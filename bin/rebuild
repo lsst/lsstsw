@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
+# **********             SERIOUS DAMAGE MAY OCCUR             ********
+#
+# Recursively build all product, starting with top-level ones listed in
+# $PRODUCTS.
+#
+# The versiondb repository should be cloned from:
+#
+#   git@git.lsstcorp.org/LSST/DMS/devenv/versiondb.git
+#
+# For creation, use:
+#
+# 	(mkdir versiondb; cd versiondb; git init; mkdir dep_db ver_db manifests)
+#
+
+set -e
+DIR=$(cd "$(dirname "$0")"; pwd -P)
+
+(
+	# FIXME: This locking mechanism is Linux-specific
+	# see: http://stackoverflow.com/questions/10526651/mac-os-x-equivalent-of-linux-flock1-command
+	#
+	flock -w 0 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
+
+	# Source the settings
+	. $DIR/../etc/settings.cfg.sh
+
+	#
+	# Prepare build
+	#
+	VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
+	[[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
+	lsst-build prepare --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS
+	[[ "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
+
+	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
+	echo "# BUILD ID: $BUILD"
+
+	#
+	# Execute build
+	#
+	lsst-build build "$BUILDDIR"
+
+	#
+	# Tag as current
+	#
+	eups-copy-tag $BUILD current
+
+	echo "# BUILD $BUILD completed."
+) 200>$DIR/../var/run/rebuild.run

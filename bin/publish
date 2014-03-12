@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
+# **********             SERIOUS DAMAGE MAY OCCUR             ********
+#
+# Publish built $PRODUCTs and their dependencies
+#
+# $ publish [distservtag]
+#
+# Example:
+#    'publish current' will publish the build found in $BUILDDIR and tag 
+#    it as 'current' on the distribution server
+#
+
+DISTRIBTAG=$1
+
+set -e
+DIR=$(cd "$(dirname "$0")"; pwd -P)
+
+# Source the settings
+. $DIR/../etc/settings.cfg.sh
+
+# Find out the build ID
+eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
+echo "*************** BUILD = $BUILD: "
+
+#
+# Create the distribution packages
+#
+for product in $PRODUCTS; do
+	eups distrib create --server-dir=$EUPS_PKGROOT -f generic -d eupspkg -t $BUILD $product
+done
+
+#
+# Declare the build tag, and declare it $DISTRIBTAG, if set
+#
+eups distrib declare --server-dir=$EUPS_PKGROOT -t $BUILD
+
+if [[ ! -z $DISTRIBTAG ]]; then
+	echo "Adding tag '$DISTRIBTAG' at the distribution server."
+	sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
+		$EUPS_PKGROOT/tags/$BUILD.list > $EUPS_PKGROOT/tags/$DISTRIBTAG.list
+fi
+
+#
+# Publish the newinstall script, if declared current
+#
+if [[ $DISTRIBTAG == current ]]; then
+	echo "Copying newinstall.sh to the distribution server."
+	cp -a $(eups list -t current -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
+fi

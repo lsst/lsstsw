@@ -1,0 +1,13 @@
+.*
+!.gitignore
+*~
+anaconda/
+build/
+distserver
+eups/
+lfs/
+public_html/
+sources/
+stack/
+versiondb/
+lsst_build/

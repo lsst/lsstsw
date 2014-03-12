@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# Apply the git same tag to all repositories in build, and push it upstream.
+#
+
+if [[ -z $1 ]]; then
+	echo "Usage: $0 [-d] <tag>"
+	echo
+	echo "     -d : instead of setting it, delete the tag"
+	echo
+	echo "WARNING: THIS WILL APPLY $tag TO ALL LSST/DMS REPOSITORIES IN ./build"
+	echo "         AND IMMEDIATELY PUSH THEM TO THE UPSTREAM GIT SERVER."
+	echo
+	echo "                                           EXERCISE EXTREME CAUTION."
+	echo
+	exit -1
+fi
+
+if [[ "$1" == "-d" ]]; then
+	DELETE=1
+	shift
+fi
+
+TAG=$1
+
+set -e
+cd build
+
+# For all git repositories:
+for gg in */.git; do
+	(
+		r=$(dirname $gg)
+		cd $r
+
+		ORIGIN=$(git config --get-all remote.origin.url | grep "LSST/DMS/" | sed 's|git://git.lsstcorp.org|git@git.lsstcorp.org:|')
+		[[ -z $ORIGIN ]] && continue
+		echo "# $r $ORIGIN"
+
+		if [[ $DELETE != 1 ]]; then
+			git tag -a -m "Version $TAG" $TAG
+			git push "$ORIGIN" refs/tags/$TAG
+		else
+			git tag -d $TAG
+			git push "$ORIGIN" :refs/tags/$TAG
+		fi
+	)
+done

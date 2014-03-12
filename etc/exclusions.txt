@@ -1,0 +1,8 @@
+# Exclusion map. Format:
+# dependency regex      product regex
+
+cuda_toolkit            .*
+cuda_sdk                .*
+scipy                   .*
+healpy                  .*
+condor                  .*
