@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+#  Deploy a standardized, standalone, lsst-build sandbox
+#
+
+set -e
+
+#git clone git@git.lsstcorp.org:LSST/DMS/devenv/build_configs/lsst-dev.git
+#cd lsst-dev
+
+LSSTSW="$PWD"
+mkdir -p sources build var/run var/log lfs distserver/production
+
+export PATH="$LSSTSW/anaconda/bin:$PATH"
+export PATH="$LSSTSW/lfs/bin:$PATH"
+export PATH="$LSSTSW/bin:$PATH"
+
+test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
+	echo "::: Deploying Anaconda"
+	cd sources
+	curl -# -L -O http://repo.continuum.io/archive/Anaconda-1.8.0-Linux-x86_64.sh
+	bash Anaconda-1.8.0-Linux-x86_64.sh -b -p "$LSSTSW/anaconda"
+	touch "$LSSTSW/anaconda/.deployed"
+)
+
+test -f "$LSSTSW/lfs/.git.deployed" || ( # git
+	echo "::: Deploying git"
+	cd sources
+ 	curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
+	curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
+	tar xzf git-1.9.0.tar.gz
+	cd git-1.9.0
+	./configure --prefix="$LSSTSW/lfs"
+	make -j4
+	make install
+	cd "$LSSTSW/lfs/share/man"
+	tar xzf "$LSSTSW/sources/git-manpages-1.9.0.tar.gz"
+	(cd "$LSSTSW" && git config push.default current)
+	touch "$LSSTSW/lfs/.git.deployed"
+)
+
+test -f "$LSSTSW/eups/.deployed" || ( # EUPS
+	echo "::: Deploying eups"
+	rm -rf "$LSSTSW/eups"
+	rm -rf "$LSSTSW/stack"
+
+	cd sources
+	curl -# -L -o eups-1.3.0.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/1.3.0.tar.gz
+	tar xzf eups-1.3.0.tar.gz
+	cd eups-1.3.0
+	./configure --prefix="$LSSTSW/eups" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
+	make
+	make install
+	touch "$LSSTSW/eups/.deployed"
+)
+
+test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
+	echo "::: Deploying manifest.remap"
+	cd stack/site
+	ln -sf ../../etc/manifest.remap
+	touch "$LSSTSW/stack/.deployed"
+)
+
+test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
+	echo "::: Deploying versiondb"
+	rm -rf versiondb
+	git clone git@git.lsstcorp.org:LSST/DMS/devenv/versiondb.git
+	git config push.default current
+	touch "$LSSTSW/versiondb/.deployed"
+)
+
+test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
+	echo "::: Deploying lsst_build"
+	rm -rf lsst_build
+	git clone git@git.lsstcorp.org:LSST/DMS/devenv/lsst_build.git
+	git config push.default current
+	touch "$LSSTSW/lsst_build/.deployed"
+)
+
+cat <<EOF
+
+Done. Edit etc/settings.cfg.sh as necessary and then run the following:
+
+	export LSSTSW=$LSSTSW
+	export EUPS_PATH=\$LSSTSW/stack
+	. \$LSSTSW/bin/setup.sh
+
+to begin using it.
+
+EOF

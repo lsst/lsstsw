@@ -33,7 +33,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 	VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
 	[[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
 	lsst-build prepare --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS
-	[[ "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
+	[[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
 	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
 	echo "# BUILD ID: $BUILD"

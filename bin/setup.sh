@@ -2,16 +2,16 @@
 #
 # source this file from your ~/.bashrc
 #
-ROOT=${ROOT:-$HOME}
+LSSTSW=${LSSTSW:-$HOME}
 
-export PATH="$ROOT/anaconda/bin:$PATH"
-export PATH="$ROOT/lfs/bin:$PATH"
-export PATH="$ROOT/bin:$PATH"
+export PATH="$LSSTSW/anaconda/bin:$PATH"
+export PATH="$LSSTSW/lfs/bin:$PATH"
+export PATH="$LSSTSW/bin:$PATH"
 
-export MANPATH="$ROOT/lfs/share/man:"
+export MANPATH="$LSSTSW/lfs/share/man:"
 
-. $ROOT/eups/bin/setups.sh
+. $LSSTSW/eups/bin/setups.sh
 
-setup -r $ROOT/lsst_build
+setup -r $LSSTSW/lsst_build
 
 echo "notice: lsstsw tools have been set up."

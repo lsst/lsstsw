@@ -11,3 +11,4 @@ sources/
 stack/
 versiondb/
 lsst_build/
+var/
