@@ -15,6 +15,8 @@
 # 	(mkdir versiondb; cd versiondb; git init; mkdir dep_db ver_db manifests)
 #
 
+REF_LIST=$@
+
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
@@ -32,7 +34,8 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 	#
 	VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
 	[[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
-	lsst-build prepare --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS
+	echo "Prepare manifest: lsst-build prepare $REF_LIST --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS"
+	lsst-build prepare $REF_LIST --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS
 	[[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
 	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
@@ -42,6 +45,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 	# Execute build
 	#
 	lsst-build build "$BUILDDIR"
+        echo "Rebuild exit status: $?"
 
 	#
 	# Tag as current

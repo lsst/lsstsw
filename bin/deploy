@@ -15,10 +15,13 @@ export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
+unset ELAPSED_METER
+test -t 2  &&  ELAPSED_METER="-#"
+
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 	echo "::: Deploying Anaconda"
 	cd sources
-	curl -# -L -O http://repo.continuum.io/archive/Anaconda-1.8.0-Linux-x86_64.sh
+	curl $ELAPSED_METER -L -O http://repo.continuum.io/archive/Anaconda-1.8.0-Linux-x86_64.sh
 	bash Anaconda-1.8.0-Linux-x86_64.sh -b -p "$LSSTSW/anaconda"
 	touch "$LSSTSW/anaconda/.deployed"
 )
@@ -26,8 +29,8 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
 	echo "::: Deploying git"
 	cd sources
- 	curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
-	curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
+ 	curl $ELAPSED_METER -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
+	curl $ELAPSED_METER -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
 	tar xzf git-1.9.0.tar.gz
 	cd git-1.9.0
 	./configure --prefix="$LSSTSW/lfs"
@@ -45,7 +48,7 @@ test -f "$LSSTSW/eups/.deployed" || ( # EUPS
 	rm -rf "$LSSTSW/stack"
 
 	cd sources
-	curl -# -L -o eups-1.3.0.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/1.3.0.tar.gz
+	curl $ELAPSED_METER -L -o eups-1.3.0.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/1.3.0.tar.gz
 	tar xzf eups-1.3.0.tar.gz
 	cd eups-1.3.0
 	./configure --prefix="$LSSTSW/eups" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
