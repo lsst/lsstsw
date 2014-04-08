@@ -18,6 +18,11 @@
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
+if [[ "$1" == "-p" ]]; then
+	PREP_ONLY=1
+	shift
+fi
+
 (
 	# FIXME: This locking mechanism is Linux-specific
 	# see: http://stackoverflow.com/questions/10526651/mac-os-x-equivalent-of-linux-flock1-command
@@ -37,6 +42,10 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
 	echo "# BUILD ID: $BUILD"
+
+	if [[ "$PREP_ONLY" == 1 ]]; then
+		exit
+	fi
 
 	#
 	# Execute build
