@@ -3,7 +3,7 @@
 #
 
 # top-level products
-export PRODUCTS=${PRODUCTS:-"lsst_distrib git anaconda"}
+export PRODUCTS=${PRODUCTS:-"lsst_sims lsst_distrib git anaconda"}
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
@@ -26,7 +26,7 @@ export EUPS_PKGROOT=$LSSTSW/distserver/production
 
 # the location of source repositories
 BASE='git://git.lsstcorp.org/LSST'
-export REPOSITORY_PATTERN="$BASE/DMS/%(product)s.git|$BASE/DMS/devenv/%(product)s.git|$BASE/DMS/testdata/%(product)s.git|$BASE/external/%(product)s.git"
+export REPOSITORY_PATTERN="$BASE/sims/%(product)s.git|$BASE/DMS/%(product)s.git|$BASE/DMS/devenv/%(product)s.git|$BASE/DMS/testdata/%(product)s.git|$BASE/external/%(product)s.git"
 
 # location of the build directory
 export BUILDDIR=$LSSTSW/build
