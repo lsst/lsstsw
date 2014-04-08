@@ -7,7 +7,7 @@ export PRODUCTS=${PRODUCTS:-"lsst_distrib git anaconda"}
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
-if [[ $USER != 'lsstsw' && $(hostname) != 'lsst-dev.ncsa.illinois.edu' ]]; then
+if [[ $USER != 'lsstsw' || $(hostname) != 'lsst-dev.ncsa.illinois.edu' ]]; then
 	export NOPUSH=1
 fi
 
