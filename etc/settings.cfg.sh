@@ -22,7 +22,7 @@ export LSSTSW=${LSSTSW:-$HOME}
 export EUPSPKG_SOURCE=git
 
 # the location of the distribution server
-export EUPS_PKGROOT=$LSSTSW/production
+export EUPS_PKGROOT=$LSSTSW/distserver/production
 
 # the location of source repositories
 BASE='git://git.lsstcorp.org/LSST'
