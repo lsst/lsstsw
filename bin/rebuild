@@ -17,11 +17,36 @@
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd -P)
+. $DIR/../etc/settings.cfg.sh
 
-if [[ "$1" == "-p" ]]; then
-	PREP_ONLY=1
-	shift
+usage() { echo "Usage: $0 [-p] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
+
+while getopts ":pr:t:" o; do
+	case "$o" in
+	p)
+		PREP_ONLY=1
+		;;
+	r)
+		REF="$REF --ref $OPTARG"
+		;;
+	t)
+		TAG="$OPTARG"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [[ "$#" != "0" ]]; then
+	PRODUCTS="$@"
 fi
+
+#echo REF=$REF
+#echo PREP_ONLY=$PREP_ONLY
+#echo TAG=$TAG
+#echo PRODUCTS=$PRODUCTS
 
 (
 	# FIXME: This locking mechanism is Linux-specific
@@ -29,15 +54,12 @@ fi
 	#
 	flock -w 0 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
 
-	# Source the settings
-	. $DIR/../etc/settings.cfg.sh
-
 	#
 	# Prepare build
 	#
 	VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
 	[[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
-	lsst-build prepare --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS
+	lsst-build prepare --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS $REF
 	[[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
 	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
@@ -53,9 +75,11 @@ fi
 	lsst-build build "$BUILDDIR"
 
 	#
-	# Tag as current
+	# Tag as requested
 	#
-	eups-copy-tag $BUILD current
+	if [[ ! -z $TAG ]]; then
+		eups-copy-tag $BUILD $TAG
+	fi
 
 	echo "# BUILD $BUILD completed."
 ) 200>$DIR/../var/run/rebuild.run

@@ -5,24 +5,57 @@
 #
 # Publish built $PRODUCTs and their dependencies
 #
-# $ publish [distservtag]
+# $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
-#    'publish current' will publish the build found in $BUILDDIR and tag 
+#    'publish -t current' will publish the build found in $BUILDDIR and tag 
 #    it as 'current' on the distribution server
 #
 
-DISTRIBTAG=$1
+DISTRIBTAG=
+BUILD=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-
-# Source the settings
 . $DIR/../etc/settings.cfg.sh
 
-# Find out the build ID
-eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
-echo "*************** BUILD = $BUILD: "
+usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+
+while getopts ":b:t:" o; do
+	case "$o" in
+	b)
+		BUILD="$OPTARG"
+		;;
+	t)
+		DISTRIBTAG="$OPTARG"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [[ "$#" = "0" ]]; then
+	usage
+fi
+PRODUCTS="$@"
+
+if [[ -z $BUILD ]]; then
+	if [[ ! -z $DISTRIBTAG ]]; then
+		# Default the build ID to distserver tag value
+		BUILD="$DISTRIBTAG"
+		echo "[publish] Build ID defaulting to distserver tag, $BUILD."
+	else
+		# Find out the build ID
+		eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
+		echo "[publish] Build ID deduced from manifest.txt, $BUILD."
+	fi
+fi
+
+#echo DISTRIBTAG=$DISTRIBTAG
+#echo BUILD=$BUILD
+#echo PRODUCTS=$PRODUCTS
 
 #
 # Create the distribution packages
@@ -36,7 +69,7 @@ done
 #
 eups distrib declare --server-dir=$EUPS_PKGROOT -t $BUILD
 
-if [[ ! -z $DISTRIBTAG ]]; then
+if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
 	echo "Adding tag '$DISTRIBTAG' at the distribution server."
 	sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
 		$EUPS_PKGROOT/tags/$BUILD.list > $EUPS_PKGROOT/tags/$DISTRIBTAG.list
