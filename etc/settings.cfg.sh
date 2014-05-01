@@ -26,7 +26,8 @@ export EUPS_PKGROOT=$LSSTSW/distserver/production
 
 # the location of source repositories
 BASE='git://git.lsstcorp.org/LSST'
-export REPOSITORY_PATTERN="$BASE/sims/%(product)s.git|$BASE/DMS/%(product)s.git|$BASE/DMS/devenv/%(product)s.git|$BASE/DMS/testdata/%(product)s.git|$BASE/external/%(product)s.git"
+SBASE='https://stash.lsstcorp.org/scm/'
+export REPOSITORY_PATTERN="$SBASE/sim/%(product)s.git|$BASE/sims/%(product)s.git|$BASE/DMS/%(product)s.git|$BASE/DMS/devenv/%(product)s.git|$BASE/DMS/testdata/%(product)s.git|$BASE/external/%(product)s.git"
 
 # location of the build directory
 export BUILDDIR=$LSSTSW/build
