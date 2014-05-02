@@ -78,7 +78,7 @@ fi
 #
 # Publish the newinstall script, if declared current
 #
-if [[ $DISTRIBTAG == current ]]; then
+if [[ $DISTRIBTAG == current ]] && eups list -t $BUILD lsst >/dev/null 2>&1; then
 	echo "Copying newinstall.sh to the distribution server."
-	cp -a $(eups list -t current -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
+	cp -a $(eups list -t $BUILD -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
 fi
