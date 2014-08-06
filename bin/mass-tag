@@ -32,7 +32,7 @@ for gg in */.git; do
 		r=$(dirname $gg)
 		cd $r
 
-		ORIGIN=$(git config --get-all remote.origin.url | grep "LSST/DMS/" | sed 's|git://git.lsstcorp.org|git@git.lsstcorp.org:|')
+		ORIGIN=$(git config --get-all remote.origin.url | grep "LSST/DMS/" | sed 's|git://git.lsstcorp.org/|git@git.lsstcorp.org:|')
 		[[ -z $ORIGIN ]] && continue
 		echo "# $r $ORIGIN"
 
