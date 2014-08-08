@@ -19,7 +19,7 @@ fi
 export LSSTSW=${LSSTSW:-$HOME}
 
 # use 'package' for public releases, use 'git' for development releases
-export EUPSPKG_SOURCE=git
+export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
 
 # the location of the distribution server
 export EUPS_PKGROOT=$LSSTSW/distserver/production
