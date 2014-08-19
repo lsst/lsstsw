@@ -65,7 +65,7 @@ test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
 	echo "::: Deploying versiondb"
 	rm -rf versiondb
 	git clone git@git.lsstcorp.org:LSST/DMS/devenv/versiondb.git
-	git config push.default current
+	(cd versiondb && git config push.default current)
 	touch "$LSSTSW/versiondb/.deployed"
 )
 
@@ -73,7 +73,7 @@ test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
 	echo "::: Deploying lsst_build"
 	rm -rf lsst_build
 	git clone git@git.lsstcorp.org:LSST/DMS/devenv/lsst_build.git
-	git config push.default current
+	(cd lsst_build && git config push.default current)
 	touch "$LSSTSW/lsst_build/.deployed"
 )
 
