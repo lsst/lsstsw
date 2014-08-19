@@ -3,7 +3,7 @@
 #
 
 # top-level products
-export PRODUCTS=${PRODUCTS:-"lsst_sims lsst_distrib git anaconda"}
+export PRODUCTS=${PRODUCTS:-"lsst_sims lsst_distrib qserv git anaconda"}
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
