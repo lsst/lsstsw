@@ -19,10 +19,14 @@ anaVers="1.8.0"
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 	cd sources
     anaVers="1.8.0"
-    if [ "$(uname)" == "Darwin" ]; then
-        anaPlatform="MacOSX-x86_64"
-    elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    platformName=$(uname -s)
+    if [ ${platformName:0:5} == "Linux" ]; then
         anaPlatform="Linux-x86_64"
+    elif [ ${platformName:0:6} == "Darwin" ]; then
+        anaPlatform="MacOSX-x86_64"
+    else
+        echo "Cannot install anaconda: unsupported platform $platformName"
+        exit 1
     fi
     anaFileName="Anaconda-${anaVers}-${anaPlatform}.sh"
     echo "::: Deploying Anaconda ${anaVers} for ${anaPlatform}"
