@@ -14,12 +14,24 @@ mkdir -p sources build var/run var/log lfs distserver/production
 export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
+anaVers="1.8.0"
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
-	echo "::: Deploying Anaconda"
 	cd sources
-	curl -# -L -O http://repo.continuum.io/archive/Anaconda-1.8.0-Linux-x86_64.sh
-	bash Anaconda-1.8.0-Linux-x86_64.sh -b -p "$LSSTSW/anaconda"
+    anaVers="1.8.0"
+    platformName=$(uname -s)
+    if [ ${platformName:0:5} == "Linux" ]; then
+        anaPlatform="Linux-x86_64"
+    elif [ ${platformName:0:6} == "Darwin" ]; then
+        anaPlatform="MacOSX-x86_64"
+    else
+        echo "Cannot install anaconda: unsupported platform $platformName"
+        exit 1
+    fi
+    anaFileName="Anaconda-${anaVers}-${anaPlatform}.sh"
+    echo "::: Deploying Anaconda ${anaVers} for ${anaPlatform}"
+	curl -# -L -O http://repo.continuum.io/archive/${anaFileName}
+	bash ${anaFileName} -b -p "$LSSTSW/anaconda"
 	touch "$LSSTSW/anaconda/.deployed"
 )
 
