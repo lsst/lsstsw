@@ -3,7 +3,7 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
-EUPS_VERSION=${EUPS_VERSION:-1.5.1}		# Version of EUPS to install
+EUPS_VERSION=${EUPS_VERSION:-1.5.2}		# Version of EUPS to install
 
 set -e
 
