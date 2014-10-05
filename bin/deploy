@@ -3,6 +3,8 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
+EUPS_VERSION=${EUPS_VERSION:-1.5.1}		# Version of EUPS to install
+
 set -e
 
 #git clone git@git.lsstcorp.org:LSST/DMS/devenv/build_configs/lsst-dev.git
@@ -51,20 +53,37 @@ test -f "$LSSTSW/lfs/.git.deployed" || ( # git
 	touch "$LSSTSW/lfs/.git.deployed"
 )
 
-test -f "$LSSTSW/eups/.deployed" || ( # EUPS
-	echo "::: Deploying eups"
-	rm -rf "$LSSTSW/eups"
-	rm -rf "$LSSTSW/stack"
+# backwards compatibility if EUPS wasn't installed to a versioned directory
+test -f "$LSSTSW/eups/.deployed" && ( # EUPS
+	echo "::: Moving old EUPS to eups/legacy"
+	mv "$LSSTSW/eups" "$LSSTSW/eups-tmp"
+	mkdir -p "$LSSTSW/eups"
+	mv "$LSSTSW/eups-tmp" "$LSSTSW/eups/legacy"
+	ln -s legacy "$LSSTSW/eups/current"
+)
+
+test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
+	echo "::: Deploying eups $EUPS_VERSION"
+	if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
+		chmod -R +w "$LSSTSW/eups/$EUPS_VERSION"
+		rm -rf "$LSSTSW/eups/$EUPS_VERSION"
+	fi
 
 	cd sources
-	curl -# -L -o eups-1.3.0.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/1.3.0.tar.gz
-	tar xzf eups-1.3.0.tar.gz
-	cd eups-1.3.0
-	./configure --prefix="$LSSTSW/eups" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
+	curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
+	tar xzf eups-$EUPS_VERSION.tar.gz
+	cd eups-$EUPS_VERSION
+	./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
 	make
 	make install
-	touch "$LSSTSW/eups/.deployed"
+	touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
 )
+
+if [[ "$(readlink $LSSTSW/eups/current)" != "$EUPS_VERSION" ]]; then
+	echo "::: Making eups $EUPS_VERSION the default"
+	rm -f "$LSSTSW/eups/current"
+	ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
+fi
 
 test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
 	echo "::: Deploying manifest.remap"
