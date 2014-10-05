@@ -4,6 +4,7 @@
 #
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.2}		# Version of EUPS to install
+ANACONDA_VERSION=${ANACONDA_VERSION:-1.8.0}	# Version of Anaconda to install
 
 set -e
 
@@ -16,11 +17,9 @@ mkdir -p sources build var/run var/log lfs distserver/production
 export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
-anaVers="1.8.0"
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 	cd sources
-    anaVers="1.8.0"
     platformName=$(uname -s)
     if [ ${platformName:0:5} == "Linux" ]; then
         anaPlatform="Linux-x86_64"
@@ -30,8 +29,8 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
         echo "Cannot install anaconda: unsupported platform $platformName"
         exit 1
     fi
-    anaFileName="Anaconda-${anaVers}-${anaPlatform}.sh"
-    echo "::: Deploying Anaconda ${anaVers} for ${anaPlatform}"
+    anaFileName="Anaconda-${ANACONDA_VERSION}-${anaPlatform}.sh"
+    echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${anaPlatform}"
 	curl -# -L -O http://repo.continuum.io/archive/${anaFileName}
 	bash ${anaFileName} -b -p "$LSSTSW/anaconda"
 	touch "$LSSTSW/anaconda/.deployed"
