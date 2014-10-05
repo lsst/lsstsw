@@ -19,91 +19,92 @@ export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
-	cd sources
-	case $(uname -s) in
-		Linux*)  ana_platform="Linux-x86_64" ;;
-		Darwin*) ana_platform="MacOSX-x86_64" ;;
-		*)
-			echo "Cannot install anaconda: unsupported platform $(uname -s)"
-			exit 1
-			;;
-	esac
-	ana_file_name="Anaconda-${ANACONDA_VERSION}-${ana_platform}.sh"
-	echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
-	curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
-	bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
-	touch "$LSSTSW/anaconda/.deployed"
+    cd sources
+    case $(uname -s) in
+        Linux*)  ana_platform="Linux-x86_64" ;;
+        Darwin*) ana_platform="MacOSX-x86_64" ;;
+        *)
+            echo "Cannot install anaconda: unsupported platform $(uname -s)"
+            exit 1
+            ;;
+    esac
+
+    ana_file_name="Anaconda-${ANACONDA_VERSION}-${ana_platform}.sh"
+    echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
+    curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
+    bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
+    touch "$LSSTSW/anaconda/.deployed"
 )
 
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
-	echo "::: Deploying git"
-	cd sources
- 	curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
-	curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
-	tar xzf git-1.9.0.tar.gz
-	cd git-1.9.0
-	./configure --prefix="$LSSTSW/lfs"
-	make -j4
-	make install
-	cd "$LSSTSW/lfs/share/man"
-	tar xzf "$LSSTSW/sources/git-manpages-1.9.0.tar.gz"
-	(cd "$LSSTSW" && git config push.default current)
-	touch "$LSSTSW/lfs/.git.deployed"
+    echo "::: Deploying git"
+    cd sources
+    curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
+    curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
+    tar xzf git-1.9.0.tar.gz
+    cd git-1.9.0
+    ./configure --prefix="$LSSTSW/lfs"
+    make -j4
+    make install
+    cd "$LSSTSW/lfs/share/man"
+    tar xzf "$LSSTSW/sources/git-manpages-1.9.0.tar.gz"
+    (cd "$LSSTSW" && git config push.default current)
+    touch "$LSSTSW/lfs/.git.deployed"
 )
 
 # backwards compatibility if EUPS wasn't installed to a versioned directory
 test -f "$LSSTSW/eups/.deployed" && ( # EUPS
-	echo "::: Moving old EUPS to eups/legacy"
-	mv "$LSSTSW/eups" "$LSSTSW/eups-tmp"
-	mkdir -p "$LSSTSW/eups"
-	mv "$LSSTSW/eups-tmp" "$LSSTSW/eups/legacy"
-	ln -s legacy "$LSSTSW/eups/current"
+    echo "::: Moving old EUPS to eups/legacy"
+    mv "$LSSTSW/eups" "$LSSTSW/eups-tmp"
+    mkdir -p "$LSSTSW/eups"
+    mv "$LSSTSW/eups-tmp" "$LSSTSW/eups/legacy"
+    ln -s legacy "$LSSTSW/eups/current"
 )
 
 test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
-	echo "::: Deploying eups $EUPS_VERSION"
-	if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
-		chmod -R +w "$LSSTSW/eups/$EUPS_VERSION"
-		rm -rf "$LSSTSW/eups/$EUPS_VERSION"
-	fi
+    echo "::: Deploying eups $EUPS_VERSION"
+    if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
+        chmod -R +w "$LSSTSW/eups/$EUPS_VERSION"
+        rm -rf "$LSSTSW/eups/$EUPS_VERSION"
+    fi
 
-	cd sources
-	curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
-	tar xzf eups-$EUPS_VERSION.tar.gz
-	cd eups-$EUPS_VERSION
-	./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
-	make
-	make install
-	touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
+    cd sources
+    curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
+    tar xzf eups-$EUPS_VERSION.tar.gz
+    cd eups-$EUPS_VERSION
+    ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
+    make
+    make install
+    touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
 )
 
 if [[ "$(readlink $LSSTSW/eups/current)" != "$EUPS_VERSION" ]]; then
-	echo "::: Making eups $EUPS_VERSION the default"
-	rm -f "$LSSTSW/eups/current"
-	ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
+    echo "::: Making eups $EUPS_VERSION the default"
+    rm -f "$LSSTSW/eups/current"
+    ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
 fi
 
 test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
-	echo "::: Deploying manifest.remap"
-	cd stack/site
-	ln -sf ../../etc/manifest.remap
-	touch "$LSSTSW/stack/.deployed"
+    echo "::: Deploying manifest.remap"
+    cd stack/site
+    ln -sf ../../etc/manifest.remap
+    touch "$LSSTSW/stack/.deployed"
 )
 
 test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
-	echo "::: Deploying versiondb"
-	rm -rf versiondb
-	git clone git@git.lsstcorp.org:LSST/DMS/devenv/versiondb.git
-	(cd versiondb && git config push.default current)
-	touch "$LSSTSW/versiondb/.deployed"
+    echo "::: Deploying versiondb"
+    rm -rf versiondb
+    git clone git@git.lsstcorp.org:LSST/DMS/devenv/versiondb.git
+    (cd versiondb && git config push.default current)
+    touch "$LSSTSW/versiondb/.deployed"
 )
 
 test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
-	echo "::: Deploying lsst_build"
-	rm -rf lsst_build
-	git clone git@git.lsstcorp.org:LSST/DMS/devenv/lsst_build.git
-	(cd lsst_build && git config push.default current)
-	touch "$LSSTSW/lsst_build/.deployed"
+    echo "::: Deploying lsst_build"
+    rm -rf lsst_build
+    git clone git@git.lsstcorp.org:LSST/DMS/devenv/lsst_build.git
+    (cd lsst_build && git config push.default current)
+    touch "$LSSTSW/lsst_build/.deployed"
 )
 
 cat <<EOF
