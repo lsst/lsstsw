@@ -20,16 +20,16 @@ export PATH="$LSSTSW/bin:$PATH"
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 	cd sources
-    case $(uname -s) in
-        Linux*)  ana_platform="Linux-x86_64" ;;
-        Darwin*) ana_platform="MacOSX-x86_64" ;;
-        *)
-          echo "Cannot install anaconda: unsupported platform $(uname -s)"
-          exit 1
-          ;;
-    esac
-    ana_file_name="Anaconda-${ANACONDA_VERSION}-${ana_platform}.sh"
-    echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
+	case $(uname -s) in
+		Linux*)  ana_platform="Linux-x86_64" ;;
+		Darwin*) ana_platform="MacOSX-x86_64" ;;
+		*)
+			echo "Cannot install anaconda: unsupported platform $(uname -s)"
+			exit 1
+			;;
+	esac
+	ana_file_name="Anaconda-${ANACONDA_VERSION}-${ana_platform}.sh"
+	echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
 	curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
 	bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
 	touch "$LSSTSW/anaconda/.deployed"
