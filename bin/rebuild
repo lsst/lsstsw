@@ -48,11 +48,29 @@ fi
 #echo TAG=$TAG
 #echo PRODUCTS=$PRODUCTS
 
+LOCKFILE_PREFIX="$DIR/../var/run/rebuild"
+lock_mutex()
+{
+	# return failure if a lock cannot be attained
+
+	if hash flock 2>/dev/null; then		# Prefer flock, if exists
+		flock -w 0 200 || return
+	elif hash lockfile 2>/dev/null; then	# Fall back to lockfile
+		# note: yes, there's a race condition here -- if the process
+		# is killed after lockfile succeeds but before trap runs, the
+		# lockfile will remain dangling. I couldn't think of a simple way
+		# to avoid it.
+		lockfile -r 0 "$LOCKFILE_PREFIX.lock" 2>/dev/null || return
+		trap "{ rm -f \"$LOCKFILE_PREFIX\".lock; }" EXIT
+	else
+		echo "don't know how to do locking on your system (neither flock or lockfile are available)." 1>&2
+		echo "playing it safe and aborting." 1>&2
+		exit -1
+	fi
+}
+
 (
-	# FIXME: This locking mechanism is Linux-specific
-	# see: http://stackoverflow.com/questions/10526651/mac-os-x-equivalent-of-linux-flock1-command
-	#
-	flock -w 0 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
+	lock_mutex || { echo "a rebuild is already in process." 1>&2; exit -1; }
 
 	#
 	# Prepare build
@@ -82,4 +100,4 @@ fi
 	fi
 
 	echo "# BUILD $BUILD completed."
-) 200>$DIR/../var/run/rebuild.run
+) 200>"$LOCKFILE_PREFIX.run"
