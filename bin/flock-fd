@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+#
+# Emulate Linux' flock utility using fcntl.flock, so it works on Darwin (and
+# probably other OS-es).
+#
+# Note: only implements the equivalent of "flock -w 0 <fd>"
+#
+
+import fcntl
+import sys
+
+if len(sys.argv) != 2:
+    print "usage: %s <fd>" % sys.argv[0]
+    exit(-2)
+
+fd = int(sys.argv[1])
+try:
+    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    print "error", str(IOError)
+    exit(-1)
