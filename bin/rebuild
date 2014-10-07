@@ -49,10 +49,7 @@ fi
 #echo PRODUCTS=$PRODUCTS
 
 (
-	# FIXME: This locking mechanism is Linux-specific
-	# see: http://stackoverflow.com/questions/10526651/mac-os-x-equivalent-of-linux-flock1-command
-	#
-	flock -w 0 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
+	flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
 
 	#
 	# Prepare build
@@ -82,4 +79,4 @@ fi
 	fi
 
 	echo "# BUILD $BUILD completed."
-) 200>$DIR/../var/run/rebuild.run
+) 200>"$DIR/../var/run/rebuild.run"
