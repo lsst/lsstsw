@@ -34,6 +34,15 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
     curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
     bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
     touch "$LSSTSW/anaconda/.deployed"
+
+    if [[ $(uname -s) = Darwin* ]]; then
+        #run install_name_tool on all of the libpythonX.X.dylib dynamic
+        #libraries in anaconda
+        for entry in $LSSTSW/anaconda/lib/libpython*.dylib
+            do
+                install_name_tool -id $entry $entry
+            done
+    fi
 )
 
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
