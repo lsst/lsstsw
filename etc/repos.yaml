@@ -112,3 +112,8 @@ astrometry_net: https://github.com/lsst/astrometry_net.git
 sims_dustmaps: https://stash.lsstcorp.org/scm/sim/sims_dustmaps.git
 minuit2: https://github.com/lsst/minuit2.git
 lsst_libs: https://github.com/lsst/lsst_libs.git
+flask: https://github.com/lsst/flask.git
+dbserv: https://github.com/lsst/dbserv.git
+imgserv: https://github.com/lsst/imgserv.git
+metaserv: https://github.com/lsst/metaserv.git
+webserv: https://github.com/lsst/webserv.git
