@@ -117,3 +117,6 @@ dbserv: https://github.com/lsst/dbserv.git
 imgserv: https://github.com/lsst/imgserv.git
 metaserv: https://github.com/lsst/metaserv.git
 webserv: https://github.com/lsst/webserv.git
+GalSim: https://github.com/lsst/galsim.git
+tmv: https://github.com/lsst/tmv.git
+sncosmo: https://github.com/lsst/sncosmo.git
