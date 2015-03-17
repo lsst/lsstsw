@@ -56,10 +56,10 @@ fi
 	#
 	VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
 	[[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
-	lsst-build prepare --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILDDIR" $PRODUCTS $REF
+	lsst-build prepare --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILD_DIR" $PRODUCTS $REF
 	[[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
-	eval "$(grep -E '^BUILD=' "$BUILDDIR"/manifest.txt)"
+	eval "$(grep -E '^BUILD=' "$BUILD_DIR"/manifest.txt)"
 	echo "# BUILD ID: $BUILD"
 
 	if [[ "$PREP_ONLY" == 1 ]]; then
@@ -69,7 +69,7 @@ fi
 	#
 	# Execute build
 	#
-	lsst-build build "$BUILDDIR"
+	lsst-build build "$BUILD_DIR"
 
 	#
 	# Tag as requested
