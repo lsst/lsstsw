@@ -11,15 +11,13 @@ ANACONDA_VERSION=${ANACONDA_VERSION:-2.1.0}	# Version of Anaconda to install
 
 set -e
 
-#git clone git@git.lsstcorp.org:LSST/DMS/devenv/build_configs/lsst-dev.git
-#cd lsst-dev
-
-LSSTSW="$PWD"
-mkdir -p sources build var/run var/log lfs distserver/production
+mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
 
 export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
+
+cd $LSSTSW
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
     cd sources
