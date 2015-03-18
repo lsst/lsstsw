@@ -116,7 +116,7 @@ test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
 test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
     echo "::: Deploying lsst_build"
     rm -rf lsst_build
-    git clone git@github.com:lsst/lsst_build.git
+    git clone https://github.com/lsst/lsst_build.git
     (cd lsst_build && git config push.default current)
     touch "$LSSTSW/lsst_build/.deployed"
 )
