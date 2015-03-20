@@ -22,35 +22,35 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
 while getopts ":b:t:" o; do
-	case "$o" in
-	b)
-		BUILD="$OPTARG"
-		;;
-	t)
-		DISTRIBTAG="$OPTARG"
-		;;
-	*)
-		usage
-		;;
-	esac
+    case "$o" in
+    b)
+        BUILD="$OPTARG"
+        ;;
+    t)
+        DISTRIBTAG="$OPTARG"
+        ;;
+    *)
+        usage
+        ;;
+    esac
 done
 shift $((OPTIND-1))
 
 if [[ "$#" = "0" ]]; then
-	usage
+    usage
 fi
 PRODUCTS="$@"
 
 if [[ -z $BUILD ]]; then
-	if [[ ! -z $DISTRIBTAG ]]; then
-		# Default the build ID to distserver tag value
-		BUILD="$DISTRIBTAG"
-		echo "[publish] Build ID defaulting to distserver tag, $BUILD."
-	else
-		# Find out the build ID
-		eval "$(grep -E '^BUILD=' "$BUILD_DIR"/manifest.txt)"
-		echo "[publish] Build ID deduced from manifest.txt, $BUILD."
-	fi
+    if [[ ! -z $DISTRIBTAG ]]; then
+        # Default the build ID to distserver tag value
+        BUILD="$DISTRIBTAG"
+        echo "[publish] Build ID defaulting to distserver tag, $BUILD."
+    else
+        # Find out the build ID
+        eval "$(grep -E '^BUILD=' "$BUILD_DIR"/manifest.txt)"
+        echo "[publish] Build ID deduced from manifest.txt, $BUILD."
+    fi
 fi
 
 #echo DISTRIBTAG=$DISTRIBTAG
@@ -61,7 +61,7 @@ fi
 # Create the distribution packages
 #
 for product in $PRODUCTS; do
-	eups distrib create --server-dir=$EUPS_PKGROOT -f generic -d eupspkg -t $BUILD $product
+    eups distrib create --server-dir=$EUPS_PKGROOT -f generic -d eupspkg -t $BUILD $product
 done
 
 #
@@ -70,15 +70,15 @@ done
 eups distrib declare --server-dir=$EUPS_PKGROOT -t $BUILD
 
 if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
-	echo "Adding tag '$DISTRIBTAG' at the distribution server."
-	sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
-		$EUPS_PKGROOT/tags/$BUILD.list > $EUPS_PKGROOT/tags/$DISTRIBTAG.list
+    echo "Adding tag '$DISTRIBTAG' at the distribution server."
+    sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
+        $EUPS_PKGROOT/tags/$BUILD.list > $EUPS_PKGROOT/tags/$DISTRIBTAG.list
 fi
 
 #
 # Publish the newinstall script, if declared current
 #
 if [[ $DISTRIBTAG == current ]] && eups list -t $BUILD lsst >/dev/null 2>&1; then
-	echo "Copying newinstall.sh to the distribution server."
-	cp -a $(eups list -t $BUILD -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
+    echo "Copying newinstall.sh to the distribution server."
+    cp -a $(eups list -t $BUILD -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
 fi
