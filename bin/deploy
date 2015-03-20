@@ -3,20 +3,21 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
+SCRIPT_DIR=${0%/*}
+source ${SCRIPT_DIR}/../etc/settings.cfg.sh
+
 EUPS_VERSION=${EUPS_VERSION:-1.5.4}		# Version of EUPS to install
 ANACONDA_VERSION=${ANACONDA_VERSION:-2.1.0}	# Version of Anaconda to install
 
 set -e
 
-#git clone git@git.lsstcorp.org:LSST/DMS/devenv/build_configs/lsst-dev.git
-#cd lsst-dev
-
-LSSTSW="$PWD"
-mkdir -p sources build var/run var/log lfs distserver/production
+mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
 
 export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
+
+cd $LSSTSW
 
 test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
     cd sources
@@ -103,17 +104,32 @@ test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
 test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
     rm -rf versiondb
-    git clone git@github.com:lsst/versiondb.git
-    (cd versiondb && git config push.default current)
+    if [ -z ${NO_PUSH+x} ]; then
+        git clone https://github.com/lsst/versiondb.git
+    else
+        git clone git@github.com:lsst/versiondb.git
+        (cd versiondb && git config push.default current)
+    fi
     touch "$LSSTSW/versiondb/.deployed"
 )
 
 test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
     echo "::: Deploying lsst_build"
     rm -rf lsst_build
-    git clone git@github.com:lsst/lsst_build.git
+    git clone https://github.com/lsst/lsst_build.git
     (cd lsst_build && git config push.default current)
     touch "$LSSTSW/lsst_build/.deployed"
+)
+
+test -f "${LSSTSW}/lfs/bin/numdiff" || (
+    echo "::: Deploying numdiff"
+    cd ${LSSTSW}/sources
+    wget http://download-mirror.savannah.gnu.org/releases//numdiff/numdiff-5.6.1.tar.gz
+    tar -xvf numdiff-5.6.1.tar.gz
+    cd numdiff-5.6.1
+    ./configure --prefix=${LSSTSW}/lfs
+    make -j4
+    make install
 )
 
 cat <<EOF
