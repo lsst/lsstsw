@@ -28,7 +28,7 @@ export EUPS_PKGROOT=$LSSTSW/distserver/production
 export REPOSFILE=${LSSTSW}/etc/repos.yaml
 
 # location of the build directory
-export BUILD_DIR=${BUILD_DIR:-${HOME}/build}
+export BUILD_DIR=${BUILD_DIR:-${LSSTSW}/build}
 
 # repository path for 'eups distrib create'
 export EUPSPKG_REPOSITORY_PATH="$BUILD_DIR"/'$PRODUCT'
