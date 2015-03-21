@@ -16,7 +16,7 @@ fi
 #
 
 # where are we? default to $HOME if $LSSTSW hasn't been defined
-export LSSTSW=${LSSTSW:-$HOME}
+export LSSTSW=${LSSTSW:-$HOME/lsstsw}
 
 # use 'package' for public releases, use 'git' for development releases
 export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
