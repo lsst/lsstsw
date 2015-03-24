@@ -20,12 +20,15 @@ set -e
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . $DIR/../etc/settings.cfg.sh
 
-usage() { echo "Usage: $0 [-p] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-p] [-n] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
-while getopts ":pr:t:" o; do
+while getopts ":pnr:t:" o; do
     case "$o" in
     p)
         PREP_ONLY=1
+        ;;
+    n)
+        NO_FETCH=1
         ;;
     r)
         REF="$REF --ref $OPTARG"
@@ -57,7 +60,11 @@ fi
     #
     VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
     [[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
-    lsst-build prepare --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILD_DIR" $PRODUCTS $REF
+    if [[ $NO_FETCH == 1 ]]; then
+        lsst-build prepare --no-fetch --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILD_DIR" $PRODUCTS $REF
+    else
+        lsst-build prepare --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$BUILD_DIR" $PRODUCTS $REF
+    fi
     [[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
     eval "$(grep -E '^BUILD=' "$BUILD_DIR"/manifest.txt)"
