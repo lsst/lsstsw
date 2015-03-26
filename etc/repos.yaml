@@ -2,7 +2,7 @@
 lsst_thirdparty: https://github.com/lsst/lsst_thirdparty.git
 lsst_apps: https://github.com/lsst/lsst_apps.git
 twisted: https://github.com/lsst/twisted.git
-throughputs: git://git.lsstcorp.org/LSST/sims/throughputs.git
+throughputs: https://github.com/lsst/throughputs.git
 sims_utils: https://stash.lsstcorp.org/scm/sim/sims_utils.git
 sims_catalogs_measures: https://stash.lsstcorp.org/scm/sim/sims_catalogs_measures.git
 scisql: https://github.com/lsst/scisql.git
