@@ -68,6 +68,13 @@ fi
     fi
 
     #
+    # HACK: Speed up the build by assuming EUPS caches are up-to-date
+    # Make sure they really are first.
+    #
+    _EUPS_ASSUME_CACHES_UP_TO_DATE=0 python -c "import eups; eups.Eups()"
+    export _EUPS_ASSUME_CACHES_UP_TO_DATE=1
+
+    #
     # Execute build
     #
     lsst-build build "$BUILD_DIR"
