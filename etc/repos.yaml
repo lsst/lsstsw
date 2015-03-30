@@ -37,7 +37,7 @@ coadd_utils: https://github.com/lsst/coadd_utils.git
 expat: https://github.com/lsst/expat.git
 zopeinterface: https://github.com/lsst/zopeinterface.git
 libevent: https://github.com/lsst/libevent.git
-lsst_sims: git://git.lsstcorp.org/LSST/sims/lsst_sims.git
+lsst_sims: https://github.com/lsst/lsst_sims.git
 numpy: https://github.com/lsst/numpy.git
 meas_deblender: https://github.com/lsst/meas_deblender.git
 gsl: https://github.com/lsst/gsl.git
