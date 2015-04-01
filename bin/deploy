@@ -3,7 +3,7 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
-SCRIPT_DIR=${0%/*}
+SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.8}         # Version of EUPS to install

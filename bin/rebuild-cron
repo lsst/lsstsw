@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=$(cd "$(dirname "$0")"; pwd -P)
+DIR=$(cd "$(dirname "$0")"; pwd)
 
 (
         flock-fd 201 || exit

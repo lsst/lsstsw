@@ -17,7 +17,7 @@
 #
 
 set -e
-DIR=$(cd "$(dirname "$0")"; pwd -P)
+DIR=$(cd "$(dirname "$0")"; pwd)
 . $DIR/../etc/settings.cfg.sh
 
 usage() { echo "Usage: $0 [-p] [-n] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
