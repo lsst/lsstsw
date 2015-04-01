@@ -8,7 +8,7 @@
 # $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
-#    'publish -t current' will publish the build found in $BUILD_DIR and tag 
+#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR and tag
 #    it as 'current' on the distribution server
 #
 
@@ -48,7 +48,7 @@ if [[ -z $BUILD ]]; then
         echo "[publish] Build ID defaulting to distserver tag, $BUILD."
     else
         # Find out the build ID
-        eval "$(grep -E '^BUILD=' "$BUILD_DIR"/manifest.txt)"
+        eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
         echo "[publish] Build ID deduced from manifest.txt, $BUILD."
     fi
 fi

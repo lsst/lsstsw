@@ -23,7 +23,7 @@ LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 REPOSFILE=${LSSTSW}/etc/repos.yaml
 
 # location of the build directory
-BUILD_DIR=${BUILD_DIR:-${LSSTSW}/build}
+LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
 
 # location of the version repository (it should be a clone of git@github.com:lsst/versiondb.git)
 VERSIONDB=${LSSTSW}/versiondb
@@ -36,7 +36,7 @@ EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 #
 
 # repository path for 'eups distrib create'
-export EUPSPKG_REPOSITORY_PATH=${BUILD_DIR}/'$PRODUCT'
+export EUPSPKG_REPOSITORY_PATH=${LSSTSW_BUILD_DIR}/'$PRODUCT'
 
 # location of the EUPS stack
 export EUPS_PATH=${LSSTSW}/stack
