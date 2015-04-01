@@ -134,11 +134,9 @@ test -f "${LSSTSW}/lfs/bin/numdiff" || (
 
 cat <<EOF
 
-Done. Edit etc/settings.cfg.sh as necessary and then run the following:
+Done. Run the following:
 
-    export LSSTSW=$LSSTSW
-    export EUPS_PATH=\$LSSTSW/stack
-    . \$LSSTSW/bin/setup.sh
+    . $LSSTSW/bin/setup.sh
 
 to begin using it.
 

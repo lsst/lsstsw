@@ -15,8 +15,9 @@ fi
 # the settings below should rarely need changing
 #
 
-# where are we? default to $HOME if $LSSTSW hasn't been defined
-LSSTSW=${LSSTSW:-$HOME/lsstsw}
+# path to the root of the lsstsw checkout
+# relative to <lsstsw>/etc/
+LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 
 # the location of source repositories
 REPOSFILE=${LSSTSW}/etc/repos.yaml
