@@ -3,7 +3,7 @@
 #
 
 # top-level products
-PRODUCTS="lsst_sims lsst_distrib qserv_distrib git anaconda webserv"
+PRODUCTS='lsst_sims lsst_distrib qserv_distrib git anaconda webserv'
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
@@ -25,24 +25,24 @@ REPOSFILE=${LSSTSW}/etc/repos.yaml
 # location of the build directory
 BUILD_DIR=${BUILD_DIR:-${LSSTSW}/build}
 
-# location of the version repository (it should be a clone of git@git.lsstcorp.org/LSST/DMS/devenv/versiondb.git)
-VERSIONDB=$LSSTSW/versiondb
+# location of the version repository (it should be a clone of git@github.com:lsst/versiondb.git)
+VERSIONDB=${LSSTSW}/versiondb
 
 # location of exclusions.txt file for 'lsst-build prepare' command
-EXCLUSIONS=$LSSTSW/etc/exclusions.txt
+EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 
 #
 # exported variables
 #
 
 # repository path for 'eups distrib create'
-export EUPSPKG_REPOSITORY_PATH="$BUILD_DIR"/'$PRODUCT'
+export EUPSPKG_REPOSITORY_PATH=${BUILD_DIR}/'$PRODUCT'
 
 # location of the EUPS stack
-export EUPS_PATH=$LSSTSW/stack
+export EUPS_PATH=${LSSTSW}/stack
 
 # use 'package' for public releases, use 'git' for development releases
 export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
 
 # the location of the distribution server
-export EUPS_PKGROOT=$LSSTSW/distserver/production
+export EUPS_PKGROOT=${LSSTSW}/distserver/production
