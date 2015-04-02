@@ -2,12 +2,12 @@
 #
 # source this file from your ~/.bashrc
 #
-LSSTSW=${LSSTSW:-$HOME}
+# relative to <lsstsw>/bin/
+LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 
 if [[ ! -f $LSSTSW/eups/current/bin/setups.sh ]]; then
     echo "error: eups not found in $LSSTSW/eups/current" 1>&2
-    echo "verify \$LSSTSW points to the directory where lsstsw has been cloned," 1>&2
-    echo "  or rerun bin/deploy to redeploy EUPS." 1>&2
+    echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
     return
 fi
 

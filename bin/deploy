@@ -3,7 +3,7 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
-SCRIPT_DIR=${0%/*}
+SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.8}         # Version of EUPS to install
@@ -134,11 +134,9 @@ test -f "${LSSTSW}/lfs/bin/numdiff" || (
 
 cat <<EOF
 
-Done. Edit etc/settings.cfg.sh as necessary and then run the following:
+Done. Run the following:
 
-    export LSSTSW=$LSSTSW
-    export EUPS_PATH=\$LSSTSW/stack
-    . \$LSSTSW/bin/setup.sh
+    . $LSSTSW/bin/setup.sh
 
 to begin using it.
 
