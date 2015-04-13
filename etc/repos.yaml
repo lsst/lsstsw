@@ -44,7 +44,7 @@ gsl: https://github.com/lsst/gsl.git
 sims_maf: https://stash.lsstcorp.org/scm/sim/sims_maf.git
 lsst: https://github.com/lsst/lsst.git
 boost: https://github.com/lsst/boost.git
-sims_sed_library: https://stash.lsstcorp.org/scm/sim/sims_sed_library.git
+sims_sed_library: https://github.com/lsst/sims_sed_library.git
 zookeeper: https://github.com/lsst/zookeeper.git
 obs_test: https://github.com/lsst/obs_test.git
 ndarray: https://github.com/lsst/ndarray.git
@@ -110,7 +110,7 @@ antlr: https://github.com/lsst/antlr.git
 datarel: https://github.com/lsst/datarel.git
 anaconda: https://github.com/lsst/anaconda.git
 astrometry_net: https://github.com/lsst/astrometry_net.git
-sims_dustmaps: https://stash.lsstcorp.org/scm/sim/sims_dustmaps.git
+sims_dustmaps: https://github.com/lsst/sims_dustmaps.git
 minuit2: https://github.com/lsst/minuit2.git
 lsst_libs: https://github.com/lsst/lsst_libs.git
 flask: https://github.com/lsst/flask.git
