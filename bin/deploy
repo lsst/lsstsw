@@ -34,6 +34,17 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
     echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
     curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
     bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
+
+    # workaround for libm issue (DM-1801); remove once Anaconda version 
+    # is bumped above 2.1.0
+    if [[ $ANACONDA_VERSION == 2.1.0 ]]; then
+    	PATH="$LSSTSW/anaconda/bin:$PATH" conda update --yes system
+    else
+        # Make sure we don't forget to remove this
+        echo "You've bumped the anaconda version above 2.1.0, now remove this workaround!"
+        exit -1
+    fi
+
     touch "$LSSTSW/anaconda/.deployed"
 
     if [[ $(uname -s) = Darwin* ]]; then
