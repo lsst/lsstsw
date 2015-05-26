@@ -38,7 +38,11 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
     # workaround for libm issue (DM-1801); remove once Anaconda version 
     # is bumped above 2.1.0
     if [[ $ANACONDA_VERSION == 2.1.0 ]]; then
-    	PATH="$LSSTSW/anaconda/bin:$PATH" conda update --yes system
+        if ! PATH="$LSSTSW/bin:$PATH" conda list --no-pip --json system >/dev/null; then
+            echo "No system package to upgrade"
+        else
+	    PATH="$LSSTSW/anaconda/bin:$PATH" conda update --yes system
+        fi
     else
         # Make sure we don't forget to remove this
         echo "You've bumped the anaconda version above 2.1.0, now remove this workaround!"
