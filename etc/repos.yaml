@@ -75,7 +75,7 @@ activemqcpp: https://github.com/lsst/activemqcpp.git
 pex_harness: https://github.com/lsst/legacy-pex_harness.git
 git: https://github.com/lsst/git.git
 sims_catUtils: https://github.com/lsst/sims_catUtils.git
-qserv_testdata: git://git.lsstcorp.org/LSST/DMS/testdata/qserv_testdata.git
+qserv_testdata: https://github.com/lsst/qserv_testdata
 eigen: https://github.com/lsst/eigen.git
 healpy: https://github.com/lsst/healpy.git
 mysqlclient: https://github.com/lsst/mysqlclient.git
