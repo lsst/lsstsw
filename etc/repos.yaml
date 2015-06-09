@@ -50,7 +50,7 @@ obs_test: https://github.com/lsst/obs_test.git
 ndarray: https://github.com/lsst/ndarray.git
 xpa: https://github.com/lsst/xpa.git
 ctrl_events: https://github.com/lsst/ctrl_events.git
-astrometry_net_data: git://git.lsstcorp.org/LSST/DMS/testdata/astrometry_net_data.git
+astrometry_net_data: https://github.com/lsst/astrometry_net_data.git
 db: https://github.com/lsst/db.git
 ctrl_platform_gordon: https://github.com/lsst/ctrl_platform_gordon.git
 pipe_base: https://github.com/lsst/pipe_base.git
