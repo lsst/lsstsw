@@ -20,15 +20,18 @@ set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
 . $DIR/../etc/settings.cfg.sh
 
-usage() { echo "Usage: $0 [-p] [-n] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
-while getopts ":pnr:t:" o; do
+while getopts ":pnur:t:" o; do
     case "$o" in
     p)
         PREP_ONLY=1
         ;;
     n)
         NO_FETCH=1
+        ;;
+    u)
+        UPDATE=1
         ;;
     r)
         REF="$REF --ref $OPTARG"
@@ -54,6 +57,12 @@ fi
 
 (
     flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
+    #
+    # update repos.yaml file
+    #
+    if [[ $UPDATE == 1 ]]; then
+        curl -# -L --silent -o $REPOSFILE $REPOSFILE_URL
+    fi
 
     #
     # Prepare build
