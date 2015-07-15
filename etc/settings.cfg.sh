@@ -3,7 +3,7 @@
 #
 
 # top-level products
-PRODUCTS='lsst_sims lsst_distrib qserv_distrib webserv'
+PRODUCTS='lsst_sims lsst_distrib qserv_distrib dax_webserv'
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
