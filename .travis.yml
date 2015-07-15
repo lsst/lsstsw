@@ -6,3 +6,9 @@ install: "pip install -r requirements.txt"
 script: "./bin/repos-lint ./etc/repos.yaml"
 notifications:
   email: false
+  hipchat:
+    rooms:
+      secure: hiu+I6yS6iQBguNNyuJ2H6HCUi2575zGgA74vuGIIViFPPF2Oc1Ty18u4ahygglaOzXh9FgFP0XEYhKE1FYPmeneP0bI/u9sr4ruEOUnC1xUyv1ClmsakzNZucQ2N7oeEEY0FOZK2VpQw44cisVdtVQFnTqf99Hj2fGP1+2LIWo=
+    template:
+      - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
+    format: html
