@@ -1,6 +1,8 @@
 LSST Distribution Server Account
 ================================
 
+[![Build Status](https://travis-ci.org/lsst/lsstsw.png)](https://travis-ci.org/lsst/lsstsw)
+
 *Note: this directory is git managed.*
 
 Structure
