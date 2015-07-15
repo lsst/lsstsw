@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+
+import sys
+import re
+import yaml
+import socket
+from urllib.parse import urlparse
+from urllib.request import urlopen
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("filename")
+args = parser.parse_args()
+
+product_pattern = re.compile('^[A-z_0-9]+$')
+
+def validate_product(pkg):
+    print('%16s: ' % 'product name', end='')
+    try:
+        validate_string(pkg)
+        validate_product_name(pkg)
+    except ValueError as e:
+        print(e)
+        return False
+
+    print('OK')
+    return True
+
+def validate_string(s):
+    # intentionally disallowing subclasses of str since serialized objects
+    # should not be in our configuration file.
+    if not type(s) is str:
+        raise ValueError('is not a string')
+
+def validate_product_name(pkg):
+    if not product_pattern.match(pkg):
+        raise ValueError('invalud EUPS product name')
+
+def validate_repo(repo):
+    print('%16s: ' % 'repo url', end='')
+
+    try:
+        validate_string(repo)
+        url = urlparse(repo)
+
+        if url.scheme == 'https':
+            urlopen(repo)
+        elif url.scheme == 'git':
+            # don't want to attempt to clone the repo as it might be large, so
+            # we're just checking for a valid hostname.  A better check might
+            # be to attempt a raw tcp connection.
+            socket.gethostbyname(url.netloc)
+        else:
+            raise ValueError('unsuported scheme: %s' % url.scheme)
+    except Exception as e:
+        print(e)
+        return False
+
+    print('OK')
+    return True
+
+repos=0
+problemos=0
+
+print('repos')
+print('===')
+print()
+
+with open(args.filename, 'r') as f:
+    data = yaml.safe_load(f)
+    # intentionally disallowing subclasses of dict since serialized objects
+    # should not be in our configuration file.
+    if not type(data) is dict:
+        print('YAML file has an invalid format: must be a Mapping')
+        sys.exit(1)
+    for k,v in data.items():
+        repos += 1
+
+        print('%s: %s' % (k, v))
+        if not validate_product(k):
+            problemos += 1
+        if not validate_repo(v):
+            problemos += 1
+
+print()
+print('summary')
+print('===')
+print('%16s: %d' % ('total repos', repos))
+print('%16s: %d' % ('errors', problemos))
+
+if problemos > 0:
+    sys.exit(1)
