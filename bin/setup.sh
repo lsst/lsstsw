@@ -11,7 +11,7 @@ if [[ ! -f $LSSTSW/eups/current/bin/setups.sh ]]; then
     return
 fi
 
-export PATH="$LSSTSW/anaconda/bin:$PATH"
+export PATH="$LSSTSW/miniconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
