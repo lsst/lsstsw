@@ -129,3 +129,4 @@ sims_operations: https://github.com/lsst/sims_operations.git
 display_ds9: https://github.com/lsst/display_ds9
 meas_extensions_psfex: https://github.com/lsst/meas_extensions_psfex.git
 psfex: https://github.com/lsst/psfex.git
+daf_ingest: https://github.com/lsst/daf_ingest.git
