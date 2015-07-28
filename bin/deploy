@@ -50,8 +50,9 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
     echo "::: Deploying git"
     cd sources
-    curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
-    curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
+    GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
+    curl -# -L -O ${GIT_BASE_URL}/git-1.9.0.tar.gz
+    curl -# -L -O ${GIT_BASE_URL}/git-manpages-1.9.0.tar.gz
     tar xzf git-1.9.0.tar.gz
     cd git-1.9.0
     ./configure --prefix="$LSSTSW/lfs"
