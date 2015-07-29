@@ -8,6 +8,7 @@ source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.9}         # Version of EUPS to install
 ANACONDA_VERSION=${ANACONDA_VERSION:-2.2.0} # Version of Anaconda to install
+GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 
 set -e
 
@@ -50,15 +51,16 @@ test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
     echo "::: Deploying git"
     cd sources
-    curl -# -L -O https://git-core.googlecode.com/files/git-1.9.0.tar.gz
-    curl -# -L -O https://git-core.googlecode.com/files/git-manpages-1.9.0.tar.gz
-    tar xzf git-1.9.0.tar.gz
-    cd git-1.9.0
+    GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
+    curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
+    curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
+    tar xzf git-${GIT_VERSION}.tar.gz
+    cd git-${GIT_VERSION}
     ./configure --prefix="$LSSTSW/lfs"
     make -j4
     make install
     cd "$LSSTSW/lfs/share/man"
-    tar xzf "$LSSTSW/sources/git-manpages-1.9.0.tar.gz"
+    tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
     (cd "$LSSTSW" && git config push.default current)
     touch "$LSSTSW/lfs/.git.deployed"
 )
