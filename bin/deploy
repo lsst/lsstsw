@@ -14,7 +14,6 @@ set -e
 
 mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
