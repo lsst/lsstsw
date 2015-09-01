@@ -14,12 +14,29 @@ args = parser.parse_args()
 
 product_pattern = re.compile('^[A-z_0-9]+$')
 
-def validate_product(pkg):
+def check_product(pkg):
     print('%16s: ' % 'product name', end='')
     try:
         validate_string(pkg)
         validate_product_name(pkg)
     except ValueError as e:
+        print(e)
+        return False
+
+    print('OK')
+    return True
+
+def check_repo_spec(spec):
+    print('%16s: ' % 'repo url', end='')
+
+    try:
+        if type(spec) is str:
+            validate_repo_url(spec)
+        elif type(spec) is dict:
+            validate_repo_dict(spec)
+        else:
+            raise ValueError('unsupported repo spec type: %s' % type(spec))
+    except Exception as e:
         print(e)
         return False
 
@@ -34,30 +51,44 @@ def validate_string(s):
 
 def validate_product_name(pkg):
     if not product_pattern.match(pkg):
-        raise ValueError('invalud EUPS product name')
+        raise ValueError('invalid EUPS product name')
 
-def validate_repo(repo):
-    print('%16s: ' % 'repo url', end='')
+def validate_repo_dict(spec):
+    supported_keys = ['url', 'ref']
 
-    try:
-        validate_string(repo)
-        url = urlparse(repo)
+    # currently we only support the url and ref keys
+    if all(key in spec for key in supported_keys):
+        validate_repo_url(spec['url'])
+        validate_string(spec['ref'])
 
-        if url.scheme == 'https':
-            urlopen(repo)
-        elif url.scheme == 'git':
-            # don't want to attempt to clone the repo as it might be large, so
-            # we're just checking for a valid hostname.  A better check might
-            # be to attempt a raw tcp connection.
-            socket.gethostbyname(url.netloc)
-        else:
-            raise ValueError('unsuported scheme: %s' % url.scheme)
-    except Exception as e:
-        print(e)
-        return False
+    # missing mandatory keys
+    missing_keys = [ key for key in supported_keys if key not in spec ]
 
-    print('OK')
-    return True
+    # extra keys
+    unknown_keys = [ key for key in spec if key not in supported_keys ]
+
+    if missing_keys or unknown_keys:
+        message = ""
+        for k in missing_keys:
+            message += "missing mandatory key: %s\n" % k
+        for k in unknown_keys:
+            message += "unknown key: %s\n" % k
+
+        raise ValueError(message)
+
+def validate_repo_url(repo):
+    validate_string(repo)
+    url = urlparse(repo)
+
+    if url.scheme == 'https':
+        urlopen(repo)
+    elif url.scheme == 'git':
+        # don't want to attempt to clone the repo as it might be large, so
+        # we're just checking for a valid hostname.  A better check might
+        # be to attempt a raw tcp connection.
+        socket.gethostbyname(url.netloc)
+    else:
+        raise ValueError('unsupported scheme: %s' % url.scheme)
 
 repos=0
 problemos=0
@@ -77,9 +108,9 @@ with open(args.filename, 'r') as f:
         repos += 1
 
         print('%s: %s' % (k, v))
-        if not validate_product(k):
+        if not check_product(k):
             problemos += 1
-        if not validate_repo(v):
+        if not check_repo_spec(v):
             problemos += 1
 
 print()

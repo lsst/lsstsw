@@ -1,3 +1,43 @@
+#
+# repos.yaml
+# ===
+#
+# Index of source repo locations for rebuild / lsst_build to clone from.
+#
+#
+# format of this file
+# ---
+#
+# It is in [YAML](http://yaml.org/) format with a single top level
+# dict/hash/map.  Each keypair specifies a source repo and a specification of
+# how it may be cloned.  Key names must conform to the EUPS product name of the
+# source package.  Values may be either a URL (string) or a dict/hash/map with
+# *exactly* two keys: `url` and `ref`.  The second form generally should be
+# used only if a ref /other than/ `master` should be the default checkout.
+#
+# * `url`: string - URL of git repo
+# * `ref`: string - ref (branch | tag) to use by default
+#
+# examples
+# ---
+#
+# ### string spec
+#
+#   afw: https://github.com/lsst/afw.git
+#
+# ### dict/hash/map spec
+#
+#        + whitespace or comments only after the colon
+#        |
+#        v
+#   afw:
+#     url: https://github.com/lsst/afw.git
+#     ref: my-magic-branch
+#
+#   ^
+#   |
+#   +--  2 space indent declaring a nested dict/hash/map
+#
 ---
 lsst_thirdparty: https://github.com/lsst/lsst_thirdparty.git
 lsst_apps: https://github.com/lsst/lsst_apps.git
