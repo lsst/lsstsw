@@ -12,3 +12,4 @@ stack/
 versiondb/
 lsst_build/
 var/
+venv/
