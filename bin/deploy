@@ -7,45 +7,54 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.9}         # Version of EUPS to install
-ANACONDA_VERSION=${ANACONDA_VERSION:-2.2.0} # Version of Anaconda to install
+MINICONDA_VERSION=${MINICONDA_VERSION:-latest} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 
 set -e
 
 mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
 
-export PATH="$LSSTSW/anaconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
 cd $LSSTSW
 
-test -f "$LSSTSW/anaconda/.deployed" || ( # Anaconda
+test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     cd sources
     case $(uname -s) in
         Linux*)  ana_platform="Linux-x86_64" ;;
         Darwin*) ana_platform="MacOSX-x86_64" ;;
         *)
-            echo "Cannot install anaconda: unsupported platform $(uname -s)"
+            echo "Cannot install miniconda: unsupported platform $(uname -s)"
             exit 1
             ;;
     esac
 
-    ana_file_name="Anaconda-${ANACONDA_VERSION}-${ana_platform}.sh"
-    echo "::: Deploying Anaconda ${ANACONDA_VERSION} for ${ana_platform}"
-    curl -# -L -O http://repo.continuum.io/archive/${ana_file_name}
-    bash ${ana_file_name} -b -p "$LSSTSW/anaconda"
-
-    touch "$LSSTSW/anaconda/.deployed"
+    miniconda_file_name="Miniconda-${MINICONDA_VERSION}-${ana_platform}.sh"
+    echo "::: Deploying Miniconda ${MINICONDA_VERSION} for ${ana_platform}"
+    curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
+    bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
 
     if [[ $(uname -s) = Darwin* ]]; then
         #run install_name_tool on all of the libpythonX.X.dylib dynamic
-        #libraries in anaconda
-        for entry in $LSSTSW/anaconda/lib/libpython*.dylib
+        #libraries in miniconda
+        for entry in $LSSTSW/miniconda/lib/libpython*.dylib
             do
                 install_name_tool -id $entry $entry
             done
     fi
+
+    (
+        # Install packages on which the stack is know to depend
+        # Note: it's not clear if agreement was reached to use all of these,
+        #       or they crept in by accident.
+
+        export PATH="$LSSTSW/miniconda/bin:$PATH"
+        conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy
+        pip install stsci.distutils
+    )
+
+    touch "$LSSTSW/miniconda/.deployed"
 )
 
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
@@ -85,7 +94,7 @@ test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
     curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
     tar xzf eups-$EUPS_VERSION.tar.gz
     cd eups-$EUPS_VERSION
-    ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/anaconda/bin/python" --with-eups="$LSSTSW/stack"
+    ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/miniconda/bin/python" --with-eups="$LSSTSW/stack"
     make
     make install
     touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
