@@ -60,7 +60,9 @@ mysqlproxy: https://github.com/lsst/mysqlproxy.git
 sconsUtils: https://github.com/lsst/sconsUtils.git
 afw: https://github.com/lsst/afw.git
 meas_base: https://github.com/lsst/meas_base.git
-xrootd: https://github.com/lsst/xrootd.git
+xrootd:
+  url: https://github.com/lsst/xrootd.git
+  ref: legacy/master
 apr_util: https://github.com/lsst/apr_util.git
 daf_persistence: https://github.com/lsst/daf_persistence.git
 obs_lsstSim: https://github.com/lsst/obs_lsstSim.git
