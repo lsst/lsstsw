@@ -153,6 +153,7 @@ sqlite: https://github.com/lsst/sqlite.git
 antlr: https://github.com/lsst/antlr.git
 datarel: https://github.com/lsst/datarel.git
 anaconda: https://github.com/lsst/anaconda.git
+miniconda: https://github.com/lsst/miniconda.git
 astrometry_net: https://github.com/lsst/astrometry_net.git
 sims_dustmaps: https://github.com/lsst/sims_dustmaps.git
 minuit2: https://github.com/lsst/minuit2.git
