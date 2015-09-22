@@ -173,3 +173,7 @@ display_ds9: https://github.com/lsst/display_ds9
 meas_extensions_psfex: https://github.com/lsst/meas_extensions_psfex.git
 psfex: https://github.com/lsst/psfex.git
 daf_ingest: https://github.com/lsst/daf_ingest.git
+mpi: https://github.com/lsst/mpi.git
+mpich: https://github.com/lsst/mpich.git
+mpi4py: https://github.com/lsst/mpi4py.git
+ctrl_pool: https://github.com/lsst/ctrl_pool.git
