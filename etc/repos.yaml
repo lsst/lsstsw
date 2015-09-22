@@ -177,3 +177,5 @@ mpi: https://github.com/lsst/mpi.git
 mpich: https://github.com/lsst/mpich.git
 mpi4py: https://github.com/lsst/mpi4py.git
 ctrl_pool: https://github.com/lsst/ctrl_pool.git
+erfa: https://github.com/lsst/erfa.git
+pal: https://github.com/lsst/pal.git
