@@ -27,7 +27,7 @@ def check_product(pkg):
     return True
 
 def check_repo_spec(spec):
-    print('%16s: ' % 'repo url', end='')
+    print('%16s: ' % 'repo spec', end='')
 
     try:
         if type(spec) is str:
@@ -47,32 +47,50 @@ def validate_string(s):
     # intentionally disallowing subclasses of str since serialized objects
     # should not be in our configuration file.
     if not type(s) is str:
-        raise ValueError('is not a string')
+        raise ValueError('is not a str')
+
+def validate_bool(b):
+    # intentionally disallowing subclasses of bool since serialized objects
+    # should not be in our configuration file.
+    if not type(b) is bool:
+        raise ValueError('is not a bool')
 
 def validate_product_name(pkg):
     if not product_pattern.match(pkg):
         raise ValueError('invalid EUPS product name')
 
 def validate_repo_dict(spec):
-    supported_keys = ['url', 'ref']
+    mandatory_keys = ['url']
+    optional_keys = ['ref', 'lfs']
 
-    # currently we only support the url and ref keys
-    if all(key in spec for key in supported_keys):
+    if 'url' in spec:
         validate_repo_url(spec['url'])
+    if 'ref' in spec:
         validate_string(spec['ref'])
+    if 'lfs' in spec:
+        validate_bool(spec['lfs'])
+        if spec['lfs'] != True:
+            raise ValueError('the only supported value for lfs is true')
 
     # missing mandatory keys
-    missing_keys = [ key for key in supported_keys if key not in spec ]
+    missing_keys = [ key for key in mandatory_keys if key not in spec ]
 
     # extra keys
-    unknown_keys = [ key for key in spec if key not in supported_keys ]
+    unknown_keys = [ key for key in spec if key not in (mandatory_keys + optional_keys)]
 
-    if missing_keys or unknown_keys:
+    # at least one optional key is required; this is to prevent url only hashes
+    # which could be simplified
+    no_options = not any(key for key in optional_keys if key in spec)
+
+    if no_options or missing_keys or unknown_keys:
         message = ""
         for k in missing_keys:
             message += "missing mandatory key: %s\n" % k
         for k in unknown_keys:
             message += "unknown key: %s\n" % k
+        if no_options:
+            message += "at least one of these keys is required: %s\n" \
+                    % optional_keys
 
         raise ValueError(message)
 
