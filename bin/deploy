@@ -9,6 +9,7 @@ source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 EUPS_VERSION=${EUPS_VERSION:-1.5.9}         # Version of EUPS to install
 MINICONDA_VERSION=${MINICONDA_VERSION:-latest} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
+LFS_VERSION=${LFS_VERSION:-1.0.2}           # Version of git-lfs to install
 
 set -e
 
@@ -72,6 +73,28 @@ test -f "$LSSTSW/lfs/.git.deployed" || ( # git
     tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
     (cd "$LSSTSW" && git config push.default current)
     touch "$LSSTSW/lfs/.git.deployed"
+)
+
+test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
+    echo "::: Deploying git-lfs"
+
+    case $(uname -s) in
+        Linux*)  lfs_platform="linux-amd64" ;;
+        Darwin*) lfs_platform="darwin-amd64" ;;
+        *)
+            echo "Cannot install git-lfs: unsupported platform $(uname -s)"
+            exit 1
+            ;;
+    esac
+
+    cd sources
+    LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
+    LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
+    curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
+    tar xzf $LFS_ARCHIVE
+    cp git-lfs-${LFS_VERSION}/git-lfs ${LSSTSW}/lfs/bin/
+    cd $LSSTSW
+    touch "${LSSTSW}/lfs/.git-lfs.deployed"
 )
 
 # backwards compatibility if EUPS wasn't installed to a versioned directory
