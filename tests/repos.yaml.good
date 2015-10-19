@@ -1,7 +1,10 @@
 ---
+#
+# all repo specs in this file should pass
+#
 https_url: https://github.com/lsst/lsstsw.git
 git_rul: git://git.lsstcorp.org/LSST/DMS/testdata/afwdata.git
-redefined_ref:
+default_ref:
   url: https://github.com/lsst/lsstsw.git
   ref: next
 lfs_enabled:
