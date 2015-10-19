@@ -7,6 +7,7 @@ import socket
 from urllib.parse import urlparse
 from urllib.request import urlopen
 import argparse
+from colors import red, green, yellow, blue, faint, bold
 
 parser = argparse.ArgumentParser()
 parser.add_argument("filename")
@@ -14,20 +15,28 @@ args = parser.parse_args()
 
 product_pattern = re.compile('^[A-z_0-9]+$')
 
+def print_good(s, *args):
+    # ansicolor assumes the first argument is a string
+    print(green(str(s), *args))
+
+def print_bad(s, *args):
+    # ansicolor assumes the first argument is a string
+    print(red(str(s), *args))
+
 def check_product(pkg):
-    print('%16s: ' % 'product name', end='')
+    print(faint(('%16s: ' % 'product name')), end='')
     try:
         validate_string(pkg)
         validate_product_name(pkg)
     except ValueError as e:
-        print(e)
+        print_bad(e)
         return False
 
-    print('OK')
+    print_good('OK')
     return True
 
 def check_repo_spec(spec):
-    print('%16s: ' % 'repo spec', end='')
+    print(faint(('%16s: ' % 'repo spec')), end='')
 
     try:
         if type(spec) is str:
@@ -37,10 +46,10 @@ def check_repo_spec(spec):
         else:
             raise ValueError('unsupported repo spec type: %s' % type(spec))
     except Exception as e:
-        print(e)
+        print_bad(e)
         return False
 
-    print('OK')
+    print_good('OK')
     return True
 
 def validate_string(s):
@@ -120,12 +129,12 @@ with open(args.filename, 'r') as f:
     # intentionally disallowing subclasses of dict since serialized objects
     # should not be in our configuration file.
     if not type(data) is dict:
-        print('YAML file has an invalid format: must be a Mapping')
+        print_bad('YAML file has an invalid format: must be a Mapping')
         sys.exit(1)
     for k,v in data.items():
         repos += 1
 
-        print('%s: %s' % (k, v))
+        print('%s: %s' % (bold(k), blue(str(v), style='bold')))
         if not check_product(k):
             problemos += 1
         if not check_repo_spec(v):
@@ -134,8 +143,8 @@ with open(args.filename, 'r') as f:
 print()
 print('summary')
 print('===')
-print('%16s: %d' % ('total repos', repos))
-print('%16s: %d' % ('errors', problemos))
+print(yellow('%16s: %d' % ('total repos', repos)))
+print(yellow('%16s: %d' % ('errors', problemos)))
 
 if problemos > 0:
     sys.exit(1)
