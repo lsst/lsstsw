@@ -66,7 +66,6 @@ xrootd:
 apr_util: https://github.com/lsst/apr_util.git
 daf_persistence: https://github.com/lsst/daf_persistence.git
 obs_lsstSim: https://github.com/lsst/obs_lsstSim.git
-obs_cfht: https://github.com/lsst/obs_cfht.git
 obs_decam: https://github.com/lsst/obs_decam.git
 log: https://github.com/lsst/log.git
 base: https://github.com/lsst/base.git
