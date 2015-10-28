@@ -17,7 +17,7 @@ BUILD=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
-. $DIR/../etc/settings.cfg.sh
+. "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
@@ -39,7 +39,7 @@ shift $((OPTIND-1))
 if [[ "$#" = "0" ]]; then
     usage
 fi
-PRODUCTS="$@"
+PRODUCTS=($@)
 
 if [[ -z $BUILD ]]; then
     if [[ ! -z $DISTRIBTAG ]]; then
@@ -60,25 +60,25 @@ fi
 #
 # Create the distribution packages
 #
-for product in $PRODUCTS; do
-    eups distrib create --server-dir=$EUPS_PKGROOT -f generic -d eupspkg -t $BUILD $product
+for product in "${PRODUCTS[@]}"; do
+    eups distrib create "--server-dir=${EUPS_PKGROOT}" -f generic -d eupspkg -t "$BUILD" "$product"
 done
 
 #
 # Declare the build tag, and declare it $DISTRIBTAG, if set
 #
-eups distrib declare --server-dir=$EUPS_PKGROOT -t $BUILD
+eups distrib declare "--server-dir=${EUPS_PKGROOT}" -t "$BUILD"
 
 if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
     echo "Adding tag '$DISTRIBTAG' at the distribution server."
     sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
-        $EUPS_PKGROOT/tags/$BUILD.list > $EUPS_PKGROOT/tags/$DISTRIBTAG.list
+        "${EUPS_PKGROOT}/tags/${BUILD.list}" > "${EUPS_PKGROOT}/tags/${DISTRIBTAG.list}"
 fi
 
 #
 # Publish the newinstall script, if declared current
 #
-if [[ $DISTRIBTAG == current ]] && eups list -t $BUILD lsst >/dev/null 2>&1; then
+if [[ "$DISTRIBTAG" == current ]] && eups list -t "$BUILD" lsst >/dev/null 2>&1; then
     echo "Copying newinstall.sh to the distribution server."
-    cp -a $(eups list -t $BUILD -d lsst)/bin/newinstall.sh $EUPS_PKGROOT/
+    cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
 fi

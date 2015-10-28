@@ -18,7 +18,7 @@
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
-. $DIR/../etc/settings.cfg.sh
+source "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
@@ -34,7 +34,7 @@ while getopts ":pnur:t:" o; do
         UPDATE=1
         ;;
     r)
-        REF="$REF --ref $OPTARG"
+        REF="${REF} --ref ${OPTARG}"
         ;;
     t)
         TAG="$OPTARG"
@@ -47,7 +47,7 @@ done
 shift $((OPTIND-1))
 
 if [[ "$#" != "0" ]]; then
-    PRODUCTS="$@"
+    PRODUCTS=($@)
 fi
 
 #echo REF=$REF
@@ -61,7 +61,7 @@ fi
     # update repos.yaml file
     #
     if [[ $UPDATE == 1 ]]; then
-        curl -# -L --silent -o $REPOSFILE $REPOSFILE_URL
+        curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
     fi
 
     #
@@ -70,14 +70,14 @@ fi
     VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
     [[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
     if [[ $NO_FETCH == 1 ]]; then
-        lsst-build prepare --no-fetch --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" $PRODUCTS $REF
+        lsst-build prepare --no-fetch --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PRODUCTS[@]}" "$REF"
     else
-        lsst-build prepare --repos="${REPOSFILE}" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" $PRODUCTS $REF
+        lsst-build prepare --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PRODUCTS[@]}" "$REF"
     fi
     [[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
-    eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
-    echo "# BUILD ID: $BUILD"
+    eval "$(grep -E '^BUILD=' "${LSSTSW_BUILD_DIR}/manifest.txt")"
+    echo "# BUILD ID: ${BUILD}"
 
     if [[ "$PREP_ONLY" == 1 ]]; then
         exit
@@ -99,8 +99,8 @@ fi
     # Tag as requested
     #
     if [[ ! -z $TAG ]]; then
-        eups-copy-tag $BUILD $TAG
+        eups-copy-tag "$BUILD" "$TAG"
     fi
 
-    echo "# BUILD $BUILD completed."
-) 200>"$DIR/../var/run/rebuild.run"
+    echo "# BUILD ${BUILD} completed."
+) 200>"${DIR}/../var/run/rebuild.run"
