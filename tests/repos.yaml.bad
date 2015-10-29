@@ -1,0 +1,28 @@
+---
+#
+# all repo specs in this file should fail
+#
+# check_product
+## name does not conform to eups expectations
+funky-name: https://github.com/lsst/lsstsw.git
+# check_repo_spec
+## url scheme is not native git or https
+invalid_scheme: git@github.com:lsst/lsstsw.git
+## https url is invalid
+invalid_https_url: https://example.dne
+## not in simpliest form; no 'option' keys
+no_option_keys:
+  url: https://github.com/lsst/lsstsw.git
+## missing mandtory 'url' key
+missing_url_key:
+  - thing1
+## extra/undefined keys
+extra_keys:
+  url: https://github.com/lsst/xrootd.git
+  ref: tickets/DM-1662
+  extra: key
+  extra2: key
+## lfs key is not true
+lfs_not_true:
+  url: https://github.com/lsst/lsstsw.git
+  lfs: false
