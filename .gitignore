@@ -6,10 +6,11 @@ build/
 distserver
 eups/
 lfs/
+lsst_build/
+miniconda/
 public_html/
 sources/
 stack/
-versiondb/
-lsst_build/
 var/
 venv/
+versiondb/
