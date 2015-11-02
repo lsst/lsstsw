@@ -130,7 +130,9 @@ eigen: https://github.com/lsst/eigen.git
 healpy: https://github.com/lsst/healpy.git
 mysqlclient: https://github.com/lsst/mysqlclient.git
 utils: https://github.com/lsst/utils.git
-afwdata: git://git.lsstcorp.org/LSST/DMS/testdata/afwdata.git
+afwdata:
+  url: https://github.com/lsst/afwdata.git
+  lfs: true
 meas_astrom: https://github.com/lsst/meas_astrom.git
 ip_diffim: https://github.com/lsst/ip_diffim.git
 meas_modelfit: https://github.com/lsst/meas_modelfit.git
