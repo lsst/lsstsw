@@ -51,7 +51,7 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
         #       or they crept in by accident.
 
         export PATH="$LSSTSW/miniconda/bin:$PATH"
-        conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy
+        conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy pandas
         pip install stsci.distutils
     )
 
