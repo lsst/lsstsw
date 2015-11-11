@@ -190,3 +190,4 @@ pal: https://github.com/lsst/pal.git
 sqlalchemy: https://github.com/lsst/sqlalchemy.git
 python_future: https://github.com/lsst/python_future.git
 capnproto: https://github.com/lsst/capnproto.git
+obs_subaru: https://github.com/lsst/obs_subaru.git
