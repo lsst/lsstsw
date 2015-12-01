@@ -9,9 +9,10 @@ before_install:
   - sudo dpkg -i "$filename"
 install: pip install -r requirements.txt
 script:
-  - python2 --version
   - shellcheck bin/{deploy,eups-copy-tag,mass-tag,publish,rebuild,rebuild-cron,setup.sh} etc/settings.cfg.sh
   - ./bin/repos-lint ./etc/repos.yaml
+  # eups assumes 'python' is 2.7
+  - alias python=python2
   - ./bin/deploy
   - . ./bin/setup.sh
   - ./bin/rebulid cfitsio
