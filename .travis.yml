@@ -12,6 +12,8 @@ script:
   - shellcheck bin/{deploy,eups-copy-tag,mass-tag,publish,rebuild,rebuild-cron,setup.sh} etc/settings.cfg.sh
   - ./bin/repos-lint ./etc/repos.yaml
   - ./bin/deploy
+  - . ./bin/setup.sh
+  - ./bin/rebulid cfitsio
 notifications:
   email: false
   hipchat:
