@@ -22,6 +22,8 @@ source "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
+REFS=()
+
 while getopts ":pnur:t:" o; do
     case "$o" in
     p)
@@ -34,7 +36,7 @@ while getopts ":pnur:t:" o; do
         UPDATE=1
         ;;
     r)
-        REF="${REF} --ref ${OPTARG}"
+        REFS=("${REFS[@]}" "--ref ${OPTARG}")
         ;;
     t)
         TAG="$OPTARG"
@@ -50,10 +52,7 @@ if [[ "$#" != "0" ]]; then
     PRODUCTS=($@)
 fi
 
-#echo REF=$REF
-#echo PREP_ONLY=$PREP_ONLY
-#echo TAG=$TAG
-#echo PRODUCTS=$PRODUCTS
+PARAMS=("${PRODUCTS[@]}" "${REFS[@]}")
 
 (
     flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
@@ -70,9 +69,9 @@ fi
     VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
     [[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
     if [[ $NO_FETCH == 1 ]]; then
-        lsst-build prepare --no-fetch --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PRODUCTS[@]}" "$REF"
+        lsst-build prepare --no-fetch --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PARAMS[@]}"
     else
-        lsst-build prepare --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PRODUCTS[@]}" "$REF"
+        lsst-build prepare --repos="$REPOSFILE" --exclusion-map="$EXCLUSIONS" --version-git-repo="$VERSIONDB" "$LSSTSW_BUILD_DIR" "${PARAMS[@]}"
     fi
     [[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
 
