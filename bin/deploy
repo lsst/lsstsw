@@ -3,24 +3,24 @@
 #  Deploy a standardized, standalone, lsst-build sandbox
 #
 
+set -e
+
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-source ${SCRIPT_DIR}/../etc/settings.cfg.sh
+source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-1.5.9}         # Version of EUPS to install
 MINICONDA_VERSION=${MINICONDA_VERSION:-latest} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.0.2}           # Version of git-lfs to install
 
-set -e
+mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production}
 
-mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
+export PATH="${LSSTSW}/lfs/bin:${PATH}"
+export PATH="${LSSTSW}/bin:${PATH}"
 
-export PATH="$LSSTSW/lfs/bin:$PATH"
-export PATH="$LSSTSW/bin:$PATH"
+cd "$LSSTSW"
 
-cd $LSSTSW
-
-test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
+test -f "${LSSTSW}/miniconda/.deployed" || ( # Anaconda
     cd sources
     case $(uname -s) in
         Linux*)  ana_platform="Linux-x86_64" ;;
@@ -33,15 +33,15 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
 
     miniconda_file_name="Miniconda-${MINICONDA_VERSION}-${ana_platform}.sh"
     echo "::: Deploying Miniconda ${MINICONDA_VERSION} for ${ana_platform}"
-    curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
-    bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
+    curl -# -L -O "http://repo.continuum.io/miniconda/${miniconda_file_name}"
+    bash "$miniconda_file_name" -b -p "${LSSTSW}/miniconda"
 
     if [[ $(uname -s) = Darwin* ]]; then
         #run install_name_tool on all of the libpythonX.X.dylib dynamic
         #libraries in miniconda
-        for entry in $LSSTSW/miniconda/lib/libpython*.dylib
+        for entry in "${LSSTSW}"/miniconda/lib/libpython*.dylib
             do
-                install_name_tool -id $entry $entry
+                install_name_tool -id "$entry" "$entry"
             done
     fi
 
@@ -50,29 +50,29 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
         # Note: it's not clear if agreement was reached to use all of these,
         #       or they crept in by accident.
 
-        export PATH="$LSSTSW/miniconda/bin:$PATH"
+        export PATH="${LSSTSW}/miniconda/bin:${PATH}"
         conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy pandas
         pip install stsci.distutils
     )
 
-    touch "$LSSTSW/miniconda/.deployed"
+    touch "${LSSTSW}/miniconda/.deployed"
 )
 
-test -f "$LSSTSW/lfs/.git.deployed" || ( # git
+test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     echo "::: Deploying git"
     cd sources
     GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-    curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
-    curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
-    tar xzf git-${GIT_VERSION}.tar.gz
-    cd git-${GIT_VERSION}
-    ./configure --prefix="$LSSTSW/lfs"
+    curl -# -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
+    curl -# -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
+    tar xzf "git-${GIT_VERSION}.tar.gz"
+    cd "git-${GIT_VERSION}"
+    ./configure --prefix="${LSSTSW}/lfs"
     make -j4
     make install
-    cd "$LSSTSW/lfs/share/man"
-    tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
+    cd "${LSSTSW}/lfs/share/man"
+    tar xzf "${LSSTSW}/sources/git-manpages-${GIT_VERSION}.tar.gz"
     (cd "$LSSTSW" && git config push.default current)
-    touch "$LSSTSW/lfs/.git.deployed"
+    touch "${LSSTSW}/lfs/.git.deployed"
 )
 
 test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
@@ -91,55 +91,55 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
     LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
     LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
     curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
-    tar xzf $LFS_ARCHIVE
-    cp git-lfs-${LFS_VERSION}/git-lfs ${LSSTSW}/lfs/bin/
-    cd $LSSTSW
+    tar xzf "${LFS_ARCHIVE}"
+    cp "git-lfs-${LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
+    cd "$LSSTSW"
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
 )
 
 # backwards compatibility if EUPS wasn't installed to a versioned directory
-test -f "$LSSTSW/eups/.deployed" && ( # EUPS
+test -f "${LSSTSW}/eups/.deployed" && ( # EUPS
     echo "::: Moving old EUPS to eups/legacy"
-    mv "$LSSTSW/eups" "$LSSTSW/eups-tmp"
-    mkdir -p "$LSSTSW/eups"
-    mv "$LSSTSW/eups-tmp" "$LSSTSW/eups/legacy"
-    ln -s legacy "$LSSTSW/eups/current"
+    mv "${LSSTSW}/eups" "${LSSTSW}/eups-tmp"
+    mkdir -p "${LSSTSW}/eups"
+    mv "${LSSTSW}/eups-tmp" "${LSSTSW}/eups/legacy"
+    ln -s legacy "${LSSTSW}/eups/current"
 )
 
-test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
-    echo "::: Deploying eups $EUPS_VERSION"
-    if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
-        chmod -R +w "$LSSTSW/eups/$EUPS_VERSION"
-        rm -rf "$LSSTSW/eups/$EUPS_VERSION"
+test -f "${LSSTSW}/eups/${EUPS_VERSION}/.deployed" || ( # EUPS
+    echo "::: Deploying eups ${EUPS_VERSION}"
+    if [[ -e "${LSSTSW}/eups/${EUPS_VERSION}" ]]; then
+        chmod -R +w "${LSSTSW}/eups/${EUPS_VERSION}"
+        rm -rf "${LSSTSW}/eups/${EUPS_VERSION}"
     fi
 
     cd sources
-    curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
-    tar xzf eups-$EUPS_VERSION.tar.gz
-    cd eups-$EUPS_VERSION
-    ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/miniconda/bin/python" --with-eups="$LSSTSW/stack"
+    curl -# -L -o "eups-${EUPS_VERSION}.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/${EUPS_VERSION}.tar.gz"
+    tar xzf "eups-${EUPS_VERSION}.tar.gz"
+    cd "eups-${EUPS_VERSION}"
+    ./configure --prefix="${LSSTSW}/eups/${EUPS_VERSION}" --with-python="${LSSTSW}/miniconda/bin/python" --with-eups="${LSSTSW}/stack"
     make
     make install
-    touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
+    touch "${LSSTSW}/eups/${EUPS_VERSION}/.deployed"
 )
 
-if [[ "$(readlink $LSSTSW/eups/current)" != "$EUPS_VERSION" ]]; then
-    echo "::: Making eups $EUPS_VERSION the default"
-    rm -f "$LSSTSW/eups/current"
-    ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
+if [[ $(readlink "${LSSTSW}/eups/current") != "$EUPS_VERSION" ]]; then
+    echo "::: Making eups ${EUPS_VERSION} the default"
+    rm -f "${LSSTSW}/eups/current"
+    ln -s "$EUPS_VERSION" "${LSSTSW}/eups/current"
 fi
 
-test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
+test -f "${LSSTSW}/stack/.deployed" || ( # Adjust the stack config
     echo "::: Deploying manifest.remap"
     cd stack/site
     ln -sf ../../etc/manifest.remap
-    touch "$LSSTSW/stack/.deployed"
+    touch "${LSSTSW}/stack/.deployed"
 )
 
-test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
+test -f "${LSSTSW}/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
     rm -rf versiondb
-    if [ -z ${NO_PUSH+x} ]; then
+    if [ -z "${NO_PUSH+x}" ]; then
         git clone https://github.com/lsst/versiondb.git
     else
         git clone git@github.com:lsst/versiondb.git
@@ -148,24 +148,24 @@ test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
 
     git config -f versiondb/.git/config user.name "LSST DATA Management"
     git config -f versiondb/.git/config user.email "dm-devel@lists.lsst.org"
-    touch "$LSSTSW/versiondb/.deployed"
+    touch "${LSSTSW}/versiondb/.deployed"
 )
 
-test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
+test -f "${LSSTSW}/lsst_build/.deployed" || ( # Clone lsst_build
     echo "::: Deploying lsst_build"
     rm -rf lsst_build
     git clone https://github.com/lsst/lsst_build.git
     (cd lsst_build && git config push.default current)
-    touch "$LSSTSW/lsst_build/.deployed"
+    touch "${LSSTSW}/lsst_build/.deployed"
 )
 
 test -f "${LSSTSW}/lfs/bin/numdiff" || (
     echo "::: Deploying numdiff"
-    cd ${LSSTSW}/sources
+    cd "${LSSTSW}/sources"
     curl -# -L -O http://download-mirror.savannah.gnu.org/releases//numdiff/numdiff-5.8.1.tar.gz
     tar -xzf numdiff-5.8.1.tar.gz
     cd numdiff-5.8.1
-    ./configure --prefix=${LSSTSW}/lfs --disable-nls
+    ./configure "--prefix=${LSSTSW}/lfs" --disable-nls
     make -j4
     make install
 )
@@ -174,7 +174,7 @@ cat <<EOF
 
 Done. Run the following:
 
-    . $LSSTSW/bin/setup.sh
+    . \"${LSSTSW}/bin/setup.sh\"
 
 to begin using it.
 

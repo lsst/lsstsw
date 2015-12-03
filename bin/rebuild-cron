@@ -6,22 +6,22 @@ DIR=$(cd "$(dirname "$0")"; pwd)
         flock-fd 201 || exit
 
     # Source the settings
-    . $DIR/../etc/settings.cfg.sh
+    . "${DIR}/../etc/settings.cfg.sh"
 
-    TIMESTAMPFILE="$HOME/var/log/rebuild.timestamp"
+    TIMESTAMPFILE="${HOME}/var/log/rebuild.timestamp"
 
     LASTWRITE=$(ssh git@git.lsstcorp.org last-write)
     TIMESTAMP=$(cat "$TIMESTAMPFILE" 2>/dev/null)
 
     if [[ $LASTWRITE > $TIMESTAMP  ]]; then
-        . $DIR/setup.sh
-        export 2>&1 | tee -a "$HOME/var/log/rebuild.last"
-        rebuild 2>&1 | tee -a "$HOME/var/log/rebuild.last"
+        . "${DIR}/setup.sh"
+        export 2>&1 | tee -a "${HOME}/var/log/rebuild.last"
+        rebuild 2>&1 | tee -a "${HOME}/var/log/rebuild.last"
 
         TAG=$(cd "$VERSIONDB" && git tag --points-at HEAD)
-        cp "$HOME/var/log/rebuild.last" "$HOME/var/log/rebuild.$TAG.log"
+        cp "${HOME}/var/log/rebuild.last" "${HOME}/var/log/rebuild.${TAG}.log"
 
         echo "$LASTWRITE" > "$TIMESTAMPFILE"
     fi
 
-) 201>$DIR/../var/run/rebuild-cron.run
+) 201>"${DIR}/../var/run/rebuild-cron.run"
