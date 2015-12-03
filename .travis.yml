@@ -3,19 +3,26 @@ language: python
 python:
   - 2.7
   - 3.4
+os:
+  - linux
+  - osx
 before_install:
   # work around https://github.com/travis-ci/apt-package-whitelist/issues/376
   - export filename="shellcheck_0.3.7-1_amd64.deb"
-  - wget "http://ftp.debian.org/debian/pool/main/s/shellcheck/$filename"
-  - sudo dpkg -i "$filename"
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then wget "http://ftp.debian.org/debian/pool/main/s/shellcheck/$filename"; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo dpkg -i "$filename"; fi
 install: if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install -r requirements.txt; fi
 script:
-  - shellcheck bin/{deploy,eups-copy-tag,mass-tag,publish,rebuild,rebuild-cron,setup.sh} etc/settings.cfg.sh
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then shellcheck bin/{deploy,eups-copy-tag,mass-tag,publish,rebuild,rebuild-cron,setup.sh} etc/settings.cfg.sh; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then ./bin/repos-lint ./etc/repos.yaml; fi
   # eups assumes 'python' is 2.7
   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then ./bin/deploy; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then . ./bin/setup.sh; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then ./bin/rebuild cfitsio; fi
+#matrix:
+#  exclude:
+#    - python: 3.4
+#      os: osx
 notifications:
   email: false
   hipchat:
