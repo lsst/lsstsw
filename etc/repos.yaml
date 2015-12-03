@@ -109,6 +109,7 @@ python: https://github.com/lsst/python.git
 freetds: https://github.com/lsst/freetds.git
 skymap: https://github.com/lsst/skymap.git
 doxygen: https://github.com/lsst/doxygen.git
+mariadb: https://github.com/lsst/mariadb.git
 mysql: https://github.com/lsst/mysql.git
 ctrl_orca: https://github.com/lsst/ctrl_orca.git
 geom: https://github.com/lsst/geom.git
