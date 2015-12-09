@@ -113,6 +113,7 @@ mariadb: https://github.com/lsst/mariadb.git
 mysql: https://github.com/lsst/mysql.git
 ctrl_orca: https://github.com/lsst/ctrl_orca.git
 geom: https://github.com/lsst/geom.git
+sphgeom: https://github.com/lsst/sphgeom.git
 qserv: https://github.com/lsst/qserv.git
 palpy: https://github.com/lsst/palpy.git
 luaexpat: https://github.com/lsst/luaexpat.git
