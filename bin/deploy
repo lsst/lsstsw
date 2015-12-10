@@ -145,6 +145,9 @@ test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
         git clone git@github.com:lsst/versiondb.git
         (cd versiondb && git config push.default current)
     fi
+
+    git config -f versiondb/.git/config user.name "LSST DATA Management"
+    git config -f versiondb/.git/config user.email "dm-devel@lists.lsst.org"
     touch "$LSSTSW/versiondb/.deployed"
 )
 
