@@ -194,3 +194,5 @@ sqlalchemy: https://github.com/lsst/sqlalchemy.git
 python_future: https://github.com/lsst/python_future.git
 capnproto: https://github.com/lsst/capnproto.git
 obs_subaru: https://github.com/lsst/obs_subaru.git
+stsci_distutils: https://github.com/lsst/stsci_distutils.git
+python_d2to1: https://github.com/lsst/python_d2to1.git
