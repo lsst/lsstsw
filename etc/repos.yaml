@@ -196,3 +196,4 @@ capnproto: https://github.com/lsst/capnproto.git
 obs_subaru: https://github.com/lsst/obs_subaru.git
 stsci_distutils: https://github.com/lsst/stsci_distutils.git
 python_d2to1: https://github.com/lsst/python_d2to1.git
+testdata_subaru: https://github.com/lsst/testdata_subaru.git
