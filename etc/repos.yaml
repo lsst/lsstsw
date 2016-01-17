@@ -201,3 +201,11 @@ python_d2to1: https://github.com/lsst/python_d2to1.git
 testdata_subaru:
   url: https://github.com/lsst/testdata_subaru.git
   lfs: true
+obs_cfht: https://github.com/lsst/obs_cfht.git
+testdata_cfht:
+  url: https://github.com/lsst/testdata_cfht.git
+  lfs: true
+obs_decam: https://github.com/lsst/obs_decam.git
+testdata_decam:
+  url: https://github.com/lsst/testdata_decam.git
+  lfs: true
