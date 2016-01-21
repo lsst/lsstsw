@@ -3,6 +3,10 @@ LSST Distribution Server Account
 
 [![Build Status](https://travis-ci.org/lsst/lsstsw.png)](https://travis-ci.org/lsst/lsstsw)
 
+For a guide to using `lsstsw`, see:
+
+https://confluence.lsstcorp.org/display/LDMDG/The+LSST+Software+Build+Tool
+
 *Note: this directory is git managed.*
 
 Structure
@@ -38,7 +42,7 @@ Release workflow
 
 Typical release workflow:
 
-  * run 'rebuild', run acceptance checks until satisfied
+  * run `rebuild`, run acceptance checks until satisfied
   * git-tag the packages using mass-tag with the release tag
-  * rerun 'rebuild' with the tags
-  * run 'publish current'
+  * rerun `rebuild` with the tags
+  * run `publish current`
