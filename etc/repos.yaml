@@ -209,3 +209,4 @@ obs_decam: https://github.com/lsst/obs_decam.git
 testdata_decam:
   url: https://github.com/lsst/testdata_decam.git
   lfs: true
+pyyaml: https://github.com/lsst/pyyaml.git
