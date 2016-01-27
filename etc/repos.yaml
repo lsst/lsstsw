@@ -217,3 +217,4 @@ validation_data_decam:
   url: https://github.com/lsst/validation_data_decam.git
   lfs: true
 pyyaml: https://github.com/lsst/pyyaml.git
+requests: https://github.com/lsst/requests.git
