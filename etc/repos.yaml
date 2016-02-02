@@ -180,6 +180,7 @@ dax_webserv: https://github.com/lsst/dax_webserv.git
 dax_webserv_client: https://github.com/lsst/dax_webserv_client.git
 dax_webservcommon: https://github.com/lsst/dax_webservcommon.git
 GalSim: https://github.com/lsst/galsim.git
+galsim: https://github.com/lsst/galsim.git
 tmv: https://github.com/lsst/tmv.git
 sncosmo: https://github.com/lsst/sncosmo.git
 sims_operations: https://github.com/lsst/sims_operations.git
