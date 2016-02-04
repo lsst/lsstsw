@@ -93,7 +93,9 @@ gsl: https://github.com/lsst/gsl.git
 sims_maf: https://github.com/lsst/sims_maf.git
 lsst: https://github.com/lsst/lsst.git
 boost: https://github.com/lsst/boost.git
-sims_sed_library: https://github.com/lsst/sims_sed_library.git
+sims_sed_library:
+    url: https://github.com/lsst/sims_sed_library.git
+    lfs: true
 zookeeper: https://github.com/lsst/zookeeper.git
 obs_test: https://github.com/lsst/obs_test.git
 ndarray: https://github.com/lsst/ndarray.git
