@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source ${SCRIPT_DIR}/../etc/settings.cfg.sh
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.1}         # Version of EUPS to install
-MINICONDA_VERSION=${MINICONDA_VERSION:-latest} # Version of Miniconda to install
+MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.0.2}           # Version of git-lfs to install
 
@@ -31,8 +31,8 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
             ;;
     esac
 
-    miniconda_file_name="Miniconda-${MINICONDA_VERSION}-${ana_platform}.sh"
-    echo "::: Deploying Miniconda ${MINICONDA_VERSION} for ${ana_platform}"
+    miniconda_file_name="Miniconda2-${MINICONDA2_VERSION}-${ana_platform}.sh"
+    echo "::: Deploying Miniconda ${MINICONDA2_VERSION} for ${ana_platform}"
     curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
     bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
 
@@ -51,6 +51,9 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
         #       or they crept in by accident.
 
         export PATH="$LSSTSW/miniconda/bin:$PATH"
+        # XXX the list of conda packages should be kept in sync with
+        # https://github.com/lsst/miniconda/blob/master/ups/eupspkg.cfg.sh
+        # The lsstsw list of packages should be considered authoritative
         conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy pandas
         pip install stsci.distutils
     )
