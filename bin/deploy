@@ -51,6 +51,9 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
         #       or they crept in by accident.
 
         export PATH="$LSSTSW/miniconda/bin:$PATH"
+        # XXX the list of conda packages should be kept in sync with
+        # https://github.com/lsst/miniconda/blob/master/ups/eupspkg.cfg.sh
+        # The lsstsw list of packages should be considered authoritative
         conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy pandas
         pip install stsci.distutils
     )
