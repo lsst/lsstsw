@@ -91,6 +91,7 @@ numpy: https://github.com/lsst/numpy.git
 meas_deblender: https://github.com/lsst/meas_deblender.git
 gsl: https://github.com/lsst/gsl.git
 sims_maf: https://github.com/lsst/sims_maf.git
+sims_skybrightness: https://github.com/lsst/sims_skybrightness.git
 lsst: https://github.com/lsst/lsst.git
 boost: https://github.com/lsst/boost.git
 sims_sed_library:
@@ -222,4 +223,3 @@ validation_data_decam:
   lfs: true
 pyyaml: https://github.com/lsst/pyyaml.git
 requests: https://github.com/lsst/requests.git
-sims_skybrightness: https://github.com/lsst/sims_skybrightness.git
