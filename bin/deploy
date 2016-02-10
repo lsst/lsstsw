@@ -13,6 +13,40 @@ LFS_VERSION=${LFS_VERSION:-1.0.2}           # Version of git-lfs to install
 
 set -e
 
+print_error() {
+    >&2 echo -e "$@"
+}
+
+usage() {
+    if [[ ! -z "$1" ]]; then
+        print_error "$0: $1"
+    fi
+    print_error
+    print_error "Usage: $0 [-b] [-h]"
+    print_error
+    print_error "Specifc options:"
+    print_error "   -b          use bleeding edge conda packages"
+    print_error "   -h          show this message"
+    exit 1
+}
+
+# We are intentionally not using gnu `getopt` due to portability concerns.
+# Sadly, this means no long options without a massive amount of boilerplate.
+while getopts "bh" option; do
+    case "$option" in
+    b)
+        BLEED_DEPLOY=true
+        ;;
+    h)
+        usage
+        ;;
+    *)
+        usage "Unknwon option: $option"
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+
 mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
 
 export PATH="$LSSTSW/lfs/bin:$PATH"
@@ -46,16 +80,20 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     fi
 
     (
-        # Install packages on which the stack is know to depend
-        # Note: it's not clear if agreement was reached to use all of these,
-        #       or they crept in by accident.
+        # Install packages on which the stack is known to depend
 
+        # XXX note that
+        # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
+        # uses the conda package specification from this repo.
         export PATH="$LSSTSW/miniconda/bin:$PATH"
-        # XXX the list of conda packages should be kept in sync with
-        # https://github.com/lsst/miniconda/blob/master/ups/eupspkg.cfg.sh
-        # The lsstsw list of packages should be considered authoritative
-        conda install --yes numpy scipy matplotlib requests cython sqlalchemy astropy pandas
-        pip install stsci.distutils
+
+        if [[ $BLEED_DEPLOY == true ]]; then
+            # The conda Intel MKL linked packages are intentionally avoided.
+            # See: https://jira.lsstcorp.org/browse/DM-5105
+            conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas
+        else
+            conda install --yes --file "${SCRIPT_DIR}/../etc/conda_packages.txt"
+        fi
     )
 
     touch "$LSSTSW/miniconda/.deployed"
