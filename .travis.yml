@@ -2,8 +2,38 @@ sudo: false
 language: python
 python:
   - 3.4
-install: "pip install -r requirements.txt"
-script: "./bin/repos-lint ./etc/repos.yaml"
+install: |
+  if [[ $MODE == lint ]]; then
+    pip install -r requirements.txt
+  fi
+script: |
+  case $MODE in
+    lint)
+      ./bin/repos-lint ./etc/repos.yaml
+      ;;
+    deploy*)
+      if [[ $MODE == deploy-bleed ]]; then
+        echo -e "*** testing with BLEED conda/pip packages ***\n"
+        ./bin/deploy -b
+      else
+        echo -e "*** testing with PINNED conda/pip packages ***\n"
+        ./bin/deploy
+      fi
+      . ./bin/setup.sh
+      echo -e "*** checking installed vs conda_packages.txt conda packages ***\n"
+      conda list -e > ./etc/conda_packages.txt
+      git diff
+      rebuild cfitsio
+      ;;
+    *)
+      echo "unknown MODE: $MODE"
+      exit 1
+      ;;
+  esac
+env:
+  - MODE=lint
+  - MODE=deploy
+  - MODE=deploy-bleed
 notifications:
   email: false
   hipchat:
