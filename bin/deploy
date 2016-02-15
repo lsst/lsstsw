@@ -121,9 +121,6 @@ test -f "$LSSTSW/lfs/.git.deployed" || ( # git
         (cd "$LSSTSW" && git config push.default current)
     else
         echo "::: Using installed git"
-        if [[ ! -e "$LSSTSW/lfs/bin" ]]; then
-            mkdir -p "$LSSTSW/lfs/bin"
-        fi
     fi
     touch "$LSSTSW/lfs/.git.deployed"
 )
@@ -145,6 +142,7 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
     LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
     curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
     tar xzf $LFS_ARCHIVE
+    mkdir -p "${LSSTSW}/lfs/bin"
     cp git-lfs-${LFS_VERSION}/git-lfs ${LSSTSW}/lfs/bin/
     cd $LSSTSW
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
