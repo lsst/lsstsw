@@ -224,4 +224,6 @@ validation_data_decam:
   lfs: true
 pyyaml: https://github.com/lsst/pyyaml.git
 requests: https://github.com/lsst/requests.git
-ci_hsc: https://github.com/lsst/ci_hsc
+ci_hsc:
+  url: https://github.com/lsst/ci_hsc.git
+  lfs: true
