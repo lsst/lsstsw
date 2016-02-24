@@ -1,14 +1,27 @@
 sudo: false
-language: python
-python:
-  - 3.4
-install: |
-  if [[ $MODE == lint ]]; then
-    pip install -r requirements.txt
-  fi
+language: c
+matrix:
+  include:
+    - os: linux
+      language: python
+      python: "3.4"
+      env: MODE=lint
+    - os: linux
+      env: MODE=deploy
+    - os: linux
+      env: MODE=deploy-bleed
+    - os: osx
+      env: MODE=deploy
+    - os: osx
+      env: MODE=deploy-bleed
+  # osx builds are often very slow to start due to high demand
+  fast_finish: true
+  allow_failures:
+    - os: osx
 script: |
   case $MODE in
     lint)
+      pip install -r requirements.txt
       ./bin/repos-lint ./etc/repos.yaml
       ;;
     deploy*)
@@ -30,10 +43,6 @@ script: |
       exit 1
       ;;
   esac
-env:
-  - MODE=lint
-  - MODE=deploy
-  - MODE=deploy-bleed
 notifications:
   email: false
   hipchat:
