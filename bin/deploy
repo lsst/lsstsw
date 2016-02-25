@@ -100,19 +100,31 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
 )
 
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
-    echo "::: Deploying git"
-    cd sources
-    GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-    curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
-    curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
-    tar xzf git-${GIT_VERSION}.tar.gz
-    cd git-${GIT_VERSION}
-    ./configure --prefix="$LSSTSW/lfs"
-    make -j4
-    make install
-    cd "$LSSTSW/lfs/share/man"
-    tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
-    (cd "$LSSTSW" && git config push.default current)
+    if hash git 2>/dev/null; then
+        GITVERNUM=$(git --version | cut -d\  -f 3)
+        GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
+    fi
+
+    if [[ $GITVER < "01-09-00" ]]; then
+        echo "::: Deploying git"
+        cd sources
+        GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
+        curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
+        curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
+        tar xzf git-${GIT_VERSION}.tar.gz
+        cd git-${GIT_VERSION}
+        ./configure --prefix="$LSSTSW/lfs"
+        make -j4
+        make install
+        cd "$LSSTSW/lfs/share/man"
+        tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
+        (cd "$LSSTSW" && git config push.default current)
+    else
+        echo "::: Using installed git"
+        if [[ ! -e "$LSSTSW/lfs/bin" ]]; then
+            mkdir -p "$LSSTSW/lfs/bin"
+        fi
+    fi
     touch "$LSSTSW/lfs/.git.deployed"
 )
 
