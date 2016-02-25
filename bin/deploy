@@ -70,15 +70,6 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
     bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
 
-    if [[ $(uname -s) = Darwin* ]]; then
-        #run install_name_tool on all of the libpythonX.X.dylib dynamic
-        #libraries in miniconda
-        for entry in $LSSTSW/miniconda/lib/libpython*.dylib
-            do
-                install_name_tool -id $entry $entry
-            done
-    fi
-
     (
         # Install packages on which the stack is known to depend
 
