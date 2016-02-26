@@ -4,7 +4,7 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-source ${SCRIPT_DIR}/../etc/settings.cfg.sh
+source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.1}         # Version of EUPS to install
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0} # Version of Miniconda to install
@@ -47,12 +47,12 @@ while getopts "bh" option; do
 done
 shift $((OPTIND-1))
 
-mkdir -p ${LSSTSW}/{sources,build,var/run,var/log,lfs,distserver/production}
+mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production}
 
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
-cd $LSSTSW
+cd "$LSSTSW"
 
 test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     cd sources
@@ -134,8 +134,8 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
     curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
     tar xzf $LFS_ARCHIVE
     mkdir -p "${LSSTSW}/lfs/bin"
-    cp git-lfs-${LFS_VERSION}/git-lfs ${LSSTSW}/lfs/bin/
-    cd $LSSTSW
+    cp git-lfs-${LFS_VERSION}/git-lfs "${LSSTSW}/lfs/bin/"
+    cd "$LSSTSW"
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
 )
 
@@ -203,11 +203,11 @@ test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
 
 test -f "${LSSTSW}/lfs/bin/numdiff" || (
     echo "::: Deploying numdiff"
-    cd ${LSSTSW}/sources
+    cd "${LSSTSW}/sources"
     curl -# -L -O http://download-mirror.savannah.gnu.org/releases//numdiff/numdiff-5.8.1.tar.gz
     tar -xzf numdiff-5.8.1.tar.gz
     cd numdiff-5.8.1
-    ./configure --prefix=${LSSTSW}/lfs --disable-nls
+    ./configure --prefix="${LSSTSW}/lfs" --disable-nls
     make -j4
     make install
 )
