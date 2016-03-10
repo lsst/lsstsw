@@ -5,7 +5,7 @@ LSST Distribution Server Account
 
 For a guide to using `lsstsw`, see:
 
-https://confluence.lsstcorp.org/display/LDMDG/The+LSST+Software+Build+Tool
+http://developer.lsst.io/en/latest/build-ci/lsstsw.html
 
 *Note: this directory is git managed.*
 
