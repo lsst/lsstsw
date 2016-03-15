@@ -57,8 +57,14 @@ cd "$LSSTSW"
 test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     cd sources
     case $(uname -s) in
-        Linux*)  ana_platform="Linux-x86_64" ;;
-        Darwin*) ana_platform="MacOSX-x86_64" ;;
+        Linux*)
+            ana_platform="Linux-x86_64"
+            conda_packages="conda_packages-linux-64.txt"
+            ;;
+        Darwin*)
+            ana_platform="MacOSX-x86_64"
+            conda_packages="conda_packages-osx-64.txt"
+            ;;
         *)
             echo "Cannot install miniconda: unsupported platform $(uname -s)"
             exit 1
@@ -83,7 +89,7 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
             # See: https://jira.lsstcorp.org/browse/DM-5105
             conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas
         else
-            conda install --yes --file "${SCRIPT_DIR}/../etc/conda_packages.txt"
+            conda install --yes --file "${SCRIPT_DIR}/../etc/${conda_packages}"
         fi
     )
 

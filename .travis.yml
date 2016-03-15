@@ -33,8 +33,20 @@ script: |
         ./bin/deploy
       fi
       . ./bin/setup.sh
-      echo -e "*** checking installed vs conda_packages.txt conda packages ***\n"
-      conda list -e > ./etc/conda_packages.txt
+      case $(uname -s) in
+        Linux*)
+          conda_packages="conda_packages-linux-64.txt"
+          ;;
+        Darwin*)
+          conda_packages="conda_packages-osx-64.txt"
+          ;;
+        *)
+          echo "unsupported platform $(uname -s)"
+          exit 1
+          ;;
+      esac
+      echo -e "*** checking installed vs ${conda_packages} conda packages ***\n"
+      conda list -e > "./etc/${conda_packages}"
       git diff
       rebuild cfitsio
       ;;
