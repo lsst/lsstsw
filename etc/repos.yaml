@@ -228,3 +228,4 @@ ci_hsc:
   url: https://github.com/lsst/ci_hsc.git
   lfs: true
 lsst_ci: https://github.com/lsst/lsst_ci.git
+pipe_drivers: https://github.com/lsst/pipe_drivers.git
