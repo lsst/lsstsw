@@ -88,6 +88,7 @@ zopeinterface: https://github.com/lsst/zopeinterface.git
 libevent: https://github.com/lsst/libevent.git
 lsst_sims: https://github.com/lsst/lsst_sims.git
 numpy: https://github.com/lsst/numpy.git
+scipy: https://github.com/lsst/scipy.git
 meas_deblender: https://github.com/lsst/meas_deblender.git
 gsl: https://github.com/lsst/gsl.git
 sims_maf: https://github.com/lsst/sims_maf.git
