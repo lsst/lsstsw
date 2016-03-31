@@ -233,3 +233,4 @@ ci_hsc:
   lfs: true
 lsst_ci: https://github.com/lsst/lsst_ci.git
 pipe_drivers: https://github.com/lsst/pipe_drivers.git
+meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape.git
