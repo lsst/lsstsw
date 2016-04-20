@@ -236,3 +236,5 @@ ci_hsc:
 lsst_ci: https://github.com/lsst/lsst_ci.git
 pipe_drivers: https://github.com/lsst/pipe_drivers.git
 meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape.git
+jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
+jointcal: https://github.com/lsst/jointcal
