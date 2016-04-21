@@ -234,6 +234,7 @@ ci_hsc:
   url: https://github.com/lsst/ci_hsc.git
   lfs: true
 lsst_ci: https://github.com/lsst/lsst_ci.git
+lsst_qa: https://github.com/lsst/lsst_qa.git
 pipe_drivers: https://github.com/lsst/pipe_drivers.git
 meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape.git
 jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
