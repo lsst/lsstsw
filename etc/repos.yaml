@@ -239,3 +239,4 @@ pipe_drivers: https://github.com/lsst/pipe_drivers.git
 meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape.git
 jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
 jointcal: https://github.com/lsst/jointcal
+ngmix: https://github.com/lsst/ngmix.git
