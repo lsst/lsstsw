@@ -241,3 +241,4 @@ jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
 jointcal: https://github.com/lsst/jointcal
 ngmix: https://github.com/lsst/ngmix.git
 meas_extensions_shapeHSM: https://github.com/lsst/meas_extensions_shapeHSM.git
+python_psutil: https://github.com/lsst/python_psutil.git
