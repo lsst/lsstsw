@@ -247,3 +247,4 @@ astropy: https://github.com/lsst/astropy.git
 oorb: 
   url: https://github.com/lsst/oorb.git
   ref: lsst-dev
+sims_movingObjects: https://github.com/lsst/sims_movingObjects.git
