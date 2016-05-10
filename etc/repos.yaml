@@ -245,5 +245,5 @@ python_psutil: https://github.com/lsst/python_psutil.git
 meas_extensions_photometryKron: https://github.com/lsst/meas_extensions_photometryKron.git
 astropy: https://github.com/lsst/astropy.git
 oorb: 
-  url: https://github.com/lsst-sims/oorb.git
+  url: https://github.com/lsst/oorb.git
   ref: lsst-dev
