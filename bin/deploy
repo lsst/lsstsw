@@ -207,17 +207,6 @@ test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
     touch "$LSSTSW/lsst_build/.deployed"
 )
 
-test -f "${LSSTSW}/lfs/bin/numdiff" || (
-    echo "::: Deploying numdiff"
-    cd "${LSSTSW}/sources"
-    curl -# -L -O http://download-mirror.savannah.gnu.org/releases//numdiff/numdiff-5.8.1.tar.gz
-    tar -xzf numdiff-5.8.1.tar.gz
-    cd numdiff-5.8.1
-    ./configure --prefix="${LSSTSW}/lfs" --disable-nls
-    make -j4
-    make install
-)
-
 cat <<EOF
 
 Done. Run the following:
