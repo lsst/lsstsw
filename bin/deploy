@@ -8,6 +8,7 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0} # Version of Miniconda to install
+MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.0.5} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.2.0}           # Version of git-lfs to install
 
@@ -22,20 +23,23 @@ usage() {
         print_error "$0: $1"
     fi
     print_error
-    print_error "Usage: $0 [-b] [-h]"
+    print_error "Usage: $0 [-3] [-b] [-h]"
     print_error
     print_error "Specifc options:"
     print_error "   -b          use bleeding edge conda packages"
+    print_error "   -3          use Python 3"
     print_error "   -h          show this message"
     exit 1
 }
 
 # We are intentionally not using gnu `getopt` due to portability concerns.
 # Sadly, this means no long options without a massive amount of boilerplate.
-while getopts "bh" option; do
+while getopts "3bh" option; do
     case "$option" in
     b)
         BLEED_DEPLOY=true
+        ;;
+    3)  USE_PYTHON3=true
         ;;
     h)
         usage
@@ -56,14 +60,23 @@ cd "$LSSTSW"
 
 test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     cd sources
+
+    if [[ $USE_PYTHON3 == true ]]; then
+        PYVER_PREFIX=3
+        MINICONDA_VERSION=${MINICONDA3_VERSION}
+    else
+        PYVER_PREFIX=2
+        MINICONDA_VERSION=${MINICONDA2_VERSION}
+    fi
+
     case $(uname -s) in
         Linux*)
             ana_platform="Linux-x86_64"
-            conda_packages="conda_packages-linux-64.txt"
+            conda_packages="conda${PYVER_PREFIX}_packages-linux-64.txt"
             ;;
         Darwin*)
             ana_platform="MacOSX-x86_64"
-            conda_packages="conda_packages-osx-64.txt"
+            conda_packages="conda${PYVER_PREFIX}_packages-osx-64.txt"
             ;;
         *)
             echo "Cannot install miniconda: unsupported platform $(uname -s)"
@@ -71,8 +84,8 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
             ;;
     esac
 
-    miniconda_file_name="Miniconda2-${MINICONDA2_VERSION}-${ana_platform}.sh"
-    echo "::: Deploying Miniconda ${MINICONDA2_VERSION} for ${ana_platform}"
+    miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ana_platform}.sh"
+    echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ana_platform}"
     curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
     bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
 
