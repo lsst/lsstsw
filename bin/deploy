@@ -6,7 +6,7 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
-EUPS_VERSION=${EUPS_VERSION:-2.0.1}         # Version of EUPS to install
+EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.2.0}           # Version of git-lfs to install
