@@ -100,7 +100,7 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
         if [[ $BLEED_DEPLOY == true ]]; then
             # The conda Intel MKL linked packages are intentionally avoided.
             # See: https://jira.lsstcorp.org/browse/DM-5105
-            conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas
+            conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future
         else
             conda install --yes --file "${SCRIPT_DIR}/../etc/${conda_packages}"
         fi
