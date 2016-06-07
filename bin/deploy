@@ -63,20 +63,22 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
 
     if [[ $USE_PYTHON3 == true ]]; then
         PYVER_PREFIX=3
+        PKG_FILE_PREFIX=3
         MINICONDA_VERSION=${MINICONDA3_VERSION}
     else
         PYVER_PREFIX=2
+        PKG_FILE_PREFIX=""
         MINICONDA_VERSION=${MINICONDA2_VERSION}
     fi
 
     case $(uname -s) in
         Linux*)
             ana_platform="Linux-x86_64"
-            conda_packages="conda${PYVER_PREFIX}_packages-linux-64.txt"
+            conda_packages="conda${PKG_FILE_PREFIX}_packages-linux-64.txt"
             ;;
         Darwin*)
             ana_platform="MacOSX-x86_64"
-            conda_packages="conda${PYVER_PREFIX}_packages-osx-64.txt"
+            conda_packages="conda${PKG_FILE_PREFIX}_packages-osx-64.txt"
             ;;
         *)
             echo "Cannot install miniconda: unsupported platform $(uname -s)"
