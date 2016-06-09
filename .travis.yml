@@ -33,17 +33,20 @@ script: |
       ./bin/repos-lint ./etc/repos.yaml
       ;;
     deploy*)
+      CONDA_PREFIX=""
       if [[ $MODE == deploy-bleed ]]; then
         echo -e "*** testing with BLEED Python 2 conda/pip packages ***\n"
         ./bin/deploy -b
       elif [[ $MODE == deploy3-bleed ]]; then
         echo -e "*** testing with BLEED Python 3 conda/pip packages ***\n"
+        CONDA_PREFIX="3"
         ./bin/deploy -b -3
       elif [[ $MODE == deploy ]]; then
         echo -e "*** testing with PINNED Python 2 conda/pip packages ***\n"
         ./bin/deploy
       elif [[ $MODE == deploy3 ]]; then
         echo -e "*** testing with PINNED Python 3 conda/pip packages ***\n"
+        CONDA_PREFIX="3"
         ./bin/deploy -3
       else
         echo -e "*** Unrecognized mode for deploy script ***\n"
@@ -52,10 +55,10 @@ script: |
       . ./bin/setup.sh
       case $(uname -s) in
         Linux*)
-          conda_packages="conda_packages-linux-64.txt"
+          conda_packages="conda${CONDA_PREFIX}_packages-linux-64.txt"
           ;;
         Darwin*)
-          conda_packages="conda_packages-osx-64.txt"
+          conda_packages="conda${CONDA_PREFIX}_packages-osx-64.txt"
           ;;
         *)
           echo "unsupported platform $(uname -s)"
