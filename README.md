@@ -14,7 +14,7 @@ Structure
 
 path       | description
 :----------|:-----------------------------------------------------------------
-anaconda   | Anaconda Python distribution
+miniconda  | Anaconda Python distribution
 bin        | software distribution binaries (rebuild, publish)
 build      | directory where builds take place
 distserver | EUPS distribution server directory
