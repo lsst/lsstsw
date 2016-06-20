@@ -249,3 +249,4 @@ oorb:
   ref: lsst-dev
 sims_movingObjects: https://github.com/lsst/sims_movingObjects.git
 deploy_testing_distrib: https://github.com/lsst/deploy_testing_distrib.git
+pybind11: https://github.com/lsst/pybind11.git
