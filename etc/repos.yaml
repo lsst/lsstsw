@@ -240,6 +240,7 @@ meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape
 jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
 jointcal: https://github.com/lsst/jointcal
 ngmix: https://github.com/lsst/ngmix.git
+meas_extensions_ngmix: https://github.com/lsst/meas_extensions_ngmix.git
 meas_extensions_shapeHSM: https://github.com/lsst/meas_extensions_shapeHSM.git
 python_psutil: https://github.com/lsst/python_psutil.git
 meas_extensions_photometryKron: https://github.com/lsst/meas_extensions_photometryKron.git
