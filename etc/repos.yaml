@@ -239,6 +239,9 @@ pipe_drivers: https://github.com/lsst/pipe_drivers.git
 meas_extensions_simpleShape: https://github.com/lsst/meas_extensions_simpleShape.git
 jointcal_cholmod: https://github.com/lsst/jointcal_cholmod
 jointcal: https://github.com/lsst/jointcal
+validation_data_jointcal:
+  url: https://github.com/lsst/validation_data_jointcal.git
+  lfs: true
 ngmix: https://github.com/lsst/ngmix.git
 meas_extensions_ngmix: https://github.com/lsst/meas_extensions_ngmix.git
 meas_extensions_shapeHSM: https://github.com/lsst/meas_extensions_shapeHSM.git
