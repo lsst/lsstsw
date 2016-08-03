@@ -23,23 +23,26 @@ usage() {
         print_error "$0: $1"
     fi
     print_error
-    print_error "Usage: $0 [-3] [-b] [-h]"
+    print_error "Usage: $0 [-3] [-b] [-s] [-h]"
     print_error
     print_error "Specifc options:"
     print_error "   -b          use bleeding edge conda packages"
     print_error "   -3          use Python 3"
+    print_error "   -s          add sims packages to conda env"
     print_error "   -h          show this message"
     exit 1
 }
 
 # We are intentionally not using gnu `getopt` due to portability concerns.
 # Sadly, this means no long options without a massive amount of boilerplate.
-while getopts "3bh" option; do
+while getopts "3bsh" option; do
     case "$option" in
     b)
         BLEED_DEPLOY=true
         ;;
     3)  USE_PYTHON3=true
+        ;;
+    s)  USE_SIMS=true
         ;;
     h)
         usage
@@ -105,6 +108,10 @@ test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
             conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future
         else
             conda install --yes --file "${SCRIPT_DIR}/../etc/${conda_packages}"
+        fi
+
+        if [[ $USE_SIMS == true ]]; then
+            conda install --yes numexpr bottleneck
         fi
     )
 
