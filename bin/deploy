@@ -56,59 +56,61 @@ mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production}
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
+if [[ $USE_PYTHON3 == true ]]; then
+    PYVER_PREFIX=3
+    PKG_FILE_PREFIX=3
+    MINICONDA_VERSION=${MINICONDA3_VERSION}
+else
+    PYVER_PREFIX=2
+    PKG_FILE_PREFIX=""
+    MINICONDA_VERSION=${MINICONDA2_VERSION}
+fi
+
+case $(uname -s) in
+    Linux*)
+        ANA_PLATFORM="Linux-x86_64"
+        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-linux-64.txt"
+        ;;
+    Darwin*)
+        ANA_PLATFORM="MacOSX-x86_64"
+        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-osx-64.txt"
+        ;;
+    *)
+        echo "Cannot install miniconda: unsupported platform $(uname -s)"
+        exit 1
+        ;;
+esac
+
 cd "$LSSTSW"
 
 test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
     cd sources
 
-    if [[ $USE_PYTHON3 == true ]]; then
-        PYVER_PREFIX=3
-        PKG_FILE_PREFIX=3
-        MINICONDA_VERSION=${MINICONDA3_VERSION}
-    else
-        PYVER_PREFIX=2
-        PKG_FILE_PREFIX=""
-        MINICONDA_VERSION=${MINICONDA2_VERSION}
-    fi
-
-    case $(uname -s) in
-        Linux*)
-            ana_platform="Linux-x86_64"
-            conda_packages="conda${PKG_FILE_PREFIX}_packages-linux-64.txt"
-            ;;
-        Darwin*)
-            ana_platform="MacOSX-x86_64"
-            conda_packages="conda${PKG_FILE_PREFIX}_packages-osx-64.txt"
-            ;;
-        *)
-            echo "Cannot install miniconda: unsupported platform $(uname -s)"
-            exit 1
-            ;;
-    esac
-
-    miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ana_platform}.sh"
-    echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ana_platform}"
-    curl -# -L -O http://repo.continuum.io/miniconda/${miniconda_file_name}
-    bash ${miniconda_file_name} -b -p "$LSSTSW/miniconda"
-
-    (
-        # Install packages on which the stack is known to depend
-
-        # XXX note that
-        # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
-        # uses the conda package specification from this repo.
-        export PATH="$LSSTSW/miniconda/bin:$PATH"
-
-        if [[ $BLEED_DEPLOY == true ]]; then
-            # The conda Intel MKL linked packages are intentionally avoided.
-            # See: https://jira.lsstcorp.org/browse/DM-5105
-            conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future
-        else
-            conda install --yes --file "${SCRIPT_DIR}/../etc/${conda_packages}"
-        fi
-    )
+    miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
+    echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ANA_PLATFORM}"
+    curl -# -L -O "http://repo.continuum.io/miniconda/${miniconda_file_name}"
+    bash "$miniconda_file_name" -b -p "$LSSTSW/miniconda"
 
     touch "$LSSTSW/miniconda/.deployed"
+)
+
+test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
+    # Install packages on which the stack is known to depend
+
+    # XXX note that
+    # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
+    # uses the conda package specification from this repo.
+    export PATH="$LSSTSW/miniconda/bin:$PATH"
+
+    if [[ $BLEED_DEPLOY == true ]]; then
+        # The conda Intel MKL linked packages are intentionally avoided.
+        # See: https://jira.lsstcorp.org/browse/DM-5105
+        conda install --yes nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future
+    else
+        conda install --yes --file "${SCRIPT_DIR}/../etc/${CONDA_PACKAGES}"
+    fi
+
+    touch "$LSSTSW/miniconda/.packages.deployed"
 )
 
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
