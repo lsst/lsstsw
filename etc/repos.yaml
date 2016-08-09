@@ -158,6 +158,7 @@ fftw: https://github.com/lsst/fftw.git
 meas_algorithms: https://github.com/lsst/meas_algorithms.git
 pykg_config: https://github.com/lsst/pykg_config.git
 protobuf: https://github.com/lsst/protobuf.git
+sims_catalogs: https://github.com/lsst/sims_catalogs.git
 sims_catalogs_generation: https://github.com/lsst/sims_catalogs_generation.git
 partition: https://github.com/lsst/partition.git
 swig: https://github.com/lsst/swig.git
