@@ -62,6 +62,7 @@ ctrl_platform_lsst: https://github.com/lsst/ctrl_platform_lsst.git
 pex_config: https://github.com/lsst/pex_config.git
 lsstDoxygen: https://github.com/lsst/lsstDoxygen.git
 mysqlpython: https://github.com/lsst/mysqlpython.git
+python_mysqlclient: https://github.com/lsst/python_mysqlclient.git
 mysqlproxy: https://github.com/lsst/mysqlproxy.git
 sconsUtils: https://github.com/lsst/sconsUtils.git
 afw: https://github.com/lsst/afw.git
