@@ -3,6 +3,4 @@
 
 cuda_toolkit            .*
 cuda_sdk                .*
-scipy                   .*
-healpy                  .*
 condor                  .*
