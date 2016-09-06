@@ -175,6 +175,7 @@ antlr: https://github.com/lsst/antlr.git
 datarel: https://github.com/lsst/datarel.git
 anaconda: https://github.com/lsst-dm/legacy-anaconda.git
 miniconda2: https://github.com/lsst/miniconda2.git
+miniconda3: https://github.com/lsst/miniconda3.git
 astrometry_net: https://github.com/lsst/astrometry_net.git
 sims_dustmaps: https://github.com/lsst/sims_dustmaps.git
 sims_maps:
@@ -251,7 +252,7 @@ meas_extensions_shapeHSM: https://github.com/lsst/meas_extensions_shapeHSM.git
 python_psutil: https://github.com/lsst/python_psutil.git
 meas_extensions_photometryKron: https://github.com/lsst/meas_extensions_photometryKron.git
 astropy: https://github.com/lsst/astropy.git
-oorb: 
+oorb:
   url: https://github.com/lsst/oorb.git
   ref: lsst-dev
 sims_movingObjects: https://github.com/lsst/sims_movingObjects.git
