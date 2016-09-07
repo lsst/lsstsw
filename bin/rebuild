@@ -16,25 +16,6 @@
 #     (mkdir versiondb; cd versiondb; git init; mkdir dep_db ver_db manifests)
 #
 
-# true if `lsst-build prepare` has run successfully
-PREPARED=false
-
-#
-# Add 128 to non-zero exit statuses if the `lsst-build prepare` subcommand has
-# completed.  This is to allow consumer scripts to be able to determine if a
-# failure in this script occurred before or after the prepare step.
-#
-cleanup() {
-    local rv=$?
-
-    [[ $rv == 0 ]] && exit
-    [[ $PREPARED == true ]] && [[ $rv -lt 128 ]] && rv=$((rv + 128))
-
-    exit $rv
-}
-
-trap cleanup EXIT
-
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
 . "${DIR}/../etc/settings.cfg.sh"
@@ -75,7 +56,26 @@ fi
 #echo PRODUCTS=$PRODUCTS
 
 (
-    flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit -1; }
+    # true if `lsst-build prepare` has run successfully
+    PREPARED=false
+
+    #
+    # Add 128 to non-zero exit statuses if the `lsst-build prepare` subcommand has
+    # completed.  This is to allow consumer scripts to be able to determine if a
+    # failure in this script occurred before or after the prepare step.
+    #
+    cleanup() {
+        local rv=$?
+
+        [[ $rv == 0 ]] && exit
+        [[ $PREPARED == true ]] && [[ $rv -lt 128 ]] && rv=$((rv + 128))
+
+        exit $rv
+    }
+
+    trap cleanup EXIT
+
+    flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit 1; }
     #
     # update repos.yaml file
     #
