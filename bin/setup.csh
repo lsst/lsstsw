@@ -8,7 +8,7 @@ setenv LSSTSW `pwd`
 if ( ! -f $LSSTSW/eups/current/bin/setups.csh ) then
     echo "error: eups not found in $LSSTSW/eups/current" 1>&2
     echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
-    return
+    exit 1
 endif
 
 setenv PATH "$LSSTSW/miniconda/bin:$PATH"
