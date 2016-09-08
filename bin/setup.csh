@@ -1,11 +1,9 @@
 # setup lsstsw environment
 #
-# source this file from your ~/.bashrc
+# source this file from your location of <lsstsw>
 #
 # relative to <lsstsw>/bin/
-setenv LSSTSW `pwd` #=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
-
-setenv PYTHONUSERBASE /Users/dreiss/lsstsw/miniconda
+setenv LSSTSW `pwd`
 
 if ( ! -f $LSSTSW/eups/current/bin/setups.csh ) then
     echo "error: eups not found in $LSSTSW/eups/current" 1>&2
@@ -19,7 +17,6 @@ setenv PATH "$LSSTSW/bin:$PATH"
 rehash
 
 setenv MANPATH "$LSSTSW/lfs/share/man:"
-setenv DYLD_LIBRARY_PATH "."
 
 source $LSSTSW/eups/current/bin/setups.csh
 
