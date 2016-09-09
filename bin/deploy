@@ -107,7 +107,7 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
 
     # disable the conda install progress bar when not attached to a tty. Eg.,
     # when running under CI
-    if [[ $(tty --quiet) ]]; then
+    if [[ -t 0 ]]; then
         ARGS+=("-q")
     fi
 
