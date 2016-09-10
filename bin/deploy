@@ -237,14 +237,14 @@ test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
 )
 
 echo "Done. Run the following:"
-echo 
+echo
 
 if [[ $SHELL =~ bash$ ]]; then
     echo "    . $LSSTSW/bin/setup.sh"
 elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
     echo "    . $LSSTSW/bin/setup.csh"
 elif [[ $SHELL =~ zsh$ ]]; then
-    echo "    . $LSSTSW/bin/setup.zsh"
+    echo "    . $LSSTSW/bin/setup.sh"
 else
     echo "    The setup script in $LSSTSW/bin most appropriate for $SHELL"
     echo "    (Warning: $SHELL is an unsupported shell)"
