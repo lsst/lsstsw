@@ -260,3 +260,4 @@ deploy_testing_distrib: https://github.com/lsst/deploy_testing_distrib.git
 pybind11: https://github.com/lsst/pybind11.git
 meas_mosaic: https://github.com/lsst/meas_mosaic.git
 lsst_py3: https://github.com/lsst-dm/lsst_py3.git
+obs_monocam: https://github.com/lsst/obs_monocam.git
