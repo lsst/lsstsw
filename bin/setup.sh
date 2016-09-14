@@ -1,11 +1,17 @@
 # setup lsstsw environment
 #
-# source this file from your ~/.bashrc
+# source this file from your ~/.bashrc or ~/.zshrc
 #
 # relative to <lsstsw>/bin/
-LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
+if [[ -z $ZSH_NAME ]]; then
+    LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
+    SUFFIX=sh
+else
+    LSSTSW=$(cd "$(dirname "$0")/.."; pwd)
+    SUFFIX=zsh
+fi
 
-if [[ ! -f "$LSSTSW/eups/current/bin/setups.sh" ]]; then
+if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
     echo "error: eups not found in $LSSTSW/eups/current" 1>&2
     echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
     return
@@ -17,7 +23,7 @@ export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
 
-. "$LSSTSW/eups/current/bin/setups.sh"
+. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 
 setup -r "$LSSTSW/lsst_build"
 
