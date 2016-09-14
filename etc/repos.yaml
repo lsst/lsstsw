@@ -148,6 +148,7 @@ meas_astrom: https://github.com/lsst/meas_astrom.git
 ip_diffim: https://github.com/lsst/ip_diffim.git
 meas_modelfit: https://github.com/lsst/meas_modelfit.git
 pipe_tasks: https://github.com/lsst/pipe_tasks.git
+pipe_supertask: https://github.com/lsst/pipe_supertask.git
 sims_photUtils: https://github.com/lsst/sims_photUtils.git
 skypix: https://github.com/lsst/skypix.git
 ctrl_execute: https://github.com/lsst/ctrl_execute.git
