@@ -263,3 +263,4 @@ meas_mosaic: https://github.com/lsst/meas_mosaic.git
 lsst_py3: https://github.com/lsst-dm/lsst_py3.git
 obs_monocam: https://github.com/lsst/obs_monocam.git
 meas_extensions_convolved: https://github.com/lsst/meas_extensions_convolved.git
+ctrl_stats: https://github.com/lsst/ctrl_stats.git
