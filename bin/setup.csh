@@ -17,6 +17,7 @@ if ( $?source ) then
     set LSSTSW=`dirname $source`
     set LSSTSW=`cd $LSSTSW/.. && pwd`
 endif
+unset source
 
 if ( ! $?LSSTSW ) then
     echo "error: could not figure out LSSTSW directory"
