@@ -2,21 +2,26 @@
 #
 # source this file from your ~/.cshrc
 
-
 set cmd=($_)        # possibly blank, but can't be parsed as $_
+set nonPathLsof=/usr/sbin/lsof
+
 if ( $?0 ) then        # direct execution
     set source=$0
 else if ( $#cmd >= 3 ) then        # direct sourcing
     set source=${cmd[2]}
-else if (-f /usr/sbin/lsof ) then        # indirect sourcing
-    set source=`/usr/sbin/lsof +p $$ | grep -oE /.\*setup.csh`
+else if ({ (which lsof >& /dev/null) }) then        # indirect sourcing
+    set source=`lsof +p $$ | grep -oE /.\*setup.csh`
+else if (-f $nonPathLsof ) then        # as above; lsof not always on path
+    set source=`$nonPathLsof +p $$ | grep -oE /.\*setup.csh`
 endif
 unset cmd
+unset nonPathLsof
 
 if ( $?source ) then
     set LSSTSW=`dirname $source`
     set LSSTSW=`cd $LSSTSW/.. && pwd`
 endif
+unset source
 
 if ( ! $?LSSTSW ) then
     echo "error: could not figure out LSSTSW directory"
