@@ -25,7 +25,7 @@ lsst_build | lsst_build software tools directory (separately git managed)
 README     | the file you're reading
 stack      | the EUPS software stack into which successfully built packages are installed
 var        | contains lock files and log files
-versiondb  | version database used by lsst_build to assing +N versions (separately git managed)
+versiondb  | version database used by lsst_build to assign +N versions (separately git managed)
 
 The most important directories to know about are etc (config files), stack
 (the built software directory), and distserver (the distribution server
