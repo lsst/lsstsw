@@ -167,8 +167,8 @@ partition: https://github.com/lsst/partition.git
 swig: https://github.com/lsst/swig.git
 kazoo: https://github.com/lsst/kazoo.git
 sims_data: https://github.com/lsst/sims_data.git
-daf_butlerUtils: https://github.com/lsst/daf_butlerUtils.git
-obs_base: https://github.com/lsst-dm/obs_base.git
+daf_butlerUtils: https://github.com/lsst/obs_base.git
+obs_base: https://github.com/lsst/obs_base.git
 pyephem: https://github.com/lsst/pyephem.git
 ephem:  https://github.com/lsst/ephem.git
 ctrl_provenance: https://github.com/lsst/ctrl_provenance.git
