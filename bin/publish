@@ -39,7 +39,19 @@ shift $((OPTIND-1))
 if [[ "$#" = "0" ]]; then
     usage
 fi
-PRODUCTS="$*"
+
+PRODUCTS=("$@")
+
+for prod in "${PRODUCTS[@]}"; do
+    if [[ -z "$prod" ]]; then
+        echo "zero length product names are not permitted"
+        usage
+    fi
+    if [[ $prod == *[[:space:]]* ]]; then
+        echo "white spaces are not permitted in product names"
+        usage
+    fi
+done
 
 if [[ -z $BUILD ]]; then
     if [[ ! -z $DISTRIBTAG ]]; then
@@ -60,8 +72,8 @@ fi
 #
 # Create the distribution packages
 #
-for product in $PRODUCTS; do
-    eups distrib create --server-dir="$EUPS_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
+for product in "${PRODUCTS[@]}"; do
+    eups distrib create --server-dir=$EUPS_PKGROOT -f generic -d eupspkg -t $BUILD $product
 done
 
 #
