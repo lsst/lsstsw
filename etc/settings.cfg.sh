@@ -20,8 +20,8 @@ fi
 LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 
 # the location of source repositories
-REPOSFILE_URL='https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml'
-REPOSFILE=${LSSTSW}/etc/repos.yaml
+REPOSFILE_URL=${REPOSFILE_URL:-'https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml'}
+REPOSFILE=${REPOSFILE:-${LSSTSW}/etc/repos.yaml}
 
 # location of the build directory
 LSSTSW_BUILD_DIR=${LSSTSW_BUILD_DIR:-${LSSTSW}/build}
