@@ -270,3 +270,4 @@ ctrl_stats: https://github.com/lsst/ctrl_stats.git
 starlink_ast:
   url: https://github.com/lsst/starlink_ast
   ref: lsst-dev
+sims_survey_fields: https://github.com/lsst/sims_survey_fields.git
