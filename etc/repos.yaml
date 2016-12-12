@@ -271,3 +271,4 @@ starlink_ast:
   url: https://github.com/lsst/starlink_ast
   ref: lsst-dev
 sims_survey_fields: https://github.com/lsst/sims_survey_fields.git
+ws4py: https://github.com/lsst/ws4py.git
