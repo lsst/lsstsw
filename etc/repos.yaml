@@ -198,7 +198,8 @@ galsim: https://github.com/lsst/galsim.git
 tmv: https://github.com/lsst/tmv.git
 sncosmo: https://github.com/lsst/sncosmo.git
 sims_operations: https://github.com/lsst/sims_operations.git
-display_ds9: https://github.com/lsst/display_ds9
+display_ds9: https://github.com/lsst/display_ds9.git
+display_firefly: https://github.com/lsst/display_firefly.git
 meas_extensions_psfex: https://github.com/lsst/meas_extensions_psfex.git
 psfex: https://github.com/lsst/psfex.git
 daf_ingest: https://github.com/lsst/daf_ingest.git
