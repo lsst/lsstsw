@@ -58,7 +58,6 @@ luasocket: https://github.com/lsst/luasocket.git
 cfitsio: https://github.com/lsst/cfitsio.git
 lua: https://github.com/lsst/lua.git
 lsst_distrib: https://github.com/lsst/lsst_distrib.git
-ctrl_platform_lsst: https://github.com/lsst/ctrl_platform_lsst.git
 pex_config: https://github.com/lsst/pex_config.git
 lsstDoxygen: https://github.com/lsst/lsstDoxygen.git
 mysqlpython: https://github.com/lsst/mysqlpython.git
@@ -109,7 +108,7 @@ xpa: https://github.com/lsst/xpa.git
 ctrl_events: https://github.com/lsst/ctrl_events.git
 astrometry_net_data: https://github.com/lsst/astrometry_net_data.git
 db: https://github.com/lsst/db.git
-ctrl_platform_gordon: https://github.com/lsst/ctrl_platform_gordon.git
+ctrl_platform_lsstvc: https://github.com/lsst/ctrl_platform_lsstvc.git
 pipe_base: https://github.com/lsst/pipe_base.git
 qserv_distrib: https://github.com/lsst/qserv_distrib.git
 daf_base: https://github.com/lsst/daf_base.git
