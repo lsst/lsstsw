@@ -108,6 +108,8 @@ xpa: https://github.com/lsst/xpa.git
 ctrl_events: https://github.com/lsst/ctrl_events.git
 astrometry_net_data: https://github.com/lsst/astrometry_net_data.git
 db: https://github.com/lsst/db.git
+ctrl_platform_lsst: https://github.com/lsst-dm/legacy_ctrl_platform_lsst.git
+ctrl_platform_gordon: https://github.com/lsst-dm/legacy_ctrl_platform_gordon.git
 ctrl_platform_lsstvc: https://github.com/lsst/ctrl_platform_lsstvc.git
 pipe_base: https://github.com/lsst/pipe_base.git
 qserv_distrib: https://github.com/lsst/qserv_distrib.git
