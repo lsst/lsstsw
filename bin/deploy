@@ -58,22 +58,20 @@ export PATH="$LSSTSW/bin:$PATH"
 
 if [[ $USE_PYTHON3 == true ]]; then
     PYVER_PREFIX=3
-    PKG_FILE_PREFIX=3
     MINICONDA_VERSION=${MINICONDA3_VERSION}
 else
     PYVER_PREFIX=2
-    PKG_FILE_PREFIX=""
     MINICONDA_VERSION=${MINICONDA2_VERSION}
 fi
 
 case $(uname -s) in
     Linux*)
         ANA_PLATFORM="Linux-x86_64"
-        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-linux-64.txt"
+        CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-linux-64.txt"
         ;;
     Darwin*)
         ANA_PLATFORM="MacOSX-x86_64"
-        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-osx-64.txt"
+        CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-osx-64.txt"
         ;;
     *)
         echo "Cannot install miniconda: unsupported platform $(uname -s)"

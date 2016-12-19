@@ -33,7 +33,7 @@ script: |
       ./bin/repos-lint ./etc/repos.yaml
       ;;
     deploy*)
-      CONDA_PREFIX=""
+      CONDA_PREFIX="2"
       if [[ $MODE == deploy-bleed ]]; then
         echo -e "*** testing with BLEED Python 2 conda/pip packages ***\n"
         ./bin/deploy -b
