@@ -110,10 +110,14 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
     fi
 
     if [[ $BLEED_DEPLOY == true ]]; then
-        # The conda Intel MKL linked packages are intentionally avoided.
-        # See: https://jira.lsstcorp.org/browse/DM-5105
-        CONDA_BLEED_PACKAGES=(nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future)
+        CONDA_BLEED_PACKAGES=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas future)
         ARGS+=("${CONDA_BLEED_PACKAGES[@]}")
+        # The conda Intel MKL linked packages are intentionally avoided [on
+        # linux].
+        # See: https://jira.lsstcorp.org/browse/DM-5105
+        if [[ $(uname -s) == Linux* ]]; then
+            ARGS+=("nomkl")
+        fi
     else
         ARGS+=("--file" "${SCRIPT_DIR}/../etc/${CONDA_PACKAGES}")
     fi
