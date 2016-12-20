@@ -277,3 +277,4 @@ firefly_client:
   url: https://github.com/lsst/firefly_client.git
   ref: lsst-dev
 ws4py: https://github.com/lsst/ws4py.git
+lsst_obs: https://github.com/lsst/lsst_obs.git
