@@ -7,8 +7,8 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0} # Version of Miniconda to install
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.0.5} # Version of Miniconda to install
+MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12} # Version of Miniconda to install
+MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.2.0}           # Version of git-lfs to install
 
@@ -58,22 +58,20 @@ export PATH="$LSSTSW/bin:$PATH"
 
 if [[ $USE_PYTHON3 == true ]]; then
     PYVER_PREFIX=3
-    PKG_FILE_PREFIX=3
     MINICONDA_VERSION=${MINICONDA3_VERSION}
 else
     PYVER_PREFIX=2
-    PKG_FILE_PREFIX=""
     MINICONDA_VERSION=${MINICONDA2_VERSION}
 fi
 
 case $(uname -s) in
     Linux*)
         ANA_PLATFORM="Linux-x86_64"
-        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-linux-64.txt"
+        CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-linux-64.txt"
         ;;
     Darwin*)
         ANA_PLATFORM="MacOSX-x86_64"
-        CONDA_PACKAGES="conda${PKG_FILE_PREFIX}_packages-osx-64.txt"
+        CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-osx-64.txt"
         ;;
     *)
         echo "Cannot install miniconda: unsupported platform $(uname -s)"
@@ -112,10 +110,23 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
     fi
 
     if [[ $BLEED_DEPLOY == true ]]; then
-        # The conda Intel MKL linked packages are intentionally avoided.
+        PACKAGES=()
+        # lsst_distrib / lsst_sims deps
+        PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas)
+
+        # lsst_build deps
+        PACKAGES+=(future pyyaml)
+
+        # The conda Intel MKL linked packages are intentionally avoided [on
+        # linux].
         # See: https://jira.lsstcorp.org/browse/DM-5105
-        CONDA_BLEED_PACKAGES=(nomkl numpy scipy matplotlib requests cython sqlalchemy astropy pandas future)
-        ARGS+=("${CONDA_BLEED_PACKAGES[@]}")
+        if [[ $(uname -s) == Linux* ]]; then
+            PACKAGES+=("nomkl")
+        fi
+
+        # filter duplicate packages
+        PACKAGES=($(echo "${PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        ARGS+=("${PACKAGES[@]}")
     else
         ARGS+=("--file" "${SCRIPT_DIR}/../etc/${CONDA_PACKAGES}")
     fi
