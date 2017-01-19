@@ -2,6 +2,7 @@
 # $ conda create --name <env> --file <this file>
 # platform: linux-64
 astropy=1.2.1=np111py27_0
+bottleneck=1.2.0=np111py27_0
 cairo=1.14.6=0
 conda=4.2.13=py27_0
 conda-env=2.6.0=0
