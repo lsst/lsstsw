@@ -20,6 +20,7 @@ libpng=1.6.27=0
 libxml2=2.9.4=0
 matplotlib=1.5.1=np111py35_0
 nomkl=1.0=0
+numexpr=2.6.0=np111py35_0
 numpy=1.11.2=py35_nomkl_0
 openblas=0.2.14=4
 openssl=1.0.2j=0
