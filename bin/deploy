@@ -112,7 +112,7 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
     if [[ $BLEED_DEPLOY == true ]]; then
         PACKAGES=()
         # lsst_distrib / lsst_sims deps
-        PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas)
+        PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas numexpr bottleneck)
 
         # lsst_build deps
         PACKAGES+=(future pyyaml)
