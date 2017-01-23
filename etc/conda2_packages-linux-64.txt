@@ -16,7 +16,7 @@ harfbuzz=0.9.39=1
 libffi=3.2.1=1
 libgfortran=3.0.0=1
 libiconv=1.14=0
-libpng=1.6.22=0
+libpng=1.6.27=0
 libxml2=2.9.4=0
 matplotlib=1.5.1=np111py27_0
 nomkl=1.0=0
