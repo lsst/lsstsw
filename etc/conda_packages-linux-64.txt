@@ -8,10 +8,10 @@ conda-env=2.6.0=0
 cycler=0.10.0=py27_0
 cython=0.25.2=py27_0
 enum34=1.1.6=py27_0
-fontconfig=2.12.1=0
+fontconfig=2.12.1=1
 freetype=2.5.5=1
 future=0.16.0=py27_0
-glib=2.50.2=0
+glib=2.50.2=1
 harfbuzz=0.9.39=1
 libffi=3.2.1=1
 libgfortran=3.0.0=1
