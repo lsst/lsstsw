@@ -7,7 +7,7 @@ PRODUCTS='lsst_sims lsst_distrib qserv_distrib dax_webserv'
 
 # set it to nonempty to prevent versiondb from being pushed upstream
 # unless you're the automated LSST software account
-if [[ $USER != 'lsstsw' || $(hostname --fqdn) != 'lsst-dev-old.ncsa.illinois.edu' ]]; then
+if [[ $USER != 'lsstsw' || $(hostname --fqdn) != 'lsst-dev01.ncsa.illinois.edu' ]]; then
     NOPUSH=1
 fi
 
