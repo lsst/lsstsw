@@ -10,6 +10,10 @@ matrix:
       env: MODE=deploy
     - os: linux
       env: MODE=deploy-bleed
+    - os: linux
+      env:
+        - MODE=deploy
+        - EUPS_GITREV=b9a7664aee338363b104738b893eb05a6e5c465c
     - os: osx
       env: MODE=deploy
     - os: osx

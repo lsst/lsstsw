@@ -7,6 +7,8 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
+EUPS_GITREV=${EUPS_GITREV:-""}
+EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12} # Version of Miniconda to install
 MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
@@ -194,6 +196,11 @@ test -f "$LSSTSW/eups/.deployed" && ( # EUPS
     ln -s legacy "$LSSTSW/eups/current"
 )
 
+# if a EUPS_GITREV is set, use that as the version dir name
+if [[ -n $EUPS_GITREV ]]; then
+    EUPS_VERSION=$EUPS_GITREV
+fi
+
 test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
     echo "::: Deploying eups $EUPS_VERSION"
     if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
@@ -202,9 +209,16 @@ test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
     fi
 
     cd sources
-    curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
-    tar xzf eups-$EUPS_VERSION.tar.gz
-    cd eups-$EUPS_VERSION
+    if [[ -n $EUPS_GITREV ]]; then
+        git clone "$EUPS_GITREPO" eups
+        cd eups
+        git checkout "$EUPS_GITREV"
+    else
+        curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
+        tar xzf eups-$EUPS_VERSION.tar.gz
+        cd eups-$EUPS_VERSION
+    fi
+
     ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/miniconda/bin/python" --with-eups="$LSSTSW/stack"
     make
     make install
