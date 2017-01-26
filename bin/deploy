@@ -12,7 +12,7 @@ EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12} # Version of Miniconda to install
 MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12} # Version of Miniconda to install
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
-LFS_VERSION=${LFS_VERSION:-1.2.0}           # Version of git-lfs to install
+LFS_VERSION=${LFS_VERSION:-1.5.5}           # Version of git-lfs to install
 
 set -e
 
