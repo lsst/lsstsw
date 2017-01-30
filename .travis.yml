@@ -7,6 +7,14 @@ matrix:
       python: "3.4"
       env: MODE=lint
     - os: linux
+      env:
+        - MODE=versiondb
+        - VERSIONDB_PUSH=true
+    - os: linux
+      env:
+        - MODE=versiondb
+        - VERSIONDB_PUSH=false
+    - os: linux
       env: MODE=deploy
     - os: linux
       env: MODE=deploy-bleed
@@ -31,6 +39,22 @@ matrix:
   allow_failures:
     - os: osx
 script: |
+  set -e
+
+  expect() {
+    local title="$1"
+    local is="$2"
+    local should="$3"
+
+    echo -e "$title"
+
+    if [[ "$is" != "$should" ]]; then
+       echo -e "    expected(${should})"
+       echo -e "    got(${is})"
+       exit 1
+    fi
+  }
+
   case $MODE in
     lint)
       pip install -r requirements.txt
@@ -73,6 +97,70 @@ script: |
       conda list -e > "./etc/${conda_packages}"
       git diff
       rebuild cfitsio
+      ;;
+    versiondb*)
+      echo -e "*** testing VERSIONDB_PUSH=$VERSIONDB_PUSH for versiondb ***\n"
+      export VERSIONDB_PUSH
+      export VERSIONDB_REPO=./versiondb-test
+      mkdir -p $VERSIONDB_REPO
+      (cd $VERSIONDB_REPO; git init --bare)
+      # pull will fail unless there is a master ref to actually pull; so we
+      # make one
+      (
+        tmpdir=$(mktemp -u -t 'versiondb.XXXXXXXX')
+        trap "{ rm -rf $tmpdir; }" EXIT
+
+        mkdir -p "$tmpdir"
+        git clone "$VERSIONDB_REPO" "$tmpdir"
+        cd $tmpdir
+        # it appears that with some versions of git, --author doesn't bypass
+        # the user.email/user.name check.
+        git config --local user.email 'author@example.com'
+        git config --local user.name 'A U Thor'
+        git commit --allow-empty -m 'initial commit' --author='A U Thor <author@example.com>'
+        git push origin master
+      )
+
+      ./bin/deploy
+
+      (cd versiondb; mkdir dep_db ver_db manifests)
+
+      . ./bin/setup.sh
+      rebuild cfitsio
+
+      cd $VERSIONDB_REPO
+      if [[ $VERSIONDB_PUSH == true ]]; then
+        echo 'should have master ref'
+        git show-ref --heads | grep -q refs/heads/master
+
+        revs=($(git rev-list master))
+
+        # the first commit is the garbage empty commit in order to create the
+        # master ref
+        expect 'should have two commits'\
+          ${#revs[@]} \
+          2
+
+        expect 'should have author name' \
+          "$(git log --format=%an ${revs[0]}^\!)" \
+          'LSST DATA Management'
+
+        expect 'should have author email' \
+          "$(git log --format=%ae ${revs[0]}^\!)" \
+          'dm-devel@lists.lsst.org'
+
+        expect 'should have subject line' \
+          "$(git log --format=%s ${revs[0]}^\!)" \
+          'Updates for build b1.'
+      else
+        echo 'should have master ref'
+        git show-ref --heads | grep -q refs/heads/master
+
+        revs=($(git rev-list master))
+        expect 'should have one commit' \
+          ${#revs[@]} \
+          1
+      fi
       ;;
     *)
       echo "unknown MODE: $MODE"
