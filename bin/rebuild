@@ -22,6 +22,12 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
+# centos 6 shipped with bash 4.1; this is the best that can be done for
+# returning a value prior to bash 4.3
+versiondb_head() {
+    echo $(cd "$VERSIONDB" && git rev-parse HEAD)
+}
+
 while getopts ":pnur:t:" o; do
     case "$o" in
     p)
@@ -86,8 +92,11 @@ fi
     #
     # Prepare build
     #
-    VERSIONDBHEAD=$(cd "$VERSIONDB" && git rev-parse HEAD)
-    [[ -z $NOPUSH ]] && (cd "$VERSIONDB" && git pull --quiet)
+    if [[ $VERSIONDB_PUSH == true ]]; then
+        # do not pull from remote unless configured to push
+        (cd "$VERSIONDB" && git pull --quiet)
+        VERSIONDB_HEAD_PREBUILD=$(versiondb_head)
+    fi
 
     ARGS=()
     if [[ $NO_FETCH == 1 ]]; then
@@ -105,7 +114,11 @@ fi
 
     lsst-build prepare "${ARGS[@]}"
 
-    [[ -z $NOPUSH && "$VERSIONDBHEAD" != $(cd "$VERSIONDB" && git rev-parse HEAD) ]] && (cd "$VERSIONDB" && git push && git push --tags)
+    if [[ $VERSIONDB_PUSH == true ]]; then
+        # do not push unless the head ref has changed
+        [[ "$VERSIONDB_HEAD_PREBUILD" != $(versiondb_head) ]] &&
+            (cd "$VERSIONDB" && git push && git push --tags)
+    fi
 
     eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
     echo "# BUILD ID: $BUILD"

@@ -241,15 +241,11 @@ test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
 test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
     rm -rf versiondb
-    if [ -z ${NO_PUSH+x} ]; then
-        git clone https://github.com/lsst/versiondb.git
-    else
-        git clone git@github.com:lsst/versiondb.git
-        (cd versiondb && git config push.default current)
-    fi
+    git clone "$VERSIONDB_REPO" versiondb
 
     git config -f versiondb/.git/config user.name "LSST DATA Management"
     git config -f versiondb/.git/config user.email "dm-devel@lists.lsst.org"
+    git config -f versiondb/.git/config push.default current
     touch "$LSSTSW/versiondb/.deployed"
 )
 
