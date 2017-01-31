@@ -5,11 +5,10 @@
 # top-level products
 PRODUCTS='lsst_sims lsst_distrib qserv_distrib dax_webserv'
 
-# set it to nonempty to prevent versiondb from being pushed upstream
-# unless you're the automated LSST software account
-if [[ $USER != 'lsstsw' || $(hostname --fqdn) != 'lsst-dev01.ncsa.illinois.edu' ]]; then
-    NOPUSH=1
-fi
+# change to ssh+git if push is needed
+VERSIONDB_REPO=${VERSIONDB_REPO:-https://github.com/lsst/versiondb.git}
+# do not set this to true unless you're the automated LSST software account
+VERSIONDB_PUSH=${VERSIONDB_PUSH:-false}
 
 #
 # the settings below should rarely need changing
