@@ -40,6 +40,7 @@ matrix:
     - os: osx
 script: |
   set -e
+  export SHELLOPTS
 
   expect() {
     local title="$1"
@@ -123,7 +124,7 @@ script: |
 
       ./bin/deploy
 
-      (cd versiondb; mkdir dep_db ver_db manifests)
+      mkdir -p versiondb/{dep_db,ver_db,manifests}
 
       . ./bin/setup.sh
       rebuild cfitsio
