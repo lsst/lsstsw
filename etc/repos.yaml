@@ -105,7 +105,7 @@ zookeeper: https://github.com/lsst/zookeeper.git
 obs_test: https://github.com/lsst/obs_test.git
 ndarray: https://github.com/lsst/ndarray.git
 xpa: https://github.com/lsst/xpa.git
-ctrl_events: https://github.com/lsst/ctrl_events.git
+ctrl_events: https://github.com/lsst-dm/legacy-ctrl_events.git
 astrometry_net_data: https://github.com/lsst/astrometry_net_data.git
 db: https://github.com/lsst/db.git
 ctrl_platform_lsst: https://github.com/lsst-dm/legacy_ctrl_platform_lsst.git
