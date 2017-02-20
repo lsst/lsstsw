@@ -133,7 +133,7 @@ pex_policy: https://github.com/lsst/pex_policy.git
 matplotlib: https://github.com/lsst/matplotlib.git
 pandas: https://github.com/lsst/pandas.git
 obs_sdss: https://github.com/lsst/obs_sdss.git
-activemqcpp: https://github.com/lsst/activemqcpp.git
+activemqcpp: https://github.com/lsst-dm/legacy-activemqcpp.git
 pex_harness: https://github.com/lsst-dm/legacy-pex_harness.git
 git: https://github.com/lsst/git.git
 sims_catUtils: https://github.com/lsst/sims_catUtils.git
