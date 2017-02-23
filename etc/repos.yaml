@@ -230,6 +230,7 @@ testdata_decam:
   lfs: true
 validate_base: https://github.com/lsst/validate_base.git
 validate_drp: https://github.com/lsst/validate_drp.git
+validate_metrics: https://github.com/lsst/validate_metrics.git
 validation_data_cfht:
   url: https://github.com/lsst/validation_data_cfht.git
   lfs: true
