@@ -63,6 +63,7 @@ lsstDoxygen: https://github.com/lsst/lsstDoxygen.git
 mysqlpython: https://github.com/lsst/mysqlpython.git
 python_mysqlclient: https://github.com/lsst/python_mysqlclient.git
 mysqlproxy: https://github.com/lsst/mysqlproxy.git
+astshim: https://github.com/lsst/astshim.git
 sconsUtils: https://github.com/lsst/sconsUtils.git
 afw: https://github.com/lsst/afw.git
 meas_base: https://github.com/lsst/meas_base.git
