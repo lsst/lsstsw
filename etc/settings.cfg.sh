@@ -3,7 +3,7 @@
 #
 
 # top-level products
-PRODUCTS='lsst_sims lsst_distrib qserv_distrib dax_webserv'
+PRODUCTS='lsst_distrib qserv_distrib dax_webserv'
 
 # change to ssh+git if push is needed
 VERSIONDB_REPO=${VERSIONDB_REPO:-https://github.com/lsst/versiondb.git}
