@@ -41,4 +41,5 @@ Command reference
 
 .. toctree::
 
+   scripts/setup
    scripts/rebuild
