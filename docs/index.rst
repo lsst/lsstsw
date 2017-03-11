@@ -35,3 +35,10 @@ Set up the stack:
 .. code-block:: bash
 
    eups setup lsst_distrib
+
+Command reference
+=================
+
+.. toctree::
+
+   scripts/rebuild
