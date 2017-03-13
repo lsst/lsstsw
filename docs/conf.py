@@ -13,3 +13,7 @@ _g.update(build_package_configs(
               'Research in Astronomy, Inc.',
     version=read_git_branch(),
     doxygen_xml_dirname=None))
+
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/3/', None)
+}
