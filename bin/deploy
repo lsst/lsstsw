@@ -4,6 +4,7 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck source=../etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
@@ -141,6 +142,7 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
 test -f "$LSSTSW/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
         GITVERNUM=$(git --version | cut -d\  -f 3)
+        # shellcheck disable=SC2183 disable=SC2046
         GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
     fi
 
@@ -148,10 +150,10 @@ test -f "$LSSTSW/lfs/.git.deployed" || ( # git
         echo "::: Deploying git"
         cd sources
         GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-        curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
-        curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
-        tar xzf git-${GIT_VERSION}.tar.gz
-        cd git-${GIT_VERSION}
+        curl -# -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
+        curl -# -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
+        tar xzf "git-${GIT_VERSION}.tar.gz"
+        cd "git-${GIT_VERSION}"
         ./configure --prefix="$LSSTSW/lfs"
         make -j4
         make install
@@ -180,9 +182,9 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
     LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
     LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
     curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
-    tar xzf $LFS_ARCHIVE
+    tar xzf "$LFS_ARCHIVE"
     mkdir -p "${LSSTSW}/lfs/bin"
-    cp git-lfs-${LFS_VERSION}/git-lfs "${LSSTSW}/lfs/bin/"
+    cp "git-lfs-${LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
     cd "$LSSTSW"
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
 )
@@ -214,9 +216,9 @@ test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
         cd eups
         git checkout "$EUPS_GITREV"
     else
-        curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
-        tar xzf eups-$EUPS_VERSION.tar.gz
-        cd eups-$EUPS_VERSION
+        curl -# -L -o "eups-$EUPS_VERSION.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz"
+        tar xzf "eups-${EUPS_VERSION}.tar.gz"
+        cd "eups-${EUPS_VERSION}"
     fi
 
     ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/miniconda/bin/python" --with-eups="$LSSTSW/stack"
@@ -225,7 +227,7 @@ test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
     touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
 )
 
-if [[ "$(readlink $LSSTSW/eups/current)" != "$EUPS_VERSION" ]]; then
+if [[ "$(readlink "${LSSTSW}/eups/current")" != "$EUPS_VERSION" ]]; then
     echo "::: Making eups $EUPS_VERSION the default"
     rm -f "$LSSTSW/eups/current"
     ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
