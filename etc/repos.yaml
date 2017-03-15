@@ -97,6 +97,7 @@ gsl: https://github.com/lsst/gsl.git
 sims_maf: https://github.com/lsst/sims_maf.git
 sims_skybrightness: https://github.com/lsst/sims_skybrightness.git
 sims_skybrightness_data: https://github.com/lsst/sims_skybrightness_data.git
+sims_skybrightness_pre: https://github.com/lsst/sims_skybrightness_pre.git
 lsst: https://github.com/lsst/lsst.git
 boost: https://github.com/lsst/boost.git
 sims_sed_library:
