@@ -28,7 +28,7 @@ usage() {
     print_error
     print_error "Usage: $0 [-3] [-b] [-h]"
     print_error
-    print_error "Specifc options:"
+    print_error "Specific options:"
     print_error "   -b          use bleeding edge conda packages"
     print_error "   -3          use Python 3"
     print_error "   -h          show this message"
@@ -48,7 +48,7 @@ while getopts "3bh" option; do
         usage
         ;;
     *)
-        usage "Unknwon option: ${option}"
+        usage "Unknown option: ${option}"
         ;;
     esac
 done
