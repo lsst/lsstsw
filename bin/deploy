@@ -4,6 +4,7 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck source=../etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.0.2}         # Version of EUPS to install
@@ -27,7 +28,7 @@ usage() {
     print_error
     print_error "Usage: $0 [-3] [-b] [-h]"
     print_error
-    print_error "Specifc options:"
+    print_error "Specific options:"
     print_error "   -b          use bleeding edge conda packages"
     print_error "   -3          use Python 3"
     print_error "   -h          show this message"
@@ -47,7 +48,7 @@ while getopts "3bh" option; do
         usage
         ;;
     *)
-        usage "Unknwon option: $option"
+        usage "Unknown option: ${option}"
         ;;
     esac
 done
@@ -55,15 +56,15 @@ shift $((OPTIND-1))
 
 mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production}
 
-export PATH="$LSSTSW/lfs/bin:$PATH"
-export PATH="$LSSTSW/bin:$PATH"
+export PATH="${LSSTSW}/lfs/bin:${PATH}"
+export PATH="${LSSTSW}/bin:${PATH}"
 
 if [[ $USE_PYTHON3 == true ]]; then
     PYVER_PREFIX=3
-    MINICONDA_VERSION=${MINICONDA3_VERSION}
+    MINICONDA_VERSION=$MINICONDA3_VERSION
 else
     PYVER_PREFIX=2
-    MINICONDA_VERSION=${MINICONDA2_VERSION}
+    MINICONDA_VERSION=$MINICONDA2_VERSION
 fi
 
 case $(uname -s) in
@@ -83,18 +84,18 @@ esac
 
 cd "$LSSTSW"
 
-test -f "$LSSTSW/miniconda/.deployed" || ( # Anaconda
+test -f "${LSSTSW}/miniconda/.deployed" || ( # Anaconda
     cd sources
 
     miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
     echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ANA_PLATFORM}"
     curl -# -L -O "http://repo.continuum.io/miniconda/${miniconda_file_name}"
-    bash "$miniconda_file_name" -b -p "$LSSTSW/miniconda"
+    bash "$miniconda_file_name" -b -p "${LSSTSW}/miniconda"
 
-    touch "$LSSTSW/miniconda/.deployed"
+    touch "${LSSTSW}/miniconda/.deployed"
 )
 
-test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
+test -f "${LSSTSW}/miniconda/.packages.deployed" || ( # conda packages
     # Install packages on which the stack is known to depend
 
     # XXX note that
@@ -135,12 +136,13 @@ test -f "$LSSTSW/miniconda/.packages.deployed" || ( # conda packages
 
     conda "${ARGS[@]}"
 
-    touch "$LSSTSW/miniconda/.packages.deployed"
+    touch "${LSSTSW}/miniconda/.packages.deployed"
 )
 
-test -f "$LSSTSW/lfs/.git.deployed" || ( # git
+test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
         GITVERNUM=$(git --version | cut -d\  -f 3)
+        # shellcheck disable=SC2183 disable=SC2046
         GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
     fi
 
@@ -148,20 +150,20 @@ test -f "$LSSTSW/lfs/.git.deployed" || ( # git
         echo "::: Deploying git"
         cd sources
         GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-        curl -# -L -O ${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz
-        curl -# -L -O ${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz
-        tar xzf git-${GIT_VERSION}.tar.gz
-        cd git-${GIT_VERSION}
-        ./configure --prefix="$LSSTSW/lfs"
+        curl -# -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
+        curl -# -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
+        tar xzf "git-${GIT_VERSION}.tar.gz"
+        cd "git-${GIT_VERSION}"
+        ./configure --prefix="${LSSTSW}/lfs"
         make -j4
         make install
-        cd "$LSSTSW/lfs/share/man"
-        tar xzf "$LSSTSW/sources/git-manpages-${GIT_VERSION}.tar.gz"
+        cd "${LSSTSW}/lfs/share/man"
+        tar xzf "${LSSTSW}/sources/git-manpages-${GIT_VERSION}.tar.gz"
         (cd "$LSSTSW" && git config push.default current)
     else
         echo "::: Using installed git"
     fi
-    touch "$LSSTSW/lfs/.git.deployed"
+    touch "${LSSTSW}/lfs/.git.deployed"
 )
 
 test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
@@ -180,20 +182,20 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
     LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
     LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
     curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
-    tar xzf $LFS_ARCHIVE
+    tar xzf "$LFS_ARCHIVE"
     mkdir -p "${LSSTSW}/lfs/bin"
-    cp git-lfs-${LFS_VERSION}/git-lfs "${LSSTSW}/lfs/bin/"
+    cp "git-lfs-${LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
     cd "$LSSTSW"
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
 )
 
 # backwards compatibility if EUPS wasn't installed to a versioned directory
-test -f "$LSSTSW/eups/.deployed" && ( # EUPS
+test -f "${LSSTSW}/eups/.deployed" && ( # EUPS
     echo "::: Moving old EUPS to eups/legacy"
-    mv "$LSSTSW/eups" "$LSSTSW/eups-tmp"
-    mkdir -p "$LSSTSW/eups"
-    mv "$LSSTSW/eups-tmp" "$LSSTSW/eups/legacy"
-    ln -s legacy "$LSSTSW/eups/current"
+    mv "${LSSTSW}/eups" "${LSSTSW}/eups-tmp"
+    mkdir -p "${LSSTSW}/eups"
+    mv "${LSSTSW}/eups-tmp" "${LSSTSW}/eups/legacy"
+    ln -s legacy "${LSSTSW}/eups/current"
 )
 
 # if a EUPS_GITREV is set, use that as the version dir name
@@ -201,11 +203,11 @@ if [[ -n $EUPS_GITREV ]]; then
     EUPS_VERSION=$EUPS_GITREV
 fi
 
-test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
-    echo "::: Deploying eups $EUPS_VERSION"
-    if [[ -e "$LSSTSW/eups/$EUPS_VERSION" ]]; then
-        chmod -R +w "$LSSTSW/eups/$EUPS_VERSION"
-        rm -rf "$LSSTSW/eups/$EUPS_VERSION"
+test -f "${LSSTSW}/eups/${EUPS_VERSION}/.deployed" || ( # EUPS
+    echo "::: Deploying eups ${EUPS_VERSION}"
+    if [[ -e "${LSSTSW}/eups/${EUPS_VERSION}" ]]; then
+        chmod -R +w "${LSSTSW}/eups/${EUPS_VERSION}"
+        rm -rf "${LSSTSW}/eups/${EUPS_VERSION}"
     fi
 
     cd sources
@@ -214,31 +216,31 @@ test -f "$LSSTSW/eups/$EUPS_VERSION/.deployed" || ( # EUPS
         cd eups
         git checkout "$EUPS_GITREV"
     else
-        curl -# -L -o eups-$EUPS_VERSION.tar.gz https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz
-        tar xzf eups-$EUPS_VERSION.tar.gz
-        cd eups-$EUPS_VERSION
+        curl -# -L -o "eups-${EUPS_VERSION}.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/${EUPS_VERSION}.tar.gz"
+        tar xzf "eups-${EUPS_VERSION}.tar.gz"
+        cd "eups-${EUPS_VERSION}"
     fi
 
-    ./configure --prefix="$LSSTSW/eups/$EUPS_VERSION" --with-python="$LSSTSW/miniconda/bin/python" --with-eups="$LSSTSW/stack"
+    ./configure --prefix="${LSSTSW}/eups/${EUPS_VERSION}" --with-python="${LSSTSW}/miniconda/bin/python" --with-eups="${LSSTSW}/stack"
     make
     make install
-    touch "$LSSTSW/eups/$EUPS_VERSION/.deployed"
+    touch "${LSSTSW}/eups/${EUPS_VERSION}/.deployed"
 )
 
-if [[ "$(readlink $LSSTSW/eups/current)" != "$EUPS_VERSION" ]]; then
-    echo "::: Making eups $EUPS_VERSION the default"
-    rm -f "$LSSTSW/eups/current"
-    ln -s "$EUPS_VERSION" "$LSSTSW/eups/current"
+if [[ "$(readlink "${LSSTSW}/eups/current")" != "$EUPS_VERSION" ]]; then
+    echo "::: Making eups ${EUPS_VERSION} the default"
+    rm -f "${LSSTSW}/eups/current"
+    ln -s "${EUPS_VERSION}" "${LSSTSW}/eups/current"
 fi
 
-test -f "$LSSTSW/stack/.deployed" || ( # Adjust the stack config
+test -f "${LSSTSW}/stack/.deployed" || ( # Adjust the stack config
     echo "::: Deploying manifest.remap"
     cd stack/site
     ln -sf ../../etc/manifest.remap
-    touch "$LSSTSW/stack/.deployed"
+    touch "${LSSTSW}/stack/.deployed"
 )
 
-test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
+test -f "${LSSTSW}/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
     rm -rf versiondb
     git clone "$VERSIONDB_REPO" versiondb
@@ -246,29 +248,29 @@ test -f "$LSSTSW/versiondb/.deployed" || ( # Clone the version database
     git config -f versiondb/.git/config user.name "LSST DATA Management"
     git config -f versiondb/.git/config user.email "dm-devel@lists.lsst.org"
     git config -f versiondb/.git/config push.default current
-    touch "$LSSTSW/versiondb/.deployed"
+    touch "${LSSTSW}/versiondb/.deployed"
 )
 
-test -f "$LSSTSW/lsst_build/.deployed" || ( # Clone lsst_build
+test -f "${LSSTSW}/lsst_build/.deployed" || ( # Clone lsst_build
     echo "::: Deploying lsst_build"
     rm -rf lsst_build
     git clone https://github.com/lsst/lsst_build.git
     (cd lsst_build && git config push.default current)
-    touch "$LSSTSW/lsst_build/.deployed"
+    touch "${LSSTSW}/lsst_build/.deployed"
 )
 
 echo "Done. Run the following:"
 echo
 
 if [[ $SHELL =~ bash$ ]]; then
-    echo "    . $LSSTSW/bin/setup.sh"
+    echo "    . ${LSSTSW}/bin/setup.sh"
 elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-    echo "    . $LSSTSW/bin/setup.csh"
+    echo "    . ${LSSTSW}/bin/setup.csh"
 elif [[ $SHELL =~ zsh$ ]]; then
-    echo "    . $LSSTSW/bin/setup.sh"
+    echo "    . ${LSSTSW}/bin/setup.sh"
 else
-    echo "    The setup script in $LSSTSW/bin most appropriate for $SHELL"
-    echo "    (Warning: $SHELL is an unsupported shell)"
+    echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
+    echo "    (Warning: ${SHELL} is an unsupported shell)"
 fi
 
 echo
