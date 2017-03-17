@@ -62,6 +62,8 @@ script: |
       ./bin/repos-lint ./etc/repos.yaml
       ;;
     deploy*)
+      # print git version
+      git --version
       CONDA_PREFIX="2"
       if [[ $MODE == deploy-bleed ]]; then
         echo -e "*** testing with BLEED Python 2 conda/pip packages ***\n"
