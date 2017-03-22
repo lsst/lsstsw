@@ -2,3 +2,4 @@
 [create]testdata_cfht        None
 [create]testdata_decam       None
 [create]testdata_subaru      None
+[create]testdata_jointcal    None
