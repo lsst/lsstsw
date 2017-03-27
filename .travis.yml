@@ -11,6 +11,8 @@ matrix:
       python: "3.4"
       env: MODE=lint
     - os: linux
+      language: c
+      compiler: gcc
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=true
