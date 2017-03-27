@@ -1,5 +1,9 @@
 sudo: false
 language: c
+addons:
+  apt:
+    packages:
+    - gettext # required to build git from src
 matrix:
   include:
     - os: linux
