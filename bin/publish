@@ -86,6 +86,10 @@ if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
     echo "Adding tag '$DISTRIBTAG' at the distribution server."
     sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
         "${EUPS_PKGROOT}/tags/${BUILD}.list" > "${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+    # remove the original bNNNN tag to reduce tag proliferation
+    rm "${EUPS_PKGROOT}/tags/${BUILD}.list"
+
 fi
 
 #
