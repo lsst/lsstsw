@@ -129,6 +129,11 @@ test -f "${LSSTSW}/miniconda/.packages.deployed" || ( # conda packages
     # shellcheck disable=SC2031
     export PATH="$LSSTSW/miniconda/bin:$PATH"
 
+    # conda may leave behind lock files from an uncompleted package
+    # installation attempt.  These need to be cleaned up before [re]attempting
+    # to install packages.
+    conda clean --lock
+
     ARGS=()
     ARGS+=("install" "--yes")
 
