@@ -241,6 +241,8 @@ validation_data_decam:
 validation_data_hsc:
   url: https://github.com/lsst/validation_data_hsc.git
   lfs: true
+verify: https://github.com/lsst/verify
+verify_metrics: https://github.com/lsst/verify_metrics
 pyyaml: https://github.com/lsst/pyyaml.git
 requests: https://github.com/lsst/requests.git
 ci_hsc:
