@@ -284,3 +284,4 @@ firefly_client:
 ws4py: https://github.com/lsst/ws4py.git
 lsst_obs: https://github.com/lsst/lsst_obs.git
 libcurl: https://github.com/lsst/libcurl.git
+meas_extensions_astrometryNet: https://github.com/lsst/meas_extensions_astrometryNet.git
