@@ -278,10 +278,11 @@ starlink_ast:
   url: https://github.com/lsst/starlink_ast
   ref: lsst-dev
 sims_survey_fields: https://github.com/lsst/sims_survey_fields.git
-firefly_client: 
+firefly_client:
   url: https://github.com/lsst/firefly_client.git
   ref: lsst-dev
 ws4py: https://github.com/lsst/ws4py.git
 lsst_obs: https://github.com/lsst/lsst_obs.git
 libcurl: https://github.com/lsst/libcurl.git
 meas_extensions_astrometryNet: https://github.com/lsst/meas_extensions_astrometryNet.git
+daf_fmt_mysql: https://github.com/lsst/daf_fmt_mysql
