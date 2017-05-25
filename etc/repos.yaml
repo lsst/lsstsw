@@ -286,3 +286,6 @@ lsst_obs: https://github.com/lsst/lsst_obs.git
 libcurl: https://github.com/lsst/libcurl.git
 meas_extensions_astrometryNet: https://github.com/lsst/meas_extensions_astrometryNet.git
 daf_fmt_mysql: https://github.com/lsst/daf_fmt_mysql
+libatomic_ops: https://github.com/lsst-dm/libatomic_ops
+libunwind: https://github.com/lsst-dm/libunwind
+igprof: https://github.com/lsst-dm/igprof
