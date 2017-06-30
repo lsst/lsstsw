@@ -292,3 +292,4 @@ libunwind: https://github.com/lsst-dm/libunwind
 igprof: https://github.com/lsst-dm/igprof
 libyaml: https://github.com/lsst/libyaml
 python_swiftclient: https://github.com/lsst/python_swiftclient
+marshmallow: https://github.com/lsst/marshmallow
