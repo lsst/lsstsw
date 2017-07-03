@@ -293,3 +293,6 @@ igprof: https://github.com/lsst-dm/igprof
 libyaml: https://github.com/lsst/libyaml
 python_swiftclient: https://github.com/lsst/python_swiftclient
 marshmallow: https://github.com/lsst/marshmallow
+ci_ctio0m9:
+  url: https://github.com/lsst/ci_ctio0m9.git
+  lfs: true
