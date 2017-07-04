@@ -296,3 +296,4 @@ marshmallow: https://github.com/lsst/marshmallow
 ci_ctio0m9:
   url: https://github.com/lsst/ci_ctio0m9.git
   lfs: true
+obs_ctio0m9: https://github.com/lsst/obs_ctio0m9.git
