@@ -29,10 +29,12 @@ versiondb_head() {
     (cd "$VERSIONDB" && git rev-parse HEAD)
 }
 
+PREP_ONLY=false
+
 while getopts ":pnur:t:" o; do
     case "$o" in
     p)
-        PREP_ONLY=1
+        PREP_ONLY=true
         ;;
     n)
         NO_FETCH=1
@@ -58,7 +60,6 @@ if [[ "$#" != "0" ]]; then
 fi
 
 #echo REF=$REF
-#echo PREP_ONLY=$PREP_ONLY
 #echo TAG=$TAG
 #echo PRODUCTS=$PRODUCTS
 
@@ -124,7 +125,7 @@ fi
     eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
     echo "# BUILD ID: $BUILD"
 
-    if [[ "$PREP_ONLY" == 1 ]]; then
+    if [[ $PREP_ONLY == true ]]; then
         exit
     fi
 
