@@ -18,6 +18,7 @@
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck source=../etc/settings.cfg.sh
 . "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
@@ -25,19 +26,23 @@ usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupst
 # centos 6 shipped with bash 4.1; this is the best that can be done for
 # returning a value prior to bash 4.3
 versiondb_head() {
-    echo $(cd "$VERSIONDB" && git rev-parse HEAD)
+    (cd "$VERSIONDB" && git rev-parse HEAD)
 }
+
+PREP_ONLY=false
+NO_FETCH=false
+UPDATE=false
 
 while getopts ":pnur:t:" o; do
     case "$o" in
     p)
-        PREP_ONLY=1
+        PREP_ONLY=true
         ;;
     n)
-        NO_FETCH=1
+        NO_FETCH=true
         ;;
     u)
-        UPDATE=1
+        UPDATE=true
         ;;
     r)
         REF="$REF --ref $OPTARG"
@@ -55,11 +60,6 @@ shift $((OPTIND-1))
 if [[ "$#" != "0" ]]; then
     PRODUCTS=("$@")
 fi
-
-#echo REF=$REF
-#echo PREP_ONLY=$PREP_ONLY
-#echo TAG=$TAG
-#echo PRODUCTS=$PRODUCTS
 
 (
     # true if `lsst-build prepare` has run successfully
@@ -85,7 +85,7 @@ fi
     #
     # update repos.yaml file
     #
-    if [[ $UPDATE == 1 ]]; then
+    if [[ $UPDATE == true ]]; then
         curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
     fi
 
@@ -99,7 +99,7 @@ fi
     fi
 
     ARGS=()
-    if [[ $NO_FETCH == 1 ]]; then
+    if [[ $NO_FETCH == true ]]; then
         ARGS+=("--no-fetch")
     fi
     ARGS+=("--repos=${REPOSFILE}")
@@ -123,7 +123,7 @@ fi
     eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
     echo "# BUILD ID: $BUILD"
 
-    if [[ "$PREP_ONLY" == 1 ]]; then
+    if [[ $PREP_ONLY == true ]]; then
         exit
     fi
 

@@ -23,18 +23,30 @@ print_error() {
     >&2 echo -e "$@"
 }
 
+fail() {
+  local code=${2:-1}
+  [[ -n $1 ]] && print_error "$1"
+  # shellcheck disable=SC2086
+  exit $code
+}
+
 usage() {
     if [[ ! -z "$1" ]]; then
         print_error "$0: $1"
     fi
-    print_error
-    print_error "Usage: $0 [-3] [-b] [-h]"
-    print_error
-    print_error "Specific options:"
-    print_error "   -b          use bleeding edge conda packages"
-    print_error "   -3          use Python 3"
-    print_error "   -h          show this message"
-    exit 1
+
+    # note that heredocs are prefixed with tab chars
+    fail "$(cat <<-EOF
+
+		Usage: $0 [-3] [-b] [-h]"
+
+		Specific options:
+		    -b          use bleeding edge conda packages"
+		    -3          use Python 3"
+		    -h          show this message"
+
+		EOF
+    )"
 }
 
 # We are intentionally not using gnu `getopt` due to portability concerns.
@@ -79,8 +91,7 @@ case $(uname -s) in
         CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-osx-64.txt"
         ;;
     *)
-        echo "Cannot install miniconda: unsupported platform $(uname -s)"
-        exit 1
+        fail "Cannot install miniconda: unsupported platform $(uname -s)"
         ;;
 esac
 
@@ -204,8 +215,7 @@ test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
         Linux*)  lfs_platform="linux-amd64" ;;
         Darwin*) lfs_platform="darwin-amd64" ;;
         *)
-            echo "Cannot install git-lfs: unsupported platform $(uname -s)"
-            exit 1
+            fail "Cannot install git-lfs: unsupported platform $(uname -s)"
             ;;
     esac
 
