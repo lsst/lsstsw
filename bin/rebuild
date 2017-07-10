@@ -31,6 +31,7 @@ versiondb_head() {
 
 PREP_ONLY=false
 NO_FETCH=false
+UPDATE=false
 
 while getopts ":pnur:t:" o; do
     case "$o" in
@@ -41,7 +42,7 @@ while getopts ":pnur:t:" o; do
         NO_FETCH=true
         ;;
     u)
-        UPDATE=1
+        UPDATE=true
         ;;
     r)
         REF="$REF --ref $OPTARG"
@@ -88,7 +89,7 @@ fi
     #
     # update repos.yaml file
     #
-    if [[ $UPDATE == 1 ]]; then
+    if [[ $UPDATE == true ]]; then
         curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
     fi
 
