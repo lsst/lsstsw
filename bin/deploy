@@ -109,6 +109,8 @@ am_I_sourced() {
 }
 
 main() {
+  config_curl
+
   BLEED_DEPLOY=false
   USE_PYTHON3=false
 
