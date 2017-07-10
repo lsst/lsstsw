@@ -1,13 +1,15 @@
+#!/bin/bash
+
 # setup lsstsw environment
 #
 # source this file from your ~/.bashrc or ~/.zshrc
 #
 # relative to <lsstsw>/bin/
 if [[ -z $ZSH_NAME ]]; then
-    LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
+    LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
     SUFFIX=sh
 else
-    LSSTSW=$(cd "$(dirname "$0")/.."; pwd)
+    LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
     SUFFIX=zsh
 fi
 
@@ -23,6 +25,7 @@ export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
 
+# shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 
 setup -r "$LSSTSW/lsst_build"

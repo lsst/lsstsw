@@ -8,7 +8,7 @@ if [[ -z $1 ]]; then
     echo
     echo "     -d : instead of setting it, delete the tag"
     echo
-    echo "WARNING: THIS WILL APPLY $tag TO ALL LSST/DMS REPOSITORIES IN ./build"
+    echo "WARNING: THIS WILL APPLY <tag> TO ALL LSST/DMS REPOSITORIES IN ./build"
     echo "         AND IMMEDIATELY PUSH THEM TO THE UPSTREAM GIT SERVER."
     echo
     echo "                                           EXERCISE EXTREME CAUTION."
@@ -29,19 +29,19 @@ cd build
 # For all git repositories:
 for gg in */.git; do
     (
-        r=$(dirname $gg)
-        cd $r
+        r=$(dirname "$gg")
+        cd "$r"
 
         ORIGIN=$(git config --get-all remote.origin.url | grep "LSST/DMS/" | sed 's|git://git.lsstcorp.org/|git@git.lsstcorp.org:|')
-        [[ -z $ORIGIN ]] && continue
+        [[ -z $ORIGIN ]] && exit # continue looop
         echo "# $r $ORIGIN"
 
         if [[ $DELETE != 1 ]]; then
-            git tag -a -m "Version $TAG" $TAG
-            git push "$ORIGIN" refs/tags/$TAG
+            git tag -a -m "Version $TAG" "$TAG"
+            git push "$ORIGIN" "refs/tags/${TAG}"
         else
-            git tag -d $TAG
-            git push "$ORIGIN" :refs/tags/$TAG
+            git tag -d "$TAG"
+            git push "$ORIGIN" ":refs/tags/${TAG}"
         fi
     )
 done

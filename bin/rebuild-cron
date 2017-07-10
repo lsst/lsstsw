@@ -1,11 +1,14 @@
 #!/bin/bash
 
+set -e
+
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 (
         flock-fd 201 || exit
 
     # Source the settings
+    # shellcheck source=../etc/settings.cfg.sh
     . $DIR/../etc/settings.cfg.sh
 
     TIMESTAMPFILE="$HOME/var/log/rebuild.timestamp"
@@ -14,6 +17,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
     TIMESTAMP=$(cat "$TIMESTAMPFILE" 2>/dev/null)
 
     if [[ $LASTWRITE > $TIMESTAMP  ]]; then
+        # shellcheck source=./setup.sh
         . $DIR/setup.sh
         export 2>&1 | tee -a "$HOME/var/log/rebuild.last"
         rebuild 2>&1 | tee -a "$HOME/var/log/rebuild.last"
@@ -24,4 +28,4 @@ DIR=$(cd "$(dirname "$0")"; pwd)
         echo "$LASTWRITE" > "$TIMESTAMPFILE"
     fi
 
-) 201>$DIR/../var/run/rebuild-cron.run
+) 201>"${DIR}/../var/run/rebuild-cron.run"
