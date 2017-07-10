@@ -33,7 +33,8 @@ for gg in */.git; do
         cd "$r"
 
         ORIGIN=$(git config --get-all remote.origin.url | grep "LSST/DMS/" | sed 's|git://git.lsstcorp.org/|git@git.lsstcorp.org:|')
-        [[ -z $ORIGIN ]] && exit # continue looop
+        # it appears that shellcheck does not like continue in a sub-shell
+        [[ -z $ORIGIN ]] && exit
         echo "# $r $ORIGIN"
 
         if [[ $DELETE != 1 ]]; then
