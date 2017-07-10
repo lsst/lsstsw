@@ -30,6 +30,7 @@ versiondb_head() {
 }
 
 PREP_ONLY=false
+NO_FETCH=false
 
 while getopts ":pnur:t:" o; do
     case "$o" in
@@ -37,7 +38,7 @@ while getopts ":pnur:t:" o; do
         PREP_ONLY=true
         ;;
     n)
-        NO_FETCH=1
+        NO_FETCH=true
         ;;
     u)
         UPDATE=1
@@ -101,7 +102,7 @@ fi
     fi
 
     ARGS=()
-    if [[ $NO_FETCH == 1 ]]; then
+    if [[ $NO_FETCH == true ]]; then
         ARGS+=("--no-fetch")
     fi
     ARGS+=("--repos=${REPOSFILE}")
