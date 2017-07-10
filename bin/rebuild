@@ -26,7 +26,7 @@ usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupst
 # centos 6 shipped with bash 4.1; this is the best that can be done for
 # returning a value prior to bash 4.3
 versiondb_head() {
-    (cd "$VERSIONDB" && git rev-parse HEAD)
+  (cd "$VERSIONDB" && git rev-parse HEAD)
 }
 
 PREP_ONLY=false
@@ -34,119 +34,121 @@ NO_FETCH=false
 UPDATE=false
 
 while getopts ":pnur:t:" o; do
-    case "$o" in
-    p)
-        PREP_ONLY=true
-        ;;
-    n)
-        NO_FETCH=true
-        ;;
-    u)
-        UPDATE=true
-        ;;
-    r)
-        REF="$REF --ref $OPTARG"
-        ;;
-    t)
-        TAG="$OPTARG"
-        ;;
-    *)
-        usage
-        ;;
-    esac
+  case "$o" in
+  p)
+    PREP_ONLY=true
+    ;;
+  n)
+    NO_FETCH=true
+    ;;
+  u)
+    UPDATE=true
+    ;;
+  r)
+    REF="$REF --ref $OPTARG"
+    ;;
+  t)
+    TAG="$OPTARG"
+    ;;
+  *)
+    usage
+    ;;
+  esac
 done
 shift $((OPTIND-1))
 
 if [[ "$#" != "0" ]]; then
-    PRODUCTS=("$@")
+  PRODUCTS=("$@")
 fi
 
 (
-    # true if `lsst-build prepare` has run successfully
-    PREPARED=false
+  # true if `lsst-build prepare` has run successfully
+  PREPARED=false
 
-    #
-    # Add 128 to non-zero exit statuses if the `lsst-build prepare` subcommand has
-    # completed.  This is to allow consumer scripts to be able to determine if a
-    # failure in this script occurred before or after the prepare step.
-    #
-    cleanup() {
-        local rv=$?
+  #
+  # Add 128 to non-zero exit statuses if the `lsst-build prepare` subcommand has
+  # completed.  This is to allow consumer scripts to be able to determine if a
+  # failure in this script occurred before or after the prepare step.
+  #
+  cleanup() {
+    local rv=$?
 
-        [[ $rv == 0 ]] && exit
-        [[ $PREPARED == true ]] && [[ $rv -lt 128 ]] && rv=$((rv + 128))
+    [[ $rv == 0 ]] && exit
+    [[ $PREPARED == true ]] && [[ $rv -lt 128 ]] && rv=$((rv + 128))
 
-        exit $rv
-    }
+    exit $rv
+  }
 
-    trap cleanup EXIT
+  trap cleanup EXIT
 
-    flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit 1; }
-    #
-    # update repos.yaml file
-    #
-    if [[ $UPDATE == true ]]; then
-        curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
-    fi
+  flock-fd 200 || { echo "a rebuild is already in process." 1>&2; exit 1; }
+  #
+  # update repos.yaml file
+  #
+  if [[ $UPDATE == true ]]; then
+    curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
+  fi
 
-    #
-    # Prepare build
-    #
-    if [[ $VERSIONDB_PUSH == true ]]; then
-        # do not pull from remote unless configured to push
-        (cd "$VERSIONDB" && git pull --quiet)
-        VERSIONDB_HEAD_PREBUILD=$(versiondb_head)
-    fi
+  #
+  # Prepare build
+  #
+  if [[ $VERSIONDB_PUSH == true ]]; then
+    # do not pull from remote unless configured to push
+    (cd "$VERSIONDB" && git pull --quiet)
+    VERSIONDB_HEAD_PREBUILD=$(versiondb_head)
+  fi
 
-    ARGS=()
-    if [[ $NO_FETCH == true ]]; then
-        ARGS+=("--no-fetch")
-    fi
-    ARGS+=("--repos=${REPOSFILE}")
-    ARGS+=("--exclusion-map=${EXCLUSIONS}")
-    ARGS+=("--version-git-repo=${VERSIONDB}")
-    ARGS+=("$LSSTSW_BUILD_DIR")
-    if [[ ! -z "$REF" ]]; then
-        # XXX intentionally not quoted to allow word splitting
-        ARGS+=($REF)
-    fi
-    ARGS+=(${PRODUCTS[@]})
+  ARGS=()
+  if [[ $NO_FETCH == true ]]; then
+    ARGS+=("--no-fetch")
+  fi
+  ARGS+=("--repos=${REPOSFILE}")
+  ARGS+=("--exclusion-map=${EXCLUSIONS}")
+  ARGS+=("--version-git-repo=${VERSIONDB}")
+  ARGS+=("$LSSTSW_BUILD_DIR")
+  if [[ ! -z "$REF" ]]; then
+    # XXX intentionally not quoted to allow word splitting
+    ARGS+=($REF)
+  fi
+  ARGS+=(${PRODUCTS[@]})
 
-    lsst-build prepare "${ARGS[@]}"
+  lsst-build prepare "${ARGS[@]}"
 
-    if [[ $VERSIONDB_PUSH == true ]]; then
-        # do not push unless the head ref has changed
-        [[ "$VERSIONDB_HEAD_PREBUILD" != $(versiondb_head) ]] &&
-            (cd "$VERSIONDB" && git push && git push --tags)
-    fi
+  if [[ $VERSIONDB_PUSH == true ]]; then
+    # do not push unless the head ref has changed
+    [[ "$VERSIONDB_HEAD_PREBUILD" != $(versiondb_head) ]] &&
+      (cd "$VERSIONDB" && git push && git push --tags)
+  fi
 
-    eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
-    echo "# BUILD ID: $BUILD"
+  eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
+  echo "# BUILD ID: $BUILD"
 
-    if [[ $PREP_ONLY == true ]]; then
-        exit
-    fi
+  if [[ $PREP_ONLY == true ]]; then
+    exit
+  fi
 
-    PREPARED=true
+  PREPARED=true
 
-    #
-    # HACK: Speed up the build by assuming EUPS caches are up-to-date
-    # Make sure they really are first.
-    #
-    _EUPS_ASSUME_CACHES_UP_TO_DATE=0 python -c "import eups; eups.Eups()"
-    export _EUPS_ASSUME_CACHES_UP_TO_DATE=1
+  #
+  # HACK: Speed up the build by assuming EUPS caches are up-to-date
+  # Make sure they really are first.
+  #
+  _EUPS_ASSUME_CACHES_UP_TO_DATE=0 python -c "import eups; eups.Eups()"
+  export _EUPS_ASSUME_CACHES_UP_TO_DATE=1
 
-    #
-    # Execute build
-    #
-    lsst-build build "$LSSTSW_BUILD_DIR"
+  #
+  # Execute build
+  #
+  lsst-build build "$LSSTSW_BUILD_DIR"
 
-    #
-    # Tag as requested
-    #
-    if [[ ! -z $TAG ]]; then
-        eups-copy-tag "$BUILD" "$TAG"
-    fi
+  #
+  # Tag as requested
+  #
+  if [[ ! -z $TAG ]]; then
+    eups-copy-tag "$BUILD" "$TAG"
+  fi
 
-    echo "# BUILD $BUILD completed."
+  echo "# BUILD $BUILD completed."
 ) 200>"$DIR/../var/run/rebuild.run"
+
+# vim: tabstop=2 shiftwidth=2 expandtab
