@@ -61,10 +61,6 @@ if [[ "$#" != "0" ]]; then
     PRODUCTS=("$@")
 fi
 
-#echo REF=$REF
-#echo TAG=$TAG
-#echo PRODUCTS=$PRODUCTS
-
 (
     # true if `lsst-build prepare` has run successfully
     PREPARED=false
