@@ -6,8 +6,8 @@
 [[ $1 == "-n" ]] && { DO_NOTHING=1; shift; }
 
 if [[ $# != 2 ]]; then
-    echo "usage: $0 [-n] <tagFrom> <tagTo>"
-    exit -1
+  echo "usage: $0 [-n] <tagFrom> <tagTo>"
+  exit -1
 fi
 
 set -e
@@ -16,10 +16,12 @@ FROM=$1
 TO=$2
 
 for line in $(eups list --raw -t "$FROM"); do
-    line=( ${line//|/ } )
-    if [[ $DO_NOTHING == 1 ]]; then
-        echo eups declare -t "$TO" "${line[0]}" "${line[1]}"
-    else
-        eups declare -t "$TO" "${line[0]}" "${line[1]}"
-    fi
+  line=( ${line//|/ } )
+  if [[ $DO_NOTHING == 1 ]]; then
+    echo eups declare -t "$TO" "${line[0]}" "${line[1]}"
+  else
+    eups declare -t "$TO" "${line[0]}" "${line[1]}"
+  fi
 done
+
+# vim: tabstop=2 shiftwidth=2 expandtab
