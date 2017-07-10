@@ -49,6 +49,22 @@ usage() {
   )"
 }
 
+config_curl() {
+  # Prefer system curl; user-installed ones sometimes behave oddly
+  if [[ -x /usr/bin/curl ]]; then
+    CURL=${CURL:-/usr/bin/curl}
+  else
+    CURL=${CURL:-curl}
+  fi
+
+  # disable curl progress meter unless running under a tty -- this is intended to
+  # reduce the amount of console output when running under CI
+  CURL_OPTS='-#'
+  if [[ ! -t 1 ]]; then
+    CURL_OPTS='-sS'
+  fi
+}
+
 parse_args() {
   local OPTIND
   local opt
