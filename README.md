@@ -3,6 +3,8 @@ LSST Distribution Server Account
 
 [![Build Status](https://travis-ci.org/lsst/lsstsw.png)](https://travis-ci.org/lsst/lsstsw)
 
+**`repos.yaml` has been migrated to [`lsst/repos`](https://github.com/lsst/repos).**
+
 For a guide to using `lsstsw`, see:
 
 http://developer.lsst.io/en/latest/build-ci/lsstsw.html
