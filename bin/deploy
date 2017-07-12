@@ -59,10 +59,13 @@ config_curl() {
 
   # disable curl progress meter unless running under a tty -- this is intended to
   # reduce the amount of console output when running under CI
-  CURL_OPTS='-#'
+  CURL_OPTS=('-#')
   if [[ ! -t 1 ]]; then
-    CURL_OPTS='-sS'
+    CURL_OPTS=('-sS')
   fi
+
+  # curl will exit 0 on 404 without the fail flag
+  CURL_OPTS+=('--fail')
 }
 
 parse_args() {
@@ -145,7 +148,7 @@ main() {
 
     miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
     echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ANA_PLATFORM}"
-    curl -# -L -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
+    $CURL "${CURL_OPTS[@]}" -# -L -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
     bash "$miniconda_file_name" -b -p "${LSSTSW}/miniconda"
 
     touch "${LSSTSW}/miniconda/.deployed"
@@ -235,8 +238,8 @@ main() {
       echo "::: Deploying git"
       cd sources
       GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-      curl -# -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
-      curl -# -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
+      $CURL "${CURL_OPTS[@]}" -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
+      $CURL "${CURL_OPTS[@]}" -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
       tar xzf "git-${GIT_VERSION}.tar.gz"
       cd "git-${GIT_VERSION}"
       ./configure --prefix="${LSSTSW}/lfs"
@@ -265,7 +268,8 @@ main() {
     cd sources
     LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
     LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
-    curl -# -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
+    $CURL "${CURL_OPTS[@]}" -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
+
     tar xzf "$LFS_ARCHIVE"
     mkdir -p "${LSSTSW}/lfs/bin"
     cp "git-lfs-${LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
@@ -300,7 +304,7 @@ main() {
       cd eups
       git checkout "$EUPS_GITREV"
     else
-      curl -# -L -o "eups-${EUPS_VERSION}.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/${EUPS_VERSION}.tar.gz"
+      $CURL "${CURL_OPTS[@]}" -L -o "eups-${EUPS_VERSION}.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/${EUPS_VERSION}.tar.gz"
       tar xzf "eups-${EUPS_VERSION}.tar.gz"
       cd "eups-${EUPS_VERSION}"
     fi
