@@ -68,6 +68,19 @@ config_curl() {
   CURL_OPTS+=('--fail')
 }
 
+fetch_repos.yaml() {
+  local ref=${1:-master}
+  local output_file=${2:-$REPOSFILE}
+  local repo=${3:-$REPOSFILE_REPO}
+
+  local baseurl="https://raw.githubusercontent.com/${repo}/${ref}"
+
+  $CURL "${CURL_OPTS[@]}" \
+    -L \
+    "${baseurl}/etc/repos.yaml" \
+    -o "$output_file"
+}
+
 parse_args() {
   local OPTIND
   local opt
@@ -116,7 +129,7 @@ main() {
 
   parse_args "$@"
 
-  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production}
+  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
@@ -144,6 +157,8 @@ main() {
   esac
 
   cd "$LSSTSW"
+
+  fetch_repos.yaml 'master'
 
   test -f "${LSSTSW}/miniconda/.deployed" || ( # Anaconda
     cd sources

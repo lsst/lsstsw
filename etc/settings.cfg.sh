@@ -19,7 +19,7 @@ VERSIONDB_PUSH=${VERSIONDB_PUSH:-false}
 LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 
 # the location of source repositories
-REPOSFILE_URL=${REPOSFILE_URL:-'https://raw.githubusercontent.com/lsst/lsstsw/master/etc/repos.yaml'}
+REPOSFILE_REPO=${REPOSFILE_REPO:-lsst/repos}
 REPOSFILE=${REPOSFILE:-${LSSTSW}/etc/repos.yaml}
 
 # location of the build directory
