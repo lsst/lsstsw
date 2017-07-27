@@ -298,3 +298,4 @@ ci_ctio0m9:
   lfs: true
 obs_ctio0m9: https://github.com/lsst/obs_ctio0m9.git
 jemalloc: https://github.com/lsst/jemalloc.git
+treecorr: https://github.com/lsst/treecorr.git
