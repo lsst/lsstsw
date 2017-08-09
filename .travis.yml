@@ -1,5 +1,9 @@
 sudo: false
 language: c
+addons:
+  apt:
+    packages:
+    - gettext # required to build git from src
 matrix:
   include:
     - os: linux
@@ -7,6 +11,8 @@ matrix:
       python: "3.4"
       env: MODE=lint
     - os: linux
+      language: c
+      compiler: gcc
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=true
