@@ -1,3 +1,0 @@
-ansicolors==1.0.2
-PyYAML==3.11
-wheel==0.24.0

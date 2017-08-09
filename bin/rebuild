@@ -20,6 +20,8 @@ set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck source=../etc/settings.cfg.sh
 . "${DIR}/../etc/settings.cfg.sh"
+# shellcheck source=./deploy
+. "${DIR}/deploy"
 
 usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
 
@@ -86,7 +88,8 @@ fi
   # update repos.yaml file
   #
   if [[ $UPDATE == true ]]; then
-    curl -# -L --silent -o "$REPOSFILE" "$REPOSFILE_URL"
+    config_curl
+    fetch_repos.yaml 'master'
   fi
 
   #

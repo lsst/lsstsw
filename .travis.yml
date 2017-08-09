@@ -3,10 +3,6 @@ language: c
 matrix:
   include:
     - os: linux
-      language: python
-      python: "3.4"
-      env: MODE=lint
-    - os: linux
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=true
@@ -57,10 +53,6 @@ script: |
   }
 
   case $MODE in
-    lint)
-      pip install -r requirements.txt
-      ./bin/repos-lint ./etc/repos.yaml
-      ;;
     deploy*)
       # print git version
       git --version
