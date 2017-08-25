@@ -39,13 +39,13 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-2] [-3] [-b] [-h]"
+		Usage: $0 [-2] [-3] [-b] [-h]
 
 		Specific options:
-		    -b          use bleeding edge conda packages"
-		    -3          use Python 3 (default)"
+		    -b          use bleeding edge conda packages
+		    -3          use Python 3 (default)
 		    -2          use Python 2
-		    -h          show this message"
+		    -h          show this message
 
 		EOF
   )"
