@@ -363,13 +363,32 @@ main() {
     touch "${LSSTSW}/versiondb/.deployed"
   )
 
-  test -f "${LSSTSW}/lsst_build/.deployed" || ( # Clone lsst_build
-    echo "::: Deploying lsst_build"
-    rm -rf lsst_build
-    git clone "$LSST_BUILD_GITREPO" -b "$LSST_BUILD_GITREV" lsst_build
-    (cd lsst_build && git config push.default current)
-    touch "${LSSTSW}/lsst_build/.deployed"
-  )
+  # Clone lsst_build
+  if [[ ! -f "${LSSTSW}/lsst_build/.deployed" ]]; then
+    (
+      echo "::: Deploying lsst_build"
+      rm -rf lsst_build
+      git clone "$LSST_BUILD_GITREPO" -b "$LSST_BUILD_GITREV" lsst_build
+      (cd lsst_build && git config push.default current)
+      touch "${LSSTSW}/lsst_build/.deployed"
+    )
+  else
+    (
+      echo "::: Updating lsst_build"
+      cd lsst_build
+      git fetch -fup origin "$LSST_BUILD_GITREV"
+      # attempt to determine if this is a branch name or a commit id. If it is
+      # a branch name, we need to reset to the commit id in the origin repo.
+      # Otherwise, if the branch already exists in the clone, the local HEAD
+      # will be used.
+      commit=$(git rev-parse --verify --quiet "origin/${LSST_BUILD_GITREV}")
+      # shellcheck disable=SC2181
+      if [[ $? != 0 ]]; then
+        commit=$LSST_BUILD_GITREV
+      fi
+      git reset --hard "$commit"
+    )
+  fi
 
   echo "Done. Run the following:"
   echo
