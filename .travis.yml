@@ -11,17 +11,17 @@ matrix:
         - MODE=versiondb
         - VERSIONDB_PUSH=false
     - os: linux
-      env: MODE=deploy
+      env: MODE=deploy2
     - os: linux
-      env: MODE=deploy-bleed
+      env: MODE=deploy2-bleed
     - os: linux
       env:
-        - MODE=deploy
+        - MODE=deploy2
         - EUPS_GITREV=b9a7664aee338363b104738b893eb05a6e5c465c
     - os: osx
-      env: MODE=deploy
+      env: MODE=deploy2
     - os: osx
-      env: MODE=deploy-bleed
+      env: MODE=deploy2-bleed
     - os: linux
       env: MODE=deploy3
     - os: linux
@@ -56,17 +56,18 @@ script: |
     deploy*)
       # print git version
       git --version
-      CONDA_PREFIX="2"
-      if [[ $MODE == deploy-bleed ]]; then
+      if [[ $MODE == deploy2-bleed ]]; then
         echo -e "*** testing with BLEED Python 2 conda/pip packages ***\n"
-        ./bin/deploy -b
+        CONDA_PREFIX="2"
+        ./bin/deploy -b -2
       elif [[ $MODE == deploy3-bleed ]]; then
         echo -e "*** testing with BLEED Python 3 conda/pip packages ***\n"
         CONDA_PREFIX="3"
         ./bin/deploy -b -3
-      elif [[ $MODE == deploy ]]; then
+      elif [[ $MODE == deploy2 ]]; then
         echo -e "*** testing with PINNED Python 2 conda/pip packages ***\n"
-        ./bin/deploy
+        CONDA_PREFIX="2"
+        ./bin/deploy -2
       elif [[ $MODE == deploy3 ]]; then
         echo -e "*** testing with PINNED Python 3 conda/pip packages ***\n"
         CONDA_PREFIX="3"

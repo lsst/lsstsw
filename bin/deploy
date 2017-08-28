@@ -16,6 +16,7 @@ MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.5.5}           # Version of git-lfs to install
+USE_PYTHON3=true
 
 set -e
 
@@ -38,12 +39,13 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-3] [-b] [-h]"
+		Usage: $0 [-2] [-3] [-b] [-h]
 
 		Specific options:
-		    -b          use bleeding edge conda packages"
-		    -3          use Python 3"
-		    -h          show this message"
+		    -b          use bleeding edge conda packages
+		    -3          use Python 3 (default)
+		    -2          use Python 2
+		    -h          show this message
 
 		EOF
   )"
@@ -87,13 +89,16 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "3bh" opt; do
+  while getopts "23bh" opt; do
     case "$opt" in
     b)
       BLEED_DEPLOY=true
       ;;
     3)
       USE_PYTHON3=true
+      ;;
+    2)
+      USE_PYTHON3=false
       ;;
     h)
       usage
