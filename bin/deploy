@@ -167,15 +167,23 @@ main() {
 
   fetch_repos.yaml 'master'
 
-  test -f "${LSSTSW}/miniconda/.deployed" || ( # Anaconda
+  # install miniconda
+  miniconda_path="${LSSTSW}/miniconda"
+  miniconda_lock="${miniconda_path}/.deployed"
+  test -f "$miniconda_lock" || (
+    miniconda_file_name="Miniconda${PYVER_PREFIX}"
+    miniconda_file_name+="-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
+
+    echo "::: Deploying ${miniconda_file_name}"
+
     cd sources
+    $CURL "${CURL_OPTS[@]}" -# -L \
+      -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
 
-    miniconda_file_name="Miniconda${PYVER_PREFIX}-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
-    echo "::: Deploying Miniconda${PYVER_PREFIX} ${MINICONDA_VERSION} for ${ANA_PLATFORM}"
-    $CURL "${CURL_OPTS[@]}" -# -L -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
-    bash "$miniconda_file_name" -b -p "${LSSTSW}/miniconda"
+    rm -rf "$miniconda_path"
+    bash "$miniconda_file_name" -b -p "$miniconda_path"
 
-    touch "${LSSTSW}/miniconda/.deployed"
+    touch "$miniconda_lock"
   )
 
   (
