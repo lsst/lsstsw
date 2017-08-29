@@ -180,6 +180,7 @@ main() {
     $CURL "${CURL_OPTS[@]}" -# -L \
       -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
 
+    rm -rf "$miniconda_path"
     bash "$miniconda_file_name" -b -p "$miniconda_path"
 
     touch "$miniconda_lock"
