@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck source=../etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
-EUPS_VERSION=${EUPS_VERSION:-2.1.3}         # Version of EUPS to install
+EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12} # Version of Miniconda to install
