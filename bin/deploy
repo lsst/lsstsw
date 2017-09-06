@@ -16,7 +16,6 @@ MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
 GIT_VERSION=${GIT_VERSION:-2.2.2}           # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.5.5}           # Version of git-lfs to install
-USE_PYTHON3=true
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 
@@ -132,7 +131,7 @@ main() {
   config_curl
 
   BLEED_DEPLOY=false
-  USE_PYTHON3=false
+  USE_PYTHON3=true
 
   parse_args "$@"
 
