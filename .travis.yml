@@ -18,22 +18,22 @@ matrix:
       env:
         - MODE=deploy2
         - EUPS_GITREV=b9a7664aee338363b104738b893eb05a6e5c465c
-    - os: osx
-      env: MODE=deploy2
-    - os: osx
-      env: MODE=deploy2-bleed
+    #- os: osx
+    #  env: MODE=deploy2
+    #- os: osx
+    #  env: MODE=deploy2-bleed
     - os: linux
       env: MODE=deploy3
     - os: linux
       env: MODE=deploy3-bleed
-    - os: osx
-      env: MODE=deploy3
-    - os: osx
-      env: MODE=deploy3-bleed
+    #- os: osx
+    #  env: MODE=deploy3
+    #- os: osx
+    #  env: MODE=deploy3-bleed
   # osx builds are often very slow to start due to high demand
   fast_finish: true
-  allow_failures:
-    - os: osx
+  #allow_failures:
+  #  - os: osx
 script: |
   set -e
   export SHELLOPTS
@@ -163,11 +163,8 @@ script: |
       exit 1
       ;;
   esac
+branches:
+  only:
+    - master
 notifications:
   email: false
-  hipchat:
-    rooms:
-      secure: hiu+I6yS6iQBguNNyuJ2H6HCUi2575zGgA74vuGIIViFPPF2Oc1Ty18u4ahygglaOzXh9FgFP0XEYhKE1FYPmeneP0bI/u9sr4ruEOUnC1xUyv1ClmsakzNZucQ2N7oeEEY0FOZK2VpQw44cisVdtVQFnTqf99Hj2fGP1+2LIWo=
-    template:
-      - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
-    format: html
