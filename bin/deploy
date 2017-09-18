@@ -10,14 +10,16 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.3.21} # Version of Miniconda to install
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.3.21} # Version of Miniconda to install
+LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-3}
+MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21} # Version of Miniconda to install
+LSSTSW_REF=${LSSTSW_REF:-master}
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
 GIT_VERSION=${GIT_VERSION:-2.14.1}          # Version of git to install
 LFS_VERSION=${LFS_VERSION:-1.5.5}           # Version of git-lfs to install
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
+NEWINSTALL_REF=${NEWINSTALL_REF:-master}
 
 set -e
 
@@ -95,11 +97,11 @@ parse_args() {
     b)
       BLEED_DEPLOY=true
       ;;
-    3)
-      USE_PYTHON3=true
-      ;;
     2)
-      USE_PYTHON3=false
+      LSST_PYTHON_VERSION=2
+      ;;
+    3)
+      LSST_PYTHON_VERSION=3
       ;;
     h)
       usage
@@ -110,6 +112,17 @@ parse_args() {
     esac
   done
   shift $((OPTIND-1))
+}
+
+l4w::load_libnewinstall() {
+  local ref=${1:-master}
+
+  # shellcheck disable=SC1090
+  source <(
+    $CURL "${CURL_OPTS[@]}" \
+      -sSL \
+      "https://raw.githubusercontent.com/lsst/lsst/${ref}/scripts/newinstall.sh"
+  )
 }
 
 #
@@ -129,9 +142,9 @@ am_I_sourced() {
 
 main() {
   config_curl
+  l4w::load_libnewinstall "$NEWINSTALL_REF"
 
   BLEED_DEPLOY=false
-  USE_PYTHON3=true
 
   parse_args "$@"
 
@@ -140,98 +153,40 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  if [[ $USE_PYTHON3 == true ]]; then
-    PYVER_PREFIX=3
-    MINICONDA_VERSION=$MINICONDA3_VERSION
-  else
-    PYVER_PREFIX=2
-    MINICONDA_VERSION=$MINICONDA2_VERSION
-  fi
-
-  case $(uname -s) in
-    Linux*)
-      ANA_PLATFORM="Linux-x86_64"
-      CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-linux-64.txt"
-      ;;
-    Darwin*)
-      ANA_PLATFORM="MacOSX-x86_64"
-      CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-osx-64.txt"
-      ;;
-    *)
-      fail "Cannot install miniconda: unsupported platform $(uname -s)"
-      ;;
-  esac
-
   cd "$LSSTSW"
 
   fetch_repos.yaml 'master'
 
-  # install miniconda
-  miniconda_path="${LSSTSW}/miniconda"
-  miniconda_lock="${miniconda_path}/.deployed"
-  test -f "$miniconda_lock" || (
-    miniconda_file_name="Miniconda${PYVER_PREFIX}"
-    miniconda_file_name+="-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
+  # an empty LSSTSW_REF disables automatic bootstrapping of a conda env
+  if [[ $BLEED_DEPLOY == true ]]; then
+    unset LSSTSW_REF
+  fi
 
-    echo "::: Deploying ${miniconda_file_name}"
+  n8l::miniconda::bootstrap \
+    "$LSST_PYTHON_VERSION" \
+    "$MINICONDA_VERSION" \
+    "$LSSTSW" \
+    'MINICONDA_PATH' \
+    "$MINICONDA_BASE_URL" \
+    "$LSSTSW_REF" \
+    "$CONDA_CHANNELS"
 
-    cd sources
-    $CURL "${CURL_OPTS[@]}" -# -L \
-      -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
+  if [[ $BLEED_DEPLOY == true ]]; then
+    (
+      # conda may leave behind lock files from an uncompleted package
+      # installation attempt.  These need to be cleaned up before [re]attempting
+      # to install packages.
+      conda clean --lock
 
-    rm -rf "$miniconda_path"
-    bash "$miniconda_file_name" -b -p "$miniconda_path"
+      ARGS=()
+      ARGS+=(install --yes --update-deps)
 
-    touch "$miniconda_lock"
-  )
+      # disable the conda install progress bar when not attached to a tty. Eg.,
+      # when running under CI
+      if [[ ! -t 0 ]]; then
+        ARGS+=(-q)
+      fi
 
-  (
-    # configure alt conda channel(s)
-    if [[ -n $CONDA_CHANNELS ]]; then
-      # shellcheck disable=SC2030
-      export PATH="$LSSTSW/miniconda/bin:$PATH"
-
-      # remove any previously configured non-default channels
-      # XXX allowed to fail
-      set +e
-      conda config --remove-key channels
-      set -e
-
-      for c in $CONDA_CHANNELS; do
-        conda config --add channels "$c"
-      done
-
-      # remove the default channels
-      conda config --remove channels defaults
-
-      conda config --show
-    fi
-  )
-
-  test -f "${LSSTSW}/miniconda/.packages.deployed" || ( # conda packages
-    # Install packages on which the stack is known to depend
-
-    # XXX note that
-    # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
-    # uses the conda package specification from this repo.
-    # shellcheck disable=SC2031
-    export PATH="$LSSTSW/miniconda/bin:$PATH"
-
-    # conda may leave behind lock files from an uncompleted package
-    # installation attempt.  These need to be cleaned up before [re]attempting
-    # to install packages.
-    conda clean --lock
-
-    ARGS=()
-    ARGS+=("install" "--yes")
-
-    # disable the conda install progress bar when not attached to a tty. Eg.,
-    # when running under CI
-    if [[ ! -t 0 ]]; then
-      ARGS+=("-q")
-    fi
-
-    if [[ $BLEED_DEPLOY == true ]]; then
       PACKAGES=()
       # lsst_distrib / lsst_sims deps
       PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas numexpr bottleneck)
@@ -243,20 +198,16 @@ main() {
       # linux].
       # See: https://jira.lsstcorp.org/browse/DM-5105
       if [[ $(uname -s) == Linux* ]]; then
-        PACKAGES+=("nomkl")
+        PACKAGES+=(nomkl)
       fi
 
       # filter duplicate packages
       PACKAGES=($(echo "${PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
       ARGS+=("${PACKAGES[@]}")
-    else
-      ARGS+=("--file" "${SCRIPT_DIR}/../etc/${CONDA_PACKAGES}")
-    fi
 
-    conda "${ARGS[@]}"
-
-    touch "${LSSTSW}/miniconda/.packages.deployed"
-  )
+      conda "${ARGS[@]}"
+    )
+  fi
 
   test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
@@ -340,7 +291,10 @@ main() {
       cd "eups-${EUPS_VERSION}"
     fi
 
-    ./configure --prefix="${LSSTSW}/eups/${EUPS_VERSION}" --with-python="${LSSTSW}/miniconda/bin/python" --with-eups="${LSSTSW}/stack"
+    ./configure \
+      --prefix="${LSSTSW}/eups/${EUPS_VERSION}" \
+      --with-python="${MINICONDA_PATH}/bin/python" \
+      --with-eups="${LSSTSW}/stack"
     make
     make install
     touch "${LSSTSW}/eups/${EUPS_VERSION}/.deployed"

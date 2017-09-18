@@ -19,7 +19,7 @@ if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   return
 fi
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
+export PATH="$LSSTSW/python/current/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
