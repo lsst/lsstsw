@@ -239,13 +239,6 @@ main() {
       # lsst_build deps
       PACKAGES+=(future pyyaml)
 
-      # The conda Intel MKL linked packages are intentionally avoided [on
-      # linux].
-      # See: https://jira.lsstcorp.org/browse/DM-5105
-      if [[ $(uname -s) == Linux* ]]; then
-        PACKAGES+=("nomkl")
-      fi
-
       # filter duplicate packages
       PACKAGES=($(echo "${PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
       ARGS+=("${PACKAGES[@]}")
@@ -254,6 +247,14 @@ main() {
     fi
 
     conda "${ARGS[@]}"
+
+    # The conda Intel MKL linked packages are intentionally avoided [on linux].
+    # See: https://jira.lsstcorp.org/browse/DM-5105 and
+    #      https://jira.lsstcorp.org/browse/DM-12266
+    if [[ $(uname -s) == Linux* ]]; then
+      conda install --yes nomkl
+      conda remove --yes mkl mkl-service
+    fi
 
     touch "${LSSTSW}/miniconda/.packages.deployed"
   )
