@@ -251,9 +251,11 @@ main() {
     # The conda Intel MKL linked packages are intentionally avoided [on linux].
     # See: https://jira.lsstcorp.org/browse/DM-5105 and
     #      https://jira.lsstcorp.org/browse/DM-12266
-    if [[ $(uname -s) == Linux* ]]; then
-      conda install --yes nomkl
-      conda remove --yes mkl mkl-service
+    if [[ $BLEED_DEPLOY == true ]]; then
+      if [[ $(uname -s) == Linux* ]]; then
+        conda install --yes nomkl
+        conda remove --yes mkl mkl-service
+      fi
     fi
 
     touch "${LSSTSW}/miniconda/.packages.deployed"
