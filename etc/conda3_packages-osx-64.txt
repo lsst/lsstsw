@@ -11,6 +11,7 @@ cycler=0.10.0=py36_0
 cython=0.26=py36_0
 freetype=2.5.5=2
 future=0.16.0=py36_1
+h5py=2.7.0
 icu=54.1=0
 idna=2.5=py36_0
 libpng=1.6.30=1
