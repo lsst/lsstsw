@@ -234,7 +234,7 @@ main() {
     if [[ $BLEED_DEPLOY == true ]]; then
       PACKAGES=()
       # lsst_distrib / lsst_sims deps
-      PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas numexpr bottleneck)
+      PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas numexpr bottleneck h5py)
 
       # lsst_build deps
       PACKAGES+=(future pyyaml)
