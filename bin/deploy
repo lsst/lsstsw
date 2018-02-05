@@ -388,11 +388,13 @@ main() {
       # a branch name, we need to reset to the commit id in the origin repo.
       # Otherwise, if the branch already exists in the clone, the local HEAD
       # will be used.
+      set +e
       commit=$(git rev-parse --verify --quiet "origin/${LSST_BUILD_GITREV}")
       # shellcheck disable=SC2181
       if [[ $? != 0 ]]; then
         commit=$LSST_BUILD_GITREV
       fi
+      set -e
       git reset --hard "$commit"
     )
   fi
