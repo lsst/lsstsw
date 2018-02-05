@@ -30,6 +30,8 @@ matrix:
     #  env: MODE=deploy3
     #- os: osx
     #  env: MODE=deploy3-bleed
+    - os: linux
+      env: MODE=redeploy
   # osx builds are often very slow to start due to high demand
   fast_finish: true
   #allow_failures:
@@ -157,6 +159,18 @@ script: |
           ${#revs[@]} \
           1
       fi
+      ;;
+    redeploy)
+      ./bin/deploy
+
+      set -x
+      echo 'check lsst_build update works when a hash is specified'
+      current_hash=$(cd lsst_build; git log -n 1 --pretty=format:'%H')
+      LSST_BUILD_GITREV="$current_hash" ./bin/deploy
+
+      echo 'check lsst_build update works when a branch name is specified'
+      LSST_BUILD_GITREV='master' ./bin/deploy
+      set +x
       ;;
     *)
       echo "unknown MODE: $MODE"
