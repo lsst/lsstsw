@@ -14,8 +14,8 @@ MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.3.21} # Version of Miniconda to insta
 MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.3.21} # Version of Miniconda to install
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
-GIT_VERSION=${GIT_VERSION:-2.14.1}          # Version of git to install
-LFS_VERSION=${LFS_VERSION:-1.5.5}           # Version of git-lfs to install
+GIT_VERSION=${GIT_VERSION:-2.16.1}          # Version of git to install
+LFS_VERSION=${LFS_VERSION:-2.3.4}           # Version of git-lfs to install
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 
