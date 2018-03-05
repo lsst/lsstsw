@@ -35,7 +35,12 @@ if ( ! -f "$LSSTSW/eups/current/bin/setups.csh" ) then
   exit 1
 endif
 
-setenv PATH "$LSSTSW/miniconda/bin:$PATH"
+setenv MINICONDA_ROOT "${LSSTSW}/miniconda"
+setenv LD_LIBRARY_PATH "${MINICONDA_ROOT}/lib"
+setenv CPATH "${MINICONDA_ROOT}/include"
+setenv PKG_CONFIG_LIBDIR="${LD_LIBRARY_PATH}/pkgconfig"
+
+setenv PATH "${MINICONDA_ROOT}/bin:$PATH"
 setenv PATH "$LSSTSW/lfs/bin:$PATH"
 setenv PATH "$LSSTSW/bin:$PATH"
 rehash

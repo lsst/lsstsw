@@ -19,7 +19,12 @@ if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   return
 fi
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
+MINICONDA_ROOT="${LSSTSW}/miniconda"
+export LD_LIBRARY_PATH="${MINICONDA_ROOT}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+#export CPATH="${MINICONDA_ROOT}/include${CPATH:+:${CPATH}}"
+export PKG_CONFIG_LIBDIR="${MINICONDA_ROOT}/lib/pkgconfig${PKG_CONFIG_LIBDIR:+:${PKG_CONFIG_LIBDIR}}"
+
+export PATH="${MINICONDA_ROOT}/bin${PATH:+:${PATH}}"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
