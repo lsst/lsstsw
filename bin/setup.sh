@@ -29,6 +29,7 @@ case $(uname -s) in
     export LD_LIBRARY_PATH="${MINICONDA_ROOT}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
     ;;
   Darwin*)
+    export DYLD_LIBRARY_PATH="${MINICONDA_ROOT}/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
     export LSST_LIBRARY_PATH="${MINICONDA_ROOT}/lib${LSST_LIBRARY_PATH:+:${LSST_LIBRARY_PATH}}"
     ;;
   *)
