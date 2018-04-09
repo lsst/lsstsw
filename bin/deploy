@@ -4,7 +4,7 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck source=../etc/settings.cfg.sh
+# shellcheck source=./etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
 EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install

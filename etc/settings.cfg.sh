@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC2034
+
 #
 # Config file with environment variables used by ~lsstsw builder
 #
@@ -16,7 +19,7 @@ VERSIONDB_PUSH=${VERSIONDB_PUSH:-false}
 
 # path to the root of the lsstsw checkout
 # relative to <lsstsw>/etc/
-LSSTSW=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
+LSSTSW="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 
 # the location of source repositories
 REPOSFILE_REPO=${REPOSFILE_REPO:-lsst/repos}
@@ -36,7 +39,7 @@ EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 #
 
 # repository path for 'eups distrib create'
-export EUPSPKG_REPOSITORY_PATH=${LSSTSW_BUILD_DIR}/'$PRODUCT'
+export EUPSPKG_REPOSITORY_PATH="${LSSTSW_BUILD_DIR}/\$PRODUCT"
 
 # location of the EUPS stack
 export EUPS_PATH=${LSSTSW}/stack

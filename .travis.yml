@@ -39,7 +39,7 @@ matrix:
         set -e
         shopt -s globstar nullglob
         CHECK=( **/*.sh bin/* )
-        IGNORE=( **/*.csh )
+        IGNORE=( **/*.csh bin/flock-fd lsst_build/** )
         for i in "${!CHECK[@]}"; do
           [[ " ${IGNORE[@]} " =~ " ${CHECK[$i]} " ]] && unset -v 'CHECK[$i]'
         done
