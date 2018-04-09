@@ -19,7 +19,26 @@ if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   return
 fi
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
+MINICONDA_ROOT="${LSSTSW}/miniconda"
+#export CPATH="${MINICONDA_ROOT}/include${CPATH:+:${CPATH}}"
+#export PKG_CONFIG_LIBDIR="${MINICONDA_ROOT}/lib/pkgconfig${PKG_CONFIG_LIBDIR:+:${PKG_CONFIG_LIBDIR}}"
+export PKG_CONFIG_PATH="${MINICONDA_ROOT}/lib/pkgconfig${PKG_CONFIG_LIBDIR:+:${PKG_CONFIG_LIBDIR}}"
+
+case $(uname -s) in
+  Linux*)
+    export LD_LIBRARY_PATH="${MINICONDA_ROOT}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    ;;
+  Darwin*)
+    export DYLD_LIBRARY_PATH="${MINICONDA_ROOT}/lib${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}"
+    export LSST_LIBRARY_PATH="${MINICONDA_ROOT}/lib${LSST_LIBRARY_PATH:+:${LSST_LIBRARY_PATH}}"
+    ;;
+  *)
+    >&2 echo "unsupported platform $(uname -s)"
+    exit 1
+    ;;
+esac
+
+export PATH="${MINICONDA_ROOT}/bin${PATH:+:${PATH}}"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
