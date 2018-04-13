@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 # ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
 # **********             SERIOUS DAMAGE MAY OCCUR             ********
@@ -8,8 +9,8 @@
 # $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
-#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR and tag
-#    it as 'current' on the distribution server
+#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
+#    and tag it as 'current' on the distribution server
 #
 
 DISTRIBTAG=
@@ -30,6 +31,24 @@ run() {
   else
     "$@"
   fi
+}
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  vars+=(${!EUPS@})
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
 }
 
 while getopts ":b:t:d" o; do
@@ -79,9 +98,13 @@ if [[ -z $BUILD ]]; then
   fi
 fi
 
-#echo DISTRIBTAG=$DISTRIBTAG
-#echo BUILD=$BUILD
-#echo PRODUCTS=$PRODUCTS
+if [[ $DEBUG == true ]]; then
+	cat <<-EOF
+	----------------------------------------------------------------
+	$(print_settings)
+	----------------------------------------------------------------
+	EOF
+fi
 
 #
 # Create the distribution packages
