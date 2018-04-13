@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 # ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
 # **********             SERIOUS DAMAGE MAY OCCUR             ********
@@ -8,8 +9,8 @@
 # $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
-#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR and tag
-#    it as 'current' on the distribution server
+#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
+#    and tag it as 'current' on the distribution server
 #
 
 DISTRIBTAG=
@@ -22,13 +23,44 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
-while getopts ":b:t:" o; do
+run() {
+  if [[ $DRYRUN == true ]]; then
+    echo "$@"
+  elif [[ $DEBUG == true ]]; then
+    (set -x; "$@")
+  else
+    "$@"
+  fi
+}
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  vars+=(${!EUPS@})
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
+}
+
+while getopts ":b:t:d" o; do
   case "$o" in
   b)
     BUILD="$OPTARG"
     ;;
   t)
     DISTRIBTAG="$OPTARG"
+    ;;
+  d)
+    DEBUG=true
     ;;
   *)
     usage
@@ -37,7 +69,7 @@ while getopts ":b:t:" o; do
 done
 shift $((OPTIND-1))
 
-if [[ "$#" = "0" ]]; then
+if [[ $# -eq 0 ]]; then
   usage
 fi
 
@@ -61,30 +93,34 @@ if [[ -z $BUILD ]]; then
     echo "[publish] Build ID defaulting to distserver tag, $BUILD."
   else
     # Find out the build ID
-    eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
+    eval "$(run grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
     echo "[publish] Build ID deduced from manifest.txt, $BUILD."
   fi
 fi
 
-#echo DISTRIBTAG=$DISTRIBTAG
-#echo BUILD=$BUILD
-#echo PRODUCTS=$PRODUCTS
+if [[ $DEBUG == true ]]; then
+	cat <<-EOF
+	----------------------------------------------------------------
+	$(print_settings)
+	----------------------------------------------------------------
+	EOF
+fi
 
 #
 # Create the distribution packages
 #
 for product in "${PRODUCTS[@]}"; do
-  eups distrib create --server-dir="$EUPS_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
+  run eups distrib create --server-dir="$EUPS_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
 done
 
 #
 # Declare the build tag, and declare it $DISTRIBTAG, if set
 #
-eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
+run eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
 
 if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
-  sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
+  run sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
       "${EUPS_PKGROOT}/tags/${BUILD}.list" > "${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
 
   # remove the original bNNNN tag to reduce tag proliferation
@@ -97,7 +133,7 @@ fi
 #
 if [[ $DISTRIBTAG == current ]] && eups list -t "$BUILD" lsst >/dev/null 2>&1; then
   echo "Copying newinstall.sh to the distribution server."
-  cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
+  run cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
 fi
 
 # vim: tabstop=2 shiftwidth=2 expandtab
