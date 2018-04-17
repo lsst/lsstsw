@@ -10,7 +10,6 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.3.21} # Version of Miniconda to install
 MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.3.21} # Version of Miniconda to install
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
@@ -45,7 +44,7 @@ usage() {
 		Specific options:
 		    -b          use bleeding edge conda packages
 		    -3          use Python 3 (default)
-		    -2          use Python 2
+		    -2          use Python 2 (no longer supported -- fatal error)
 		    -h          show this message
 
 		EOF
@@ -96,10 +95,10 @@ parse_args() {
       BLEED_DEPLOY=true
       ;;
     3)
-      USE_PYTHON3=true
+      # noop
       ;;
     2)
-      USE_PYTHON3=false
+      fail 'Python 2.x is no longer supported.'
       ;;
     h)
       usage
@@ -131,7 +130,6 @@ main() {
   config_curl
 
   BLEED_DEPLOY=false
-  USE_PYTHON3=true
 
   parse_args "$@"
 
@@ -140,22 +138,17 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  if [[ $USE_PYTHON3 == true ]]; then
-    PYVER_PREFIX=3
-    MINICONDA_VERSION=$MINICONDA3_VERSION
-  else
-    PYVER_PREFIX=2
-    MINICONDA_VERSION=$MINICONDA2_VERSION
-  fi
+  local pyver_prefix=3
+  local miniconda_version=$MINICONDA3_VERSION
 
   case $(uname -s) in
     Linux*)
-      ANA_PLATFORM="Linux-x86_64"
-      CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-linux-64.txt"
+      local ana_platform="Linux-x86_64"
+      local conda_packages="conda${pyver_prefix}_packages-linux-64.txt"
       ;;
     Darwin*)
-      ANA_PLATFORM="MacOSX-x86_64"
-      CONDA_PACKAGES="conda${PYVER_PREFIX}_packages-osx-64.txt"
+      local ana_platform="MacOSX-x86_64"
+      local conda_packages="conda${pyver_prefix}_packages-osx-64.txt"
       ;;
     *)
       fail "Cannot install miniconda: unsupported platform $(uname -s)"
@@ -170,8 +163,8 @@ main() {
   miniconda_path="${LSSTSW}/miniconda"
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
-    miniconda_file_name="Miniconda${PYVER_PREFIX}"
-    miniconda_file_name+="-${MINICONDA_VERSION}-${ANA_PLATFORM}.sh"
+    miniconda_file_name="Miniconda${pyver_prefix}"
+    miniconda_file_name+="-${miniconda_version}-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
@@ -250,7 +243,7 @@ main() {
       PACKAGES=($(echo "${PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
       ARGS+=("${PACKAGES[@]}")
     else
-      ARGS+=("--file" "${SCRIPT_DIR}/../etc/${CONDA_PACKAGES}")
+      ARGS+=("--file" "${SCRIPT_DIR}/../etc/${conda_packages}")
     fi
 
     conda "${ARGS[@]}"

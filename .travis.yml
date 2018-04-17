@@ -11,18 +11,6 @@ matrix:
         - MODE=versiondb
         - VERSIONDB_PUSH=false
     - os: linux
-      env: MODE=deploy2
-    - os: linux
-      env: MODE=deploy2-bleed
-    - os: linux
-      env:
-        - MODE=deploy2
-        - EUPS_GITREV=b9a7664aee338363b104738b893eb05a6e5c465c
-    #- os: osx
-    #  env: MODE=deploy2
-    #- os: osx
-    #  env: MODE=deploy2-bleed
-    - os: linux
       env: MODE=deploy3
     - os: linux
       env: MODE=deploy3-bleed
@@ -72,22 +60,14 @@ script: |
     deploy*)
       # print git version
       git --version
-      if [[ $MODE == deploy2-bleed ]]; then
-        echo -e "*** testing with BLEED Python 2 conda/pip packages ***\n"
-        CONDA_PREFIX="2"
-        ./bin/deploy -b -2
-      elif [[ $MODE == deploy3-bleed ]]; then
+      if [[ $MODE == deploy3-bleed ]]; then
         echo -e "*** testing with BLEED Python 3 conda/pip packages ***\n"
         CONDA_PREFIX="3"
-        ./bin/deploy -b -3
-      elif [[ $MODE == deploy2 ]]; then
-        echo -e "*** testing with PINNED Python 2 conda/pip packages ***\n"
-        CONDA_PREFIX="2"
-        ./bin/deploy -2
+        ./bin/deploy -b
       elif [[ $MODE == deploy3 ]]; then
         echo -e "*** testing with PINNED Python 3 conda/pip packages ***\n"
         CONDA_PREFIX="3"
-        ./bin/deploy -3
+        ./bin/deploy
       else
         echo -e "*** Unrecognized mode for deploy script ***\n"
         exit -1
