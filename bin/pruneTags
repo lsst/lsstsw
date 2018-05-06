@@ -4,9 +4,13 @@ from __future__ import absolute_import, division, print_function
 import argparse
 from eups import Eups
 
+ALWAYS_KEEP = ["lsstsw", "lsst_build"]
+
 def main(tags, dry_run=False, delete_untagged=False):
     eups = Eups()
     for product in eups.findProducts():
+        if product.name in ALWAYS_KEEP:
+            continue
         removed = []
         for tag in product.tags:
             if tag not in tags:
