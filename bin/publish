@@ -120,12 +120,16 @@ run eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
 
 if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
-  run sed -r 's|EUPS distribution [^ ]+ version list. Version 1.0|EUPS distribution '"$DISTRIBTAG"' version list. Version 1.0|' \
-      "${EUPS_PKGROOT}/tags/${BUILD}.list" > "${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+  match='EUPS distribution ([^ ]+) version list. Version 1.0'
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1"
+  src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
+  dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+  run sed -r "s|${match}|${sub}|" "$src_tag" > "$dst_tag"
 
   # remove the original bNNNN tag to reduce tag proliferation
-  rm "${EUPS_PKGROOT}/tags/${BUILD}.list"
-
+  rm "$src_tag"
 fi
 
 #
