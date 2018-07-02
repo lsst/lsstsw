@@ -34,6 +34,9 @@ VERSIONDB=${LSSTSW}/versiondb
 # location of exclusions.txt file for 'lsst-build prepare' command
 EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 
+# name of conda env to create/update/use
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-dm-scipipe}
+
 #
 # exported variables
 #

@@ -1,0 +1,18 @@
+name: lsst-dm-scipipe
+channels:
+  - defaults
+dependencies:
+  - astropy
+  - bottleneck
+  - cython
+  - future
+  - h5py
+  - matplotlib
+  - numexpr
+  - numpy
+  - pandas
+  - pip
+  - pyyaml
+  - requests
+  - scipy
+  - sqlalchemy

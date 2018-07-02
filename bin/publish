@@ -75,6 +75,9 @@ fi
 
 PRODUCTS=("$@")
 
+# shellcheck disable=SC1091
+source activate "$LSST_CONDA_ENV_NAME"
+
 for prod in "${PRODUCTS[@]}"; do
   if [[ -z "$prod" ]]; then
     echo "zero length product names are not permitted"
