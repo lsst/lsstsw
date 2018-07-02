@@ -18,7 +18,7 @@ BUILD=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck source=./etc/settings.cfg.sh
+# shellcheck disable=SC1090
 . "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
