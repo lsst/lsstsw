@@ -186,12 +186,12 @@ main() {
     touch "$miniconda_lock"
   )
 
+  # intentionally outside of a lockfile subshell
+  export PATH="$LSSTSW/miniconda/bin:$PATH"
+
   (
     # configure alt conda channel(s)
     if [[ -n $CONDA_CHANNELS ]]; then
-      # shellcheck disable=SC2030
-      export PATH="$LSSTSW/miniconda/bin:$PATH"
-
       # remove any previously configured non-default channels
       # XXX allowed to fail
       conda config --remove-key channels || true
@@ -218,7 +218,6 @@ main() {
     # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
     # uses the conda package specification from this repo.
     # shellcheck disable=SC2031
-    export PATH="$LSSTSW/miniconda/bin:$PATH"
 
     # conda may leave behind lock files from an uncompleted package
     # installation attempt.  These need to be cleaned up before [re]attempting
