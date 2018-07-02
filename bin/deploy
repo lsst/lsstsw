@@ -207,7 +207,11 @@ main() {
     fi
   )
 
-  test -f "${LSSTSW}/miniconda/.packages.deployed" || ( # conda packages
+  # cleanup orphaned lock file
+  local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
+  [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
+
+  (
     # Install packages on which the stack is known to depend
 
     # XXX note that
@@ -234,8 +238,6 @@ main() {
     ARGS+=("--file" "${SCRIPT_DIR}/../etc/${conda_packages}")
 
     conda "${ARGS[@]}"
-
-    touch "${LSSTSW}/miniconda/.packages.deployed"
   )
 
   # intentionally outside of a lockfile subshell
