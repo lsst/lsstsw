@@ -57,6 +57,10 @@ matrix:
       services:
         - docker
       script: ./tests/hadolint.sh
+
+    - env: TEST=make
+      language: c
+      script: ./tests/make.sh
   # osx builds are often very slow to start due to high demand
   fast_finish: true
   # allow_failures:
