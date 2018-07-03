@@ -1,3 +1,4 @@
+---
 sudo: false
 language: c
 matrix:
@@ -6,20 +7,27 @@ matrix:
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=true
+
     - os: linux
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=false
+
     - os: linux
       env: MODE=deploy3
+
     - os: linux
       env: MODE=deploy3-bleed
+
     #- os: osx
     #  env: MODE=deploy3
+
     #- os: osx
     #  env: MODE=deploy3-bleed
+
     - os: linux
       env: MODE=redeploy
+
     - env: TEST=shellcheck
       services:
         - docker
@@ -174,5 +182,7 @@ script: |
 branches:
   only:
     - master
+    # also matched against tag pushes
+    - /^\d+\.\d+\.\d+$/
 notifications:
   email: false
