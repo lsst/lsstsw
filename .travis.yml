@@ -28,6 +28,12 @@ matrix:
     - os: linux
       env: MODE=redeploy
 
+    - env: TEST=yamllint
+      language: c
+      services:
+        - docker
+      script: ./tests/yamllint.sh
+
     - env: TEST=shellcheck
       language: c
       services:
