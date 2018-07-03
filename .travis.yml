@@ -28,6 +28,12 @@ matrix:
     - os: linux
       env: MODE=redeploy
 
+    - env: TEST=markdownlint
+      language: c
+      services:
+        - docker
+      script: ./tests/mdl.sh
+
     - env: TEST=yamllint
       language: c
       services:
