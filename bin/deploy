@@ -10,7 +10,9 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.3.21} # Version of Miniconda to install
+# force Python 3
+LSST_PYTHON_VERSION=3
+MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
 GIT_VERSION=${GIT_VERSION:-2.16.1}          # Version of git to install
@@ -138,8 +140,8 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  local pyver_prefix=3
-  local miniconda_version=$MINICONDA3_VERSION
+  local pyver_prefix=$LSST_PYTHON_VERSION
+  local miniconda_version=$MINICONDA_VERSION
 
   local deploy_mode=packages
   if [[ $BLEED_DEPLOY == true ]]; then
