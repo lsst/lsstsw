@@ -46,7 +46,7 @@ deploy*)
   esac
   echo -e "*** checking installed vs ${conda_packages} conda packages ***"
   conda list -e > "./etc/${conda_packages}"
-  git diff
+  git --no-pager diff
   rebuild pytest
   ;;
 versiondb*)
