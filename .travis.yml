@@ -29,19 +29,10 @@ matrix:
       env: MODE=redeploy
 
     - env: TEST=shellcheck
+      language: c
       services:
         - docker
-      script: |
-        set -e
-        shopt -s globstar nullglob
-        CHECK=( **/*.sh bin/* )
-        IGNORE=( **/*.csh bin/flock-fd lsst_build/** )
-        for i in "${!CHECK[@]}"; do
-          [[ " ${IGNORE[@]} " =~ " ${CHECK[$i]} " ]] && unset -v 'CHECK[$i]'
-        done
-        [[ ${#CHECK[@]} -eq 0 ]] && exit
-        docker run -v $(pwd):$(pwd) -w $(pwd) \
-          koalaman/shellcheck-alpine:v0.4.6 -x "${CHECK[@]}"
+      script: ./tests/shellcheck.sh
   # osx builds are often very slow to start due to high demand
   fast_finish: true
   #allow_failures:
