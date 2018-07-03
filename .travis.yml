@@ -3,37 +3,36 @@ sudo: false
 language: c
 matrix:
   include:
-    - os: linux
+    - &accept
+      os: linux
+      env: MODE=deploy3
+      services:
+        - docker
+      script: ./tests/docker-acceptance.sh
+
+    - <<: *accept
+      env: MODE=deploy3-bleed
+
+    - <<: *accept
+      env: MODE=redeploy
+
+    - <<: *accept
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=true
-      script: ./tests/acceptance.sh
 
-    - os: linux
+    - <<: *accept
       env:
         - MODE=versiondb
         - VERSIONDB_PUSH=false
-      script: ./tests/acceptance.sh
 
-    - os: linux
-      env: MODE=deploy3
-      script: ./tests/acceptance.sh
+    # - os: osx
+    #   env: MODE=deploy3
+    #   script: ./tests/acceptance.sh
 
-    - os: linux
-      env: MODE=deploy3-bleed
-      script: ./tests/acceptance.sh
-
-    #- os: osx
-    #  env: MODE=deploy3
-    #  script: ./tests/acceptance.sh
-
-    #- os: osx
-    #  env: MODE=deploy3-bleed
-    #  script: ./tests/acceptance.sh
-
-    - os: linux
-      env: MODE=redeploy
-      script: ./tests/acceptance.sh
+    # - os: osx
+    #   env: MODE=deploy3-bleed
+    #   script: ./tests/acceptance.sh
 
     - env: TEST=markdownlint
       language: c
@@ -54,8 +53,8 @@ matrix:
       script: ./tests/shellcheck.sh
   # osx builds are often very slow to start due to high demand
   fast_finish: true
-  #allow_failures:
-  #  - os: osx
+  # allow_failures:
+  #   - os: osx
 branches:
   only:
     - master
