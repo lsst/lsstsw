@@ -1,20 +1,19 @@
 #!/bin/bash
 
-set -eo pipefile
-export SHELLOPTS
+set -Eeo pipefail
 
 expect() {
-local title="$1"
-local is="$2"
-local should="$3"
+  local title="$1"
+  local is="$2"
+  local should="$3"
 
-echo -e "$title"
+  echo -e "$title"
 
-if [[ "$is" != "$should" ]]; then
-   echo -e "    expected(${should})"
-   echo -e "    got(${is})"
-   exit 1
-fi
+  if [[ "$is" != "$should" ]]; then
+     echo -e "    expected(${should})"
+     echo -e "    got(${is})"
+     exit 1
+  fi
 }
 
 case $MODE in
@@ -22,15 +21,16 @@ deploy*)
   # print git version
   git --version
   if [[ $MODE == deploy3-bleed ]]; then
-    echo -e "*** testing with BLEED Python 3 conda/pip packages ***\n"
+    echo -e "*** testing with BLEED Python 3 conda/pip packages ***"
     ./bin/deploy -b
   elif [[ $MODE == deploy3 ]]; then
-    echo -e "*** testing with PINNED Python 3 conda/pip packages ***\n"
+    echo -e "*** testing with PINNED Python 3 conda/pip packages ***"
     ./bin/deploy
   else
-    echo -e "*** Unrecognized mode for deploy script ***\n"
+    echo -e "*** Unrecognized mode for deploy script ***"
     exit -1
   fi
+  # shellcheck disable=SC1091
   . ./bin/setup.sh
   case $(uname -s) in
     Linux*)
@@ -44,13 +44,13 @@ deploy*)
       exit 1
       ;;
   esac
-  echo -e "*** checking installed vs ${conda_packages} conda packages ***\n"
+  echo -e "*** checking installed vs ${conda_packages} conda packages ***"
   conda list -e > "./etc/${conda_packages}"
   git diff
   rebuild pytest
   ;;
 versiondb*)
-  echo -e "*** testing VERSIONDB_PUSH=$VERSIONDB_PUSH for versiondb ***\n"
+  echo -e "*** testing VERSIONDB_PUSH=$VERSIONDB_PUSH for versiondb ***"
   export VERSIONDB_PUSH
   export VERSIONDB_REPO=./versiondb-test
   mkdir -p $VERSIONDB_REPO
@@ -59,11 +59,12 @@ versiondb*)
   # make one
   (
     tmpdir=$(mktemp -u -t 'versiondb.XXXXXXXX')
+    # shellcheck disable=SC2064
     trap "{ rm -rf $tmpdir; }" EXIT
 
     mkdir -p "$tmpdir"
     git clone "$VERSIONDB_REPO" "$tmpdir"
-    cd $tmpdir
+    cd "$tmpdir"
     # it appears that with some versions of git, --author doesn't bypass
     # the user.email/user.name check.
     git config --local user.email 'author@example.com'
@@ -76,6 +77,7 @@ versiondb*)
 
   mkdir -p versiondb/{dep_db,ver_db,manifests}
 
+  # shellcheck disable=SC1091
   . ./bin/setup.sh
   rebuild pytest
 
@@ -84,30 +86,30 @@ versiondb*)
     echo 'should have master ref'
     git show-ref --heads | grep -q refs/heads/master
 
-    revs=($(git rev-list master))
+    mapfile -t revs < <(git rev-list master)
 
     # the first commit is the garbage empty commit in order to create the
     # master ref
-    expect 'should have two commits'\
-      ${#revs[@]} \
+    expect 'should have two commits' \
+      "${#revs[@]}" \
       2
 
     expect 'should have author name' \
-      "$(git log --format=%an ${revs[0]}^\!)" \
+      "$(git log --format=%an "${revs[0]}"^\!)" \
       'LSST DATA Management'
 
     expect 'should have author email' \
-      "$(git log --format=%ae ${revs[0]}^\!)" \
+      "$(git log --format=%ae "${revs[0]}"^\!)" \
       'dm-devel@lists.lsst.org'
 
     expect 'should have subject line' \
-      "$(git log --format=%s ${revs[0]}^\!)" \
+      "$(git log --format=%s "${revs[0]}"^\!)" \
       'Updates for build b1.'
   else
     echo 'should have master ref'
     git show-ref --heads | grep -q refs/heads/master
 
-    revs=($(git rev-list master))
+    mapfile -t revs < <(git rev-list master)
     expect 'should have one commit' \
       ${#revs[@]} \
       1
