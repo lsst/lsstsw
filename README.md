@@ -14,20 +14,20 @@ http://developer.lsst.io/en/latest/build-ci/lsstsw.html
 Structure
 ---------
 
-path       | description
-:----------|:-----------------------------------------------------------------
-miniconda  | Anaconda Python distribution
-bin        | software distribution binaries (rebuild, publish)
-build      | directory where builds take place
-distserver | EUPS distribution server directory
-etc        | configuration files live here
-eups       | local installation of EUPS
-lfs        | local installation of various packages, e.g. git (lfs stands for "Linux from Scratch")
-lsst_build | lsst_build software tools directory (separately git managed)
-README     | the file you're reading
-stack      | the EUPS software stack into which successfully built packages are installed
-var        | contains lock files and log files
-versiondb  | version database used by lsst_build to assign +N versions (separately git managed)
+| path       | description                                                    |
+| :----------|:---------------------------------------------------------------|
+| miniconda  | Anaconda Python distribution                                   |
+| bin        | software distribution binaries (rebuild, publish)              |
+| build      | directory where builds take place                              |
+| distserver | EUPS distribution server directory                             |
+| etc        | configuration files live here                                  |
+| eups       | local installation of EUPS                                     |
+| lfs        | local installation of various packages, e.g. git (lfs stands for "Linux from Scratch") |
+| lsst_build | lsst_build software tools directory (separately git managed)   |
+| README     | the file you're reading                                        |
+| stack      | the EUPS software stack into which successfully built packages are installed |
+| var        | contains lock files and log files                              |
+| versiondb  | version database used by lsst_build to assign +N versions (separately git managed) |
 
 The most important directories to know about are etc (config files), stack
 (the built software directory), and distserver (the distribution server
@@ -44,7 +44,7 @@ Release workflow
 
 Typical release workflow:
 
-  * run `rebuild`, run acceptance checks until satisfied
-  * git-tag the packages using mass-tag with the release tag
-  * rerun `rebuild` with the tags
-  * run `publish current`
+* run `rebuild`, run acceptance checks until satisfied
+* git-tag the packages using mass-tag with the release tag
+* rerun `rebuild` with the tags
+* run `publish current`
