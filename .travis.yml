@@ -51,6 +51,12 @@ matrix:
       services:
         - docker
       script: ./tests/shellcheck.sh
+
+    - env: TEST=hadolint
+      language: c
+      services:
+        - docker
+      script: ./tests/hadolint.sh
   # osx builds are often very slow to start due to high demand
   fast_finish: true
   # allow_failures:
