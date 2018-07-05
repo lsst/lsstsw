@@ -232,8 +232,8 @@ main() {
 
     # disable the conda install progress bar when not attached to a tty. Eg.,
     # when running under CI
-    if [[ ! -t 0 ]]; then
-      ARGS+=("-q")
+    if [[ ! -t 1 ]]; then
+      ARGS+=("--quiet")
     fi
 
     ARGS+=("--file" "${SCRIPT_DIR}/../etc/${conda_packages}")
