@@ -15,7 +15,7 @@ LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.3.21}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-""}
-LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.16.1}
+LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
@@ -265,7 +265,9 @@ main() {
       ./configure --prefix="${LSSTSW}/lfs"
       make -j4
       make install
-      cd "${LSSTSW}/lfs/share/man"
+      man_dir="${LSSTSW}/lfs/share/man"
+      mkdir -p "$man_dir"
+      cd "$man_dir"
       tar xzf "${LSSTSW}/sources/git-manpages-${LSST_GIT_VERSION}.tar.gz"
       (cd "$LSSTSW" && git config push.default current)
     else
