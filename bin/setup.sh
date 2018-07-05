@@ -25,6 +25,10 @@ export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
 
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-dm-scipipe}
+# shellcheck disable=SC1091
+source activate "$LSST_CONDA_ENV_NAME"
+
 # shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 

@@ -42,6 +42,12 @@ rehash
 
 setenv MANPATH "$LSSTSW/lfs/share/man:"
 
+if ( ! $?LSST_CONDA_ENV_NAME ) then
+  set LSST_CONDA_ENV_NAME="lsst-dm-scipipe"
+endif
+# shellcheck disable=SC1091
+source activate "$LSST_CONDA_ENV_NAME"
+
 source "$LSSTSW/eups/current/bin/setups.csh"
 
 setup -r "$LSSTSW/lsst_build"

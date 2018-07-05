@@ -1,0 +1,18 @@
+# This env file should be kept in sync with conda3_bleed-linux-64.txt with the
+# exception of the nomkl being present on linux and NOT on osx.
+# nomkl is required on linux.  See DM-8146
+# future + pyyaml are lsst-build deps. See DM-15025
+astropy
+bottleneck
+cython
+future
+h5py
+matplotlib
+numexpr
+numpy
+pandas
+pip
+pyyaml
+requests
+scipy
+sqlalchemy

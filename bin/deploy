@@ -10,7 +10,9 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.3.21} # Version of Miniconda to install
+# force Python 3
+LSST_PYTHON_VERSION=3
+MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-""}
 GIT_VERSION=${GIT_VERSION:-2.16.1}          # Version of git to install
@@ -138,22 +140,30 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  local pyver_prefix=3
-  local miniconda_version=$MINICONDA3_VERSION
+  local pyver_prefix=$LSST_PYTHON_VERSION
+  local miniconda_version=$MINICONDA_VERSION
+
+  local deploy_mode=packages
+  if [[ $BLEED_DEPLOY == true ]]; then
+    deploy_mode=bleed
+  fi
 
   case $(uname -s) in
     Linux*)
-      local ana_platform="Linux-x86_64"
-      local conda_packages="conda${pyver_prefix}_packages-linux-64.txt"
+      local ana_platform='Linux-x86_64'
+      local pkg_postfix='linux-64'
       ;;
     Darwin*)
-      local ana_platform="MacOSX-x86_64"
-      local conda_packages="conda${pyver_prefix}_packages-osx-64.txt"
+      local ana_platform='MacOSX-x86_64'
+      local pkg_postfix='osx-64'
       ;;
     *)
       fail "Cannot install miniconda: unsupported platform $(uname -s)"
       ;;
   esac
+
+  local conda_packages
+  conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.txt"
 
   cd "$LSSTSW"
 
@@ -178,12 +188,12 @@ main() {
     touch "$miniconda_lock"
   )
 
+  # intentionally outside of a lockfile subshell
+  export PATH="$LSSTSW/miniconda/bin:$PATH"
+
   (
     # configure alt conda channel(s)
     if [[ -n $CONDA_CHANNELS ]]; then
-      # shellcheck disable=SC2030
-      export PATH="$LSSTSW/miniconda/bin:$PATH"
-
       # remove any previously configured non-default channels
       # XXX allowed to fail
       conda config --remove-key channels || true
@@ -199,14 +209,17 @@ main() {
     fi
   )
 
-  test -f "${LSSTSW}/miniconda/.packages.deployed" || ( # conda packages
+  # cleanup orphaned lock file
+  local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
+  [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
+
+  (
     # Install packages on which the stack is known to depend
 
     # XXX note that
     # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
     # uses the conda package specification from this repo.
     # shellcheck disable=SC2031
-    export PATH="$LSSTSW/miniconda/bin:$PATH"
 
     # conda may leave behind lock files from an uncompleted package
     # installation attempt.  These need to be cleaned up before [re]attempting
@@ -214,7 +227,8 @@ main() {
     conda clean --lock
 
     ARGS=()
-    ARGS+=("install" "--yes")
+    ARGS+=('env' 'update')
+    ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
 
     # disable the conda install progress bar when not attached to a tty. Eg.,
     # when running under CI
@@ -222,32 +236,14 @@ main() {
       ARGS+=("-q")
     fi
 
-    if [[ $BLEED_DEPLOY == true ]]; then
-      PACKAGES=()
-      # lsst_distrib / lsst_sims deps
-      PACKAGES+=(numpy scipy matplotlib requests cython sqlalchemy astropy pandas numexpr bottleneck h5py)
-
-      # lsst_build deps
-      PACKAGES+=(future pyyaml)
-
-      # The conda Intel MKL linked packages are intentionally avoided [on
-      # linux].
-      # See: https://jira.lsstcorp.org/browse/DM-5105
-      if [[ $(uname -s) == Linux* ]]; then
-        PACKAGES+=("nomkl")
-      fi
-
-      # filter duplicate packages
-      PACKAGES=($(echo "${PACKAGES[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-      ARGS+=("${PACKAGES[@]}")
-    else
-      ARGS+=("--file" "${SCRIPT_DIR}/../etc/${conda_packages}")
-    fi
+    ARGS+=("--file" "${SCRIPT_DIR}/../etc/${conda_packages}")
 
     conda "${ARGS[@]}"
-
-    touch "${LSSTSW}/miniconda/.packages.deployed"
   )
+
+  # intentionally outside of a lockfile subshell
+  # shellcheck disable=SC1091
+  source activate "$LSST_CONDA_ENV_NAME"
 
   test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
