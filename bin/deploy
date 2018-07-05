@@ -7,16 +7,16 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
-EUPS_VERSION=${EUPS_VERSION:-2.1.4}         # Version of EUPS to install
-EUPS_GITREV=${EUPS_GITREV:-""}
-EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
+LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
+LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
 LSST_PYTHON_VERSION=3
-MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
-MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-CONDA_CHANNELS=${CONDA_CHANNELS:-""}
-GIT_VERSION=${GIT_VERSION:-2.16.1}          # Version of git to install
-LFS_VERSION=${LFS_VERSION:-2.3.4}           # Version of git-lfs to install
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.3.21}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-""}
+LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.16.1}
+LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.3.4}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 
@@ -141,7 +141,7 @@ main() {
   export PATH="${LSSTSW}/bin:${PATH}"
 
   local pyver_prefix=$LSST_PYTHON_VERSION
-  local miniconda_version=$MINICONDA_VERSION
+  local miniconda_version=$LSST_MINICONDA_VERSION
 
   local deploy_mode=packages
   if [[ $BLEED_DEPLOY == true ]]; then
@@ -180,7 +180,7 @@ main() {
 
     cd sources
     $CURL "${CURL_OPTS[@]}" -# -L \
-      -O "${MINICONDA_BASE_URL}/${miniconda_file_name}"
+      -O "${LSST_MINICONDA_BASE_URL}/${miniconda_file_name}"
 
     rm -rf "$miniconda_path"
     bash "$miniconda_file_name" -b -p "$miniconda_path"
@@ -193,12 +193,12 @@ main() {
 
   (
     # configure alt conda channel(s)
-    if [[ -n $CONDA_CHANNELS ]]; then
+    if [[ -n $LSST_CONDA_CHANNELS ]]; then
       # remove any previously configured non-default channels
       # XXX allowed to fail
       conda config --remove-key channels || true
 
-      for c in $CONDA_CHANNELS; do
+      for c in $LSST_CONDA_CHANNELS; do
         conda config --add channels "$c"
       done
 
@@ -256,15 +256,17 @@ main() {
       echo "::: Deploying git"
       cd sources
       GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-      $CURL "${CURL_OPTS[@]}" -L -O "${GIT_BASE_URL}/git-${GIT_VERSION}.tar.gz"
-      $CURL "${CURL_OPTS[@]}" -L -O "${GIT_BASE_URL}/git-manpages-${GIT_VERSION}.tar.gz"
-      tar xzf "git-${GIT_VERSION}.tar.gz"
-      cd "git-${GIT_VERSION}"
+      $CURL "${CURL_OPTS[@]}" -L \
+        -O "${GIT_BASE_URL}/git-${LSST_GIT_VERSION}.tar.gz"
+      $CURL "${CURL_OPTS[@]}" -L \
+        -O "${GIT_BASE_URL}/git-manpages-${LSST_GIT_VERSION}.tar.gz"
+      tar xzf "git-${LSST_GIT_VERSION}.tar.gz"
+      cd "git-${LSST_GIT_VERSION}"
       ./configure --prefix="${LSSTSW}/lfs"
       make -j4
       make install
       cd "${LSSTSW}/lfs/share/man"
-      tar xzf "${LSSTSW}/sources/git-manpages-${GIT_VERSION}.tar.gz"
+      tar xzf "${LSSTSW}/sources/git-manpages-${LSST_GIT_VERSION}.tar.gz"
       (cd "$LSSTSW" && git config push.default current)
     else
       echo "::: Using installed git"
@@ -285,12 +287,13 @@ main() {
 
     cd sources
     LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
-    LFS_ARCHIVE="git-lfs-${lfs_platform}-${LFS_VERSION}.tar.gz"
-    $CURL "${CURL_OPTS[@]}" -L -O "${LFS_BASE_URL}/v${LFS_VERSION}/${LFS_ARCHIVE}"
+    LFS_ARCHIVE="git-lfs-${lfs_platform}-${LSST_LFS_VERSION}.tar.gz"
+    $CURL "${CURL_OPTS[@]}" -L \
+      -O "${LFS_BASE_URL}/v${LSST_LFS_VERSION}/${LFS_ARCHIVE}"
 
     tar xzf "$LFS_ARCHIVE"
     mkdir -p "${LSSTSW}/lfs/bin"
-    cp "git-lfs-${LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
+    cp "git-lfs-${LSST_LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
     cd "$LSSTSW"
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
   )
@@ -304,39 +307,44 @@ main() {
     ln -s legacy "${LSSTSW}/eups/current"
   )
 
-  # if a EUPS_GITREV is set, use that as the version dir name
-  if [[ -n $EUPS_GITREV ]]; then
-    EUPS_VERSION=$EUPS_GITREV
+  # if a LSST_EUPS_GITREV is set, use that as the version dir name
+  if [[ -n $LSST_EUPS_GITREV ]]; then
+    LSST_EUPS_VERSION=$LSST_EUPS_GITREV
   fi
 
-  test -f "${LSSTSW}/eups/${EUPS_VERSION}/.deployed" || ( # EUPS
-    echo "::: Deploying eups ${EUPS_VERSION}"
-    if [[ -e "${LSSTSW}/eups/${EUPS_VERSION}" ]]; then
-      chmod -R +w "${LSSTSW}/eups/${EUPS_VERSION}"
-      rm -rf "${LSSTSW}/eups/${EUPS_VERSION}"
+  test -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
+    echo "::: Deploying eups ${LSST_EUPS_VERSION}"
+    if [[ -e "${LSSTSW}/eups/${LSST_EUPS_VERSION}" ]]; then
+      chmod -R +w "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
+      rm -rf "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
     fi
 
     cd sources
-    if [[ -n $EUPS_GITREV ]]; then
-      git clone "$EUPS_GITREPO" eups
+    if [[ -n $LSST_EUPS_GITREV ]]; then
+      git clone "$LSST_EUPS_GITREPO" eups
       cd eups
-      git checkout "$EUPS_GITREV"
+      git checkout "$LSST_EUPS_GITREV"
     else
-      $CURL "${CURL_OPTS[@]}" -L -o "eups-${EUPS_VERSION}.tar.gz" "https://github.com/RobertLuptonTheGood/eups/archive/${EUPS_VERSION}.tar.gz"
-      tar xzf "eups-${EUPS_VERSION}.tar.gz"
-      cd "eups-${EUPS_VERSION}"
+      $CURL "${CURL_OPTS[@]}" -L \
+        -o "eups-${LSST_EUPS_VERSION}.tar.gz" \
+        "https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz"
+      tar xzf "eups-${LSST_EUPS_VERSION}.tar.gz"
+      cd "eups-${LSST_EUPS_VERSION}"
     fi
 
-    ./configure --prefix="${LSSTSW}/eups/${EUPS_VERSION}" --with-python="${LSSTSW}/miniconda/bin/python" --with-eups="${LSSTSW}/stack"
+    ./configure \
+      --prefix="${LSSTSW}/eups/${LSST_EUPS_VERSION}" \
+      --with-python="${LSSTSW}/miniconda/bin/python" \
+      --with-eups="${LSSTSW}/stack"
     make
     make install
-    touch "${LSSTSW}/eups/${EUPS_VERSION}/.deployed"
+    touch "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed"
   )
 
-  if [[ "$(readlink "${LSSTSW}/eups/current")" != "$EUPS_VERSION" ]]; then
-    echo "::: Making eups ${EUPS_VERSION} the default"
+  if [[ "$(readlink "${LSSTSW}/eups/current")" != "$LSST_EUPS_VERSION" ]]; then
+    echo "::: Making eups ${LSST_EUPS_VERSION} the default"
     rm -f "${LSSTSW}/eups/current"
-    ln -s "${EUPS_VERSION}" "${LSSTSW}/eups/current"
+    ln -s "${LSST_EUPS_VERSION}" "${LSSTSW}/eups/current"
   fi
 
   test -f "${LSSTSW}/stack/.deployed" || ( # Adjust the stack config
