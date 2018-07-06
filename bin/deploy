@@ -245,6 +245,14 @@ main() {
   # shellcheck disable=SC1091
   source activate "$LSST_CONDA_ENV_NAME"
 
+  # report packages in the current conda env
+  #
+  # note that `conda list -e`, which is the current format being used for the
+  # canoncial env files, doesn't seem to list pip installed packages.  The the
+  # "newer" yaml env file format from `conda env export` does include pip/pypi
+  # packages.
+  conda env export
+
   test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
       GITVERNUM=$(git --version | cut -d\  -f 3)
