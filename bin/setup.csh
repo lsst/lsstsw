@@ -43,7 +43,7 @@ rehash
 setenv MANPATH "$LSSTSW/lfs/share/man:"
 
 if ( ! $?LSST_CONDA_ENV_NAME ) then
-  set LSST_CONDA_ENV_NAME="lsst-dm-scipipe"
+  set LSST_CONDA_ENV_NAME="lsst-scipipe"
 endif
 # shellcheck disable=SC1091
 source activate "$LSST_CONDA_ENV_NAME"
