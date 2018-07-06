@@ -221,11 +221,6 @@ main() {
   (
     # Install packages on which the stack is known to depend
 
-    # XXX note that
-    # https://github.com/lsst/miniconda2/blob/master/ups/eupspkg.cfg.sh
-    # uses the conda package specification from this repo.
-    # shellcheck disable=SC2031
-
     # conda may leave behind lock files from an uncompleted package
     # installation attempt.  These need to be cleaned up before [re]attempting
     # to install packages.
