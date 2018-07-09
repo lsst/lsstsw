@@ -43,7 +43,8 @@ print_settings() {
   )
 
   # print env vars prefixed with ^EUPS
-  vars+=(${!EUPS@})
+  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
+  vars+=("${eups_vars[@]}")
 
   for i in ${vars[*]}
   do
@@ -125,6 +126,7 @@ if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
+  # shellcheck disable=SC1117
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1"
   src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
   dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"

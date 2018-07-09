@@ -7,10 +7,10 @@
 # relative to <lsstsw>/bin/
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
-  SUFFIX=sh
+  SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
-  SUFFIX=zsh
+  SUFFIX='zsh'
 fi
 
 if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
