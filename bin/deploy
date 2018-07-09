@@ -257,7 +257,7 @@ main() {
     if hash git 2>/dev/null; then
       GITVERNUM=$(git --version | cut -d\  -f 3)
       # shellcheck disable=SC2183 disable=SC2046
-      GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
+      GITVER=$(printf "%02d-%02d-%02d\\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
     fi
 
     if [[ $GITVER < "01-09-00" ]]; then

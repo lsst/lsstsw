@@ -16,11 +16,12 @@ FROM=$1
 TO=$2
 
 for line in $(eups list --raw -t "$FROM"); do
-  line=( ${line//|/ } )
+  IFS="|" read -r -a field <<< "$line"
+
   if [[ $DO_NOTHING == 1 ]]; then
-    echo eups declare -t "$TO" "${line[0]}" "${line[1]}"
+    echo eups declare -t "$TO" "${field[0]}" "${field[1]}"
   else
-    eups declare -t "$TO" "${line[0]}" "${line[1]}"
+    eups declare -t "$TO" "${field[0]}" "${field[1]}"
   fi
 done
 

@@ -113,10 +113,10 @@ fi
   ARGS+=("--version-git-repo=${VERSIONDB}")
   ARGS+=("$LSSTSW_BUILD_DIR")
   if [[ ! -z "$REF" ]]; then
-    # XXX intentionally not quoted to allow word splitting
-    ARGS+=($REF)
+    IFS=" " read -r -a refs <<< "$REF"
+    ARGS+=("${refs[@]}")
   fi
-  ARGS+=(${PRODUCTS[@]})
+  ARGS+=("${PRODUCTS[@]}")
 
   lsst-build prepare "${ARGS[@]}"
 
