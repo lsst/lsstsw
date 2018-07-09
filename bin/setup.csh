@@ -45,8 +45,8 @@ setenv MANPATH "$LSSTSW/lfs/share/man:"
 if ( ! $?LSST_CONDA_ENV_NAME ) then
   set LSST_CONDA_ENV_NAME="lsst-scipipe"
 endif
-# shellcheck disable=SC1091
-source activate "$LSST_CONDA_ENV_NAME"
+source "$LSSTSW/miniconda/etc/profile.d/conda.csh"
+conda activate "$LSST_CONDA_ENV_NAME"
 
 source "$LSSTSW/eups/current/bin/setups.csh"
 
