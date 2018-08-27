@@ -15,5 +15,6 @@ pandas
 pip
 pyyaml
 requests
+scikit-learn
 scipy
 sqlalchemy
