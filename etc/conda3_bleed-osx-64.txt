@@ -4,6 +4,7 @@
 # future + pyyaml are lsst-build deps. See DM-15025
 astropy
 bottleneck
+cffi
 cython
 future
 h5py
