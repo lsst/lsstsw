@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+from __future__ import absolute_import, division, print_function
+
+import argparse
+from eups import Eups
+
+def main(tags, dry_run=False, delete_untagged=False):
+    eups = Eups()
+    for product in eups.findProducts():
+        removed = []
+        for tag in product.tags:
+            if tag not in tags:
+                if not dry_run:
+                    eups.unassignTag(tag, product.name, product.version)
+                removed.append(tag)
+        if len(removed) == len(product.tags) and delete_untagged:
+            if not dry_run:
+                eups.remove(product.name, product.version)
+            print("%s %s: deleted" % (product.name, product.version))
+        elif removed:
+            print("%s %s: pruned %s" % (product.name, product.version,
+                                        ", ".join(removed)))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Undeclare all EUPS tags other than those provided."
+    )
+    parser.add_argument("keep", metavar="TAG", type=str, nargs="+",
+                        help="EUPS tags to keep")
+    parser.add_argument("--delete-untagged", action="store_true", default=False,
+                        help="Delete EUPS products with no tags")
+    parser.add_argument("-n", "--dry-run", action="store_true", default=False,
+                        help="Only show operations that would be performed")
+    args = parser.parse_args()
+    main(args.keep, dry_run=args.dry_run, delete_untagged=args.delete_untagged)

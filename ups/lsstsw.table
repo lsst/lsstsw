@@ -1,0 +1,4 @@
+setupRequired(lsst_build)
+envPrepend(PATH, ${PRODUCT_DIR}/miniconda/bin)
+envPrepend(PATH, ${PRODUCT_DIR}/bin)
+envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/src, |)
