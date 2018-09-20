@@ -8,3 +8,6 @@
 [create]validation_data_cfht  None
 [create]validation_data_decam None
 [create]validation_data_hsc   None
+[create]ap_verify_testdata    None
+[create]ap_verify_hits2015    None
+[create]ap_verify_ci_hits2015 None
