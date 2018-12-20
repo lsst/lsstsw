@@ -135,7 +135,7 @@ main() {
 
   parse_args "$@"
 
-  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc}
+  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
@@ -164,11 +164,24 @@ main() {
 
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.txt"
-  local env_file="${SCRIPT_DIR}/../etc/${conda_packages}"
-  local lsstsw_ref
-  lsstsw_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
+  #local env_file="${SCRIPT_DIR}/../etc/${conda_packages}"
+  #local lsstsw_ref
+  #lsstsw_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
+  #
+  #echo "::: effective LSST_LSSTSW_REF: ${lsstsw_ref}"
 
-  echo "::: effective LSST_LSSTSW_REF: ${lsstsw_ref}"
+  cd "$LSSTSW"
+  # conda environment reference
+  local env_file="${LSSTSW}/scipipe_conda_env/etc/${conda_packages}"
+  local env_ref
+  cd env
+  git clone https://github.com/lsst/scipipe_conda_env
+  cd scipipe_conda_env
+  env_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
+
+  echo "::: conda environment revision: ${env_ref}"
+  echo "${env_file}"
+   
 
   cd "$LSSTSW"
 
