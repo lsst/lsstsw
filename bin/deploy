@@ -19,6 +19,7 @@ LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
+LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 
 set -e
 
@@ -172,17 +173,22 @@ main() {
 
   cd "$LSSTSW"
   # conda environment reference
-  local env_file="${LSSTSW}/scipipe_conda_env/etc/${conda_packages}"
+  local env_file="${LSSTSW}/env/scipipe_conda_env/etc/${conda_packages}"
+
+  echo "::: conda environment file: ${env_file}"
+
   local env_ref
   cd env
-  git clone https://github.com/lsst/scipipe_conda_env
+  if [ -d 'scipipe_conda_env' ]; then
+    echo ":::  conda environment already present"
+  else 
+    git clone "$LSST_BUILD_GITREPO"
+  fi
   cd scipipe_conda_env
   env_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
 
   echo "::: conda environment revision: ${env_ref}"
-  echo "${env_file}"
    
-
   cd "$LSSTSW"
 
   fetch_repos.yaml 'master'
