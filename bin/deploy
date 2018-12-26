@@ -165,11 +165,6 @@ main() {
 
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.txt"
-  #local env_file="${SCRIPT_DIR}/../etc/${conda_packages}"
-  #local lsstsw_ref
-  #lsstsw_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
-  #
-  #echo "::: effective LSST_LSSTSW_REF: ${lsstsw_ref}"
 
   cd "$LSSTSW"
   # conda environment reference
