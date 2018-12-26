@@ -177,7 +177,7 @@ main() {
   if [ -d 'scipipe_conda_env' ]; then
     echo ":::  conda environment already present"
   else 
-    git clone "$LSST_BUILD_GITREPO"
+    git clone "$LSST_SCIPIPECENV_GITREPO"
   fi
   cd scipipe_conda_env
   env_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
