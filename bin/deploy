@@ -20,6 +20,9 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+# this git ref controls which set of conda packages are used to initialize the
+# the default conda env defined in scipipe_conda_env git package (RFC-553).
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-d8778d3}
 
 set -e
 
@@ -168,22 +171,22 @@ main() {
 
   cd "$LSSTSW"
   # conda environment reference
-  local env_file="${LSSTSW}/env/scipipe_conda_env/etc/${conda_packages}"
+  local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
+  local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
 
   echo "::: conda environment file: ${env_file}"
 
-  local env_ref
   cd env
-  if [ -d 'scipipe_conda_env' ]; then
+  if [ -d "${LSST_SPLENV_REF}" ]; then
     echo ":::  conda environment already present"
-  else 
-    git clone "$LSST_SCIPIPECENV_GITREPO"
+  else
+    mkdir "${LSST_SPLENV_REF}"
+    $CURL "${CURL_OPTS[@]}" -# -L \
+       "${env_url}/${conda_packages}" \
+       --output "${LSST_SPLENV_REF}/${conda_packages}"
   fi
-  cd scipipe_conda_env
-  env_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
+  echo "::: conda environment revision: ${LSST_SPLENV_REF}"
 
-  echo "::: conda environment revision: ${env_ref}"
-   
   cd "$LSSTSW"
 
   fetch_repos.yaml 'master'
