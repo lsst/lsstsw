@@ -19,6 +19,10 @@ LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
+LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+# this git ref controls which set of conda packages are used to initialize the
+# the default conda env defined in scipipe_conda_env git package (RFC-553).
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-fcd27eb}
 
 set -e
 
@@ -135,7 +139,7 @@ main() {
 
   parse_args "$@"
 
-  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc}
+  mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
@@ -164,11 +168,24 @@ main() {
 
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.txt"
-  local env_file="${SCRIPT_DIR}/../etc/${conda_packages}"
-  local lsstsw_ref
-  lsstsw_ref=$(git log -n 1 --pretty=format:'%h' "$env_file")
 
-  echo "::: effective LSST_LSSTSW_REF: ${lsstsw_ref}"
+  cd "$LSSTSW"
+  # conda environment reference
+  local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
+  local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
+
+  echo "::: conda environment file: ${env_file}"
+
+  cd env
+  if [ -e "${LSST_SPLENV_REF}"/"${conda_packages}" ]; then
+    echo ":::  conda environment already present"
+  else
+    mkdir "${LSST_SPLENV_REF}"
+    $CURL "${CURL_OPTS[@]}" -# -L \
+       "${env_url}/${conda_packages}" \
+       --output "${LSST_SPLENV_REF}/${conda_packages}"
+  fi
+  echo "::: conda environment revision: ${LSST_SPLENV_REF}"
 
   cd "$LSSTSW"
 
