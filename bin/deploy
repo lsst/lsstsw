@@ -22,7 +22,7 @@ LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-a6ad1c7}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-fcd27eb}
 
 set -e
 
