@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
