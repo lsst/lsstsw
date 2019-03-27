@@ -7,12 +7,12 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
 LSST_PYTHON_VERSION=3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.12}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-""}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
@@ -22,7 +22,7 @@ LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-fcd27eb}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-1172c30}
 
 set -e
 
@@ -167,7 +167,7 @@ main() {
   esac
 
   local conda_packages
-  conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.txt"
+  conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.yml"
 
   cd "$LSSTSW"
   # conda environment reference
