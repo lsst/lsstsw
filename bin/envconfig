@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# setup lsstsw environment
+#
+# source this file from your ~/.bashrc or ~/.zshrc
+#
+# relative to <lsstsw>/bin/
+
+
+set -e
+
+print_error() {
+  >&2 echo -e "$@"
+}
+
+fail() {
+  local code=${2:-1}
+  [[ -n $1 ]] && print_error "$1"
+  # shellcheck disable=SC2086
+  exit $code
+}
+
+usage() {
+  if [[ ! -z "$1" ]]; then
+    print_error "$0: $1"
+  fi
+
+  # note that heredocs are prefixed with tab chars
+  fail "$(cat <<-EOF
+
+		Usage: $0  [-i] [-e] [-h]
+
+		Specific options:
+		-i          interactive
+        -e REF      sperimental env ref
+        -h          show this message
+
+		EOF
+  )"
+}
+
+parse_args() {
+  local OPTIND
+  local opt
+
+  while getopts "hei" opt; do
+    case "$opt" in
+    i)
+      INTERACTIVE=true
+      ;;
+    h)
+      usage
+      ;;
+    e)
+      shift;
+      ENVREF=$1
+      ;;
+    *)
+      usage "Unknown option: ${opt}"
+      ;;
+    esac
+  done
+  shift $((OPTIND-1))
+}
+
+##############
+
+INTERACTIVE=false
+ENVREF=""
+
+parse_args "$@"
+
+
+if [[ -z $ZSH_NAME ]]; then
+  LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
+  SUFFIX='sh'
+else
+  LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  SUFFIX='zsh'
+fi
+
+if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
+  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
+  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
+  return
+fi
+
+export PATH="$LSSTSW/miniconda/bin:$PATH"
+export PATH="$LSSTSW/lfs/bin:$PATH"
+export PATH="$LSSTSW/bin:$PATH"
+
+export MANPATH="$LSSTSW/lfs/share/man:"
+
+if $INTERACTIVE ; then
+  # get the list of available environments
+  #ENVS="`conda env list | grep -v ^# | awk -F ' /' '{ print $2 }'`"
+  ENVS="`conda env list | grep -v ^#`"
+  #echo ${ENVS[@]}
+  for i in "${ENVS[@]}"
+  do
+  	:
+  	echo "$i\n"
+  done
+  #LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+elif [[ $ENVREF != "" ]]; then
+  echo "Setting $ENVREF environment..."
+  
+  LSST_CONDA_ENV_NAME=${ENVREF}
+  source activate "$LSST_CONDA_ENV_NAME"
+else
+  echo "Setting the defualt environment..."
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  source activate "$LSST_CONDA_ENV_NAME"
+fi
+
+. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+
+setup -r "$LSSTSW/lsst_build"
+
+echo "notice: lsstsw tools have been set up."
+
+# vim: tabstop=2 shiftwidth=2 expandtab

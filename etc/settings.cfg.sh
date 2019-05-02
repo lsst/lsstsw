@@ -37,6 +37,9 @@ EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 # name of conda env to create/update/use
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
 
+# conda environment prefix
+LSST_CONDA_ENV_PREFIX="scipipe-env"
+
 #
 # exported variables
 #

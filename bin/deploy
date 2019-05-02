@@ -45,13 +45,15 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-2] [-3] [-b] [-h]
+		Usage: $0 [-2] [-3] [-b] [-h] [-e] [-r]
 
 		Specific options:
-		    -b          use bleeding edge conda packages
-		    -3          use Python 3 (default)
-		    -2          use Python 2 (no longer supported -- fatal error)
-		    -h          show this message
+        -b          use bleeding edge conda packages
+        -e REF      sperimental env ref
+        -r BRANCH   sperimental branch ref
+        -3          use Python 3 (default)
+        -2          use Python 2 (no longer supported -- fatal error)
+        -h          show this message
 
 		EOF
   )"
@@ -95,7 +97,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "23bh" opt; do
+  while getopts "23bher" opt; do
     case "$opt" in
     b)
       BLEED_DEPLOY=true
@@ -108,6 +110,14 @@ parse_args() {
       ;;
     h)
       usage
+      ;;
+    e)
+      shift;
+      ENVREF=$1
+      ;;
+    r)
+      shift;
+      ENVBREF=$1
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -132,12 +142,33 @@ am_I_sourced() {
   fi
 }
 
+get_branch_tip_hash() {
+    reftip=`git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVBREF} | cut -c1-7`
+    if [[ $reftip == '' ]]; then
+      echo ":::- Branch ${ENVBREF} invalid!"
+      exit
+    else
+      echo ":::- Found new environment reference ${reftip} !"
+    fi
+}
+
+fixnames() {
+  FIXED_ENVREF=${ENVREF//[.\/]/-}
+  FIXED_ENVBREF=${ENVBREF//[.\/]/-}
+  echo "Fixed ${FIXED_ENVREF}"
+  echo "Fixed ${FIXED_ENVBREF}"
+}
+
 main() {
   config_curl
 
   BLEED_DEPLOY=false
 
+  ENVREF=""
+  ENVBREF=""
+
   parse_args "$@"
+  fixnames
 
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
@@ -166,26 +197,47 @@ main() {
       ;;
   esac
 
+  # If -r is provided, -e is ignored
+  if [[ $FIXED_ENVBREF != '' ]]; then
+    # get given branch SHA1 and assign it to LSST_SPLENV_REF
+    get_branch_tip_hash
+    LSST_SPLENV_REF="$reftip"
+    # Defining environment name
+    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVBREF}-${LSST_SPLENV_REF}"
+  elif [[ $ENVREF != '' ]]; then
+    LSST_SPLENV_REF="${ENVREF}"
+    # Defining environment name
+    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVREF}"
+  fi
+  REF_FOLDER_NAME=${LSST_SPLENV_REF//[.\/]/-}
+
+  echo "Ref Name: ${LSST_SPLENV_REF}"
+  echo "Folder name: ${REF_FOLDER_NAME}"
+  echo "Env Name: ${LSST_CONDA_ENV_NAME}"
+
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.yml"
 
   cd "$LSSTSW"
   # conda environment reference
-  local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
+  local env_file="${LSSTSW}/env/${FIXED_ENVBREF}/${REF_FOLDER_NAME}/${conda_packages}"
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
 
   echo "::: conda environment file: ${env_file}"
 
   cd env
-  if [ -e "${LSST_SPLENV_REF}"/"${conda_packages}" ]; then
+  if [ -e "${env_file}" ]; then
     echo ":::  conda environment already present"
   else
-    mkdir "${LSST_SPLENV_REF}"
+    if [[ $FIXED_ENVBREF != '' ]]; then
+      mkdir -p "${FIXED_ENVBREF}"
+      cd "${FIXED_ENVBREF}"
+    fi
+    mkdir -p "${REF_FOLDER_NAME}"
     $CURL "${CURL_OPTS[@]}" -# -L \
        "${env_url}/${conda_packages}" \
-       --output "${LSST_SPLENV_REF}/${conda_packages}"
+       --output "${REF_FOLDER_NAME}/${conda_packages}"
   fi
-  echo "::: conda environment revision: ${LSST_SPLENV_REF}"
 
   cd "$LSSTSW"
 
@@ -260,7 +312,8 @@ main() {
 
   # intentionally outside of a lockfile subshell
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  echo "Activate environment ${LSST_CONDA_ENV_NAME}"
+  source activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env
   #
