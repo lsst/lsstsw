@@ -6,9 +6,6 @@
 #
 # relative to <lsstsw>/bin/
 
-
-set -e
-
 print_error() {
   >&2 echo -e "$@"
 }
@@ -112,6 +109,9 @@ else
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
   source activate "$LSST_CONDA_ENV_NAME"
 fi
+export LSST_CONDA_ENV_NAME
+export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
+#echo "${PATH}"
 
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 

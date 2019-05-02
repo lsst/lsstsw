@@ -203,7 +203,7 @@ main() {
     get_branch_tip_hash
     LSST_SPLENV_REF="$reftip"
     # Defining environment name
-    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVBREF}-${LSST_SPLENV_REF}"
+    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVBREF}.${LSST_SPLENV_REF}"
   elif [[ $ENVREF != '' ]]; then
     LSST_SPLENV_REF="${ENVREF}"
     # Defining environment name

@@ -31,6 +31,20 @@ versiondb_head() {
   (cd "$VERSIONDB" && git rev-parse HEAD)
 }
 
+save_build_env() {
+  filename="${LSSTSW_BUILD_DIR}/${BUILD}.env"
+  echo "Saving environment information in ${filename}"
+  conda env export | grep -v "^name"> .env
+  echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
+  cat .env | grep "^prefix" >> "${filename}"
+  cat .env | grep -v "^prefix" > .env1
+  if [[ "${LSST_CONDA_ENV_NAME}" != "lsst-scipipe" ]]; then
+    echo ${LSST_CONDA_ENV_NAME:11}
+  fi
+  #rm .env
+  #rm .env1
+}
+
 PREP_ONLY=false
 NO_FETCH=false
 UPDATE=false
@@ -65,7 +79,7 @@ fi
 
 (
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  #source activate "$LSST_CONDA_ENV_NAME"
 
   # true if `lsst-build prepare` has run successfully
   PREPARED=false
@@ -128,6 +142,8 @@ fi
 
   eval "$(grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
   echo "# BUILD ID: $BUILD"
+
+  save_build_env
 
   if [[ $PREP_ONLY == true ]]; then
     exit
