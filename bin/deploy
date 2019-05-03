@@ -49,8 +49,8 @@ usage() {
 
 		Specific options:
         -b          use bleeding edge conda packages
-        -e REF      sperimental env ref
-        -r BRANCH   sperimental branch ref
+        -e REF      github reference in scipipe_conda_env (tag or SHA1)
+        -r BRANCH   github branch in scipipe_conda_env
         -3          use Python 3 (default)
         -2          use Python 2 (no longer supported -- fatal error)
         -h          show this message
@@ -148,15 +148,13 @@ get_branch_tip_hash() {
       echo ":::- Branch ${ENVBREF} invalid!"
       exit
     else
-      echo ":::- Found new environment reference ${reftip} !"
+      echo "::: Found new environment reference ${reftip} !"
     fi
 }
 
 fixnames() {
   FIXED_ENVREF=${ENVREF//[.\/]/-}
   FIXED_ENVBREF=${ENVBREF//[.\/]/-}
-  echo "Fixed ${FIXED_ENVREF}"
-  echo "Fixed ${FIXED_ENVBREF}"
 }
 
 main() {
@@ -199,21 +197,18 @@ main() {
 
   # If -r is provided, -e is ignored
   if [[ $FIXED_ENVBREF != '' ]]; then
-    # get given branch SHA1 and assign it to LSST_SPLENV_REF
+    # get latest branch SHA1 and assign it to LSST_SPLENV_REF
     get_branch_tip_hash
     LSST_SPLENV_REF="$reftip"
-    # Defining environment name
-    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVBREF}.${LSST_SPLENV_REF}"
+    # Defining environment name based on branch and SHA1 from the tip of the branch
+    LSST_CONDA_ENV_NAME="scipipe-env-${FIXED_ENVBREF}.${LSST_SPLENV_REF}"
   elif [[ $ENVREF != '' ]]; then
     LSST_SPLENV_REF="${ENVREF}"
-    # Defining environment name
-    LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_PREFIX}-${FIXED_ENVREF}"
+    # Defining environment name based on the provided SHA1
+    LSST_CONDA_ENV_NAME="scipipe-env-${FIXED_ENVREF}"
   fi
+  # the folder where to store locally the environment yaml
   REF_FOLDER_NAME=${LSST_SPLENV_REF//[.\/]/-}
-
-  echo "Ref Name: ${LSST_SPLENV_REF}"
-  echo "Folder name: ${REF_FOLDER_NAME}"
-  echo "Env Name: ${LSST_CONDA_ENV_NAME}"
 
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.yml"
@@ -227,9 +222,10 @@ main() {
 
   cd env
   if [ -e "${env_file}" ]; then
-    echo ":::  conda environment already present"
+    echo "::: conda environment already present"
   else
     if [[ $FIXED_ENVBREF != '' ]]; then
+      # if a branch is provided, store the environment yaml inside the corresponding subfolder
       mkdir -p "${FIXED_ENVBREF}"
       cd "${FIXED_ENVBREF}"
     fi

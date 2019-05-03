@@ -25,11 +25,12 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0  [-i] [-e] [-h]
+		Usage: $0  [-i] [-e] [-b] [-h]
 
 		Specific options:
-		-i          interactive
-        -e REF      sperimental env ref
+		    -i          interactive, propose a list of available environment
+        -e REF      environment name
+        -b bXXXX    activate the environment already used for the build with id bXXXX
         -h          show this message
 
 		EOF
@@ -40,8 +41,12 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "hei" opt; do
+  while getopts "heib" opt; do
     case "$opt" in
+    b)
+      shift;
+      BUILD_ID=$1
+      ;;
     i)
       INTERACTIVE=true
       ;;
@@ -64,6 +69,7 @@ parse_args() {
 
 INTERACTIVE=false
 ENVREF=""
+BUILD_ID=""
 
 parse_args "$@"
 
@@ -88,26 +94,46 @@ export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
 
+# need to activate the miniconda base environment to get the correct list of environments
+source activate "${LSSTSW}/miniconda"
+
 if $INTERACTIVE ; then
   # get the list of available environments
   #ENVS="`conda env list | grep -v ^# | awk -F ' /' '{ print $2 }'`"
-  ENVS="`conda env list | grep -v ^#`"
-  #echo ${ENVS[@]}
-  for i in "${ENVS[@]}"
-  do
-  	:
-  	echo "$i\n"
+  IFS=$'\n' raw_envs=( $( conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base" ) )
+  envs=()
+  #echo "${ENVS}"
+  l=0
+  for i in "${raw_envs[@]}"; do
+    ((l++))
+    envs[l]=`echo "${i}" | cut -f 1 -d ' '`
+    echo "${l} - ${envs[${l}]}"
   done
-  #LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  read -p "Choose environment [1 to ${l}]: " eid
+  LSST_CONDA_ENV_NAME="${envs[${eid}]}"
+  source activate "$LSST_CONDA_ENV_NAME"
+
 elif [[ $ENVREF != "" ]]; then
-  echo "Setting $ENVREF environment..."
-  
+  echo "Setting $ENVREF environment..."  
   LSST_CONDA_ENV_NAME=${ENVREF}
   source activate "$LSST_CONDA_ENV_NAME"
+
+elif [[ $BUILD_ID != "" ]]; then
+  echo "Looking for evironment used in build ${BUILD_ID}..."
+  if [[ -f "build/${BUILD_ID}.env" ]]; then
+    LSST_CONDA_ENV_NAME=`cat "build/${BUILD_ID}.env" | grep 'environment_name' | cut -f 2 -d ' '`
+    source activate "$LSST_CONDA_ENV_NAME"
+    echo "Environment ${LSST_CONDA_ENV_NAME} found."
+  else
+    echo "No build found with id ${BUILD_ID}"
+    exit
+  fi
+
 else
-  echo "Setting the defualt environment..."
+  echo "Setting the default environment..."
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
   source activate "$LSST_CONDA_ENV_NAME"
+
 fi
 export LSST_CONDA_ENV_NAME
 export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
