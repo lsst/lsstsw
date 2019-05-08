@@ -10,52 +10,48 @@ print_error() {
   >&2 echo -e "$@"
 }
 
-fail() {
-  local code=${2:-1}
-  [[ -n $1 ]] && print_error "$1"
-  # shellcheck disable=SC2086
-  exit $code
-}
-
 usage() {
   if [[ ! -z "$1" ]]; then
     print_error "$0: $1"
   fi
 
   # note that heredocs are prefixed with tab chars
-  fail "$(cat <<-EOF
+  echo "$(cat <<-EOF
 
-		Usage: $0  [-i] [-e] [-b] [-h]
+		Usage: $0  [-i] [-n] [-b] [-h]
 
 		Specific options:
-		    -i          interactive, propose a list of available environment
-        -e REF      environment name
-        -b bXXXX    activate the environment already used for the build with id bXXXX
+        -i          interactive, choose from a list of available environments
+        -n NAME      environment name
+        -b bXXXX    activate the environment used for the build with id bXXXX
         -h          show this message
 
 		EOF
   )"
+
+  finish=true
+   
 }
 
 parse_args() {
   local OPTIND
   local opt
 
-  while getopts "heib" opt; do
+  while getopts "bnih" opt; do
     case "$opt" in
     b)
       shift;
       BUILD_ID=$1
+      ;;
+    n)
+      shift;
+      ENVREF=$1
       ;;
     i)
       INTERACTIVE=true
       ;;
     h)
       usage
-      ;;
-    e)
-      shift;
-      ENVREF=$1
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -70,9 +66,13 @@ parse_args() {
 INTERACTIVE=false
 ENVREF=""
 BUILD_ID=""
+finish=false
 
 parse_args "$@"
 
+if [ "$finish" = true ]; then
+  return
+fi
 
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
@@ -99,10 +99,8 @@ source activate "${LSSTSW}/miniconda"
 
 if $INTERACTIVE ; then
   # get the list of available environments
-  #ENVS="`conda env list | grep -v ^# | awk -F ' /' '{ print $2 }'`"
   IFS=$'\n' raw_envs=( $( conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base" ) )
   envs=()
-  #echo "${ENVS}"
   l=0
   for i in "${raw_envs[@]}"; do
     ((l++))
@@ -110,8 +108,13 @@ if $INTERACTIVE ; then
     echo "${l} - ${envs[${l}]}"
   done
   read -p "Choose environment [1 to ${l}]: " eid
-  LSST_CONDA_ENV_NAME="${envs[${eid}]}"
-  source activate "$LSST_CONDA_ENV_NAME"
+  if [[ -z "${envs[${eid}]}" ]] ; then
+    echo "User input error: ${eid} not in range."
+    return
+  else
+    LSST_CONDA_ENV_NAME="${envs[${eid}]}"
+    source activate "$LSST_CONDA_ENV_NAME"
+  fi
 
 elif [[ $ENVREF != "" ]]; then
   echo "Setting $ENVREF environment..."  
@@ -119,14 +122,14 @@ elif [[ $ENVREF != "" ]]; then
   source activate "$LSST_CONDA_ENV_NAME"
 
 elif [[ $BUILD_ID != "" ]]; then
-  echo "Looking for evironment used in build ${BUILD_ID}..."
+  echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=`cat "build/${BUILD_ID}.env" | grep 'environment_name' | cut -f 2 -d ' '`
     source activate "$LSST_CONDA_ENV_NAME"
-    echo "Environment ${LSST_CONDA_ENV_NAME} found."
+    echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
     echo "No build found with id ${BUILD_ID}"
-    exit
+    return
   fi
 
 else
