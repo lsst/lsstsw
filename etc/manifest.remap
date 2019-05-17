@@ -11,3 +11,4 @@
 [create]ap_verify_testdata    None
 [create]ap_verify_hits2015    None
 [create]ap_verify_ci_hits2015 None
+[create]ap_pipe_testdata      None
