@@ -180,14 +180,18 @@ main() {
   if [[ $FIXED_ENVREF != '' ]]; then
     # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
     # if the REF is not a branch (or a tag), the reftip will be empty
-    reftip=`git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVREF} | cut -c1-7`
-    if [[ $reftip == '' ]]; then
-        # the provided ref is not a branch nor a tag
+    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVREF})
+    reftip=$(echo "$rawreftip" | cut -c1-7)
+    reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
+    echo ">> $reftype"
+    if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then
+        # the provided ref is not a branch
         LSST_SPLENV_REF="${ENVREF}"
         # Defining environment name based on the provided SHA1
         LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}"
         local env_file="${LSSTSW}/env/${ENVREF}/${conda_packages}"
     else
+        # the provided ref is a branch
         LSST_SPLENV_REF="$reftip"
         # Defining environment name based on branch and SHA1 from the tip of the branch
         LSST_CONDA_ENV_NAME="scipipe-env-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
@@ -201,6 +205,7 @@ main() {
   cd "$LSSTSW"
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
+  echo "$env_url"
 
   echo "::: conda environment file: ${env_file}"
 
@@ -293,6 +298,7 @@ main() {
   # intentionally outside of a lockfile subshell
   # shellcheck disable=SC1091
   echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+  # shellcheck disable=SC1091
   source activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env

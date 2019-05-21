@@ -37,22 +37,23 @@ save_build_env() {
   filename="${LSSTSW_BUILD_DIR}/${BUILD}.env"
   echo "Saving environment information in ${filename}"
   conda env export > /tmp/lenv
-  cat /tmp/lenv | grep "^prefix" >> "${filename}"
-  cat /tmp/lenv | grep -v "^prefix" > /tmp/lenv1
+  echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
+  grep "^prefix" /tmp/lenv >> "${filename}"
+  grep -v "^prefix" /tmp/lenv > /tmp/lenv1
   if [[ "${LSST_CONDA_ENV_NAME}" != "lsst-scipipe" ]]; then
-    ref="${LSST_CONDA_ENV_NAME:12}"
+    ref="${LSST_CONDA_ENV_NAME:13}"
     if [[ $ref == *"."* ]]; then
-      ref1=`echo "${ref}" | cut -f 1 -d .`
-      ref2=`echo "${ref}" | cut -f 2 -d .`
+      ref1=$(echo "${ref}" | cut -f 1 -d .)
+      ref2=$(echo "${ref}" | cut -f 2 -d .)
       local_env_dir="${LSSTSW}/env/${ref1}/${ref2}"
     else
       local_env_dir="${LSSTSW}/env/${ref}"
     fi 
     if [ -d "${local_env_dir}" ]; then
-      ref_file=`ls "${local_env_dir}/conda*.yml"`
+      ref_file=$(find "${local_env_dir}" -name "conda*.yml" -exec basename {} \;)
       local_env_file="${local_env_dir}/${ref_file}"
       echo "env_ref_file: ${local_env_file}" >> "${filename}"
-      cat "${local_env_file}" | grep -v "^name" > /tmp/renv
+      grep -v "^name" "${local_env_file}" > /tmp/renv
       set +e  # disable set -e for the diff commands.
       diff -u /tmp/lenv1 /tmp/renv >> "${filename}"
       echo "Differences between active anvironment and reference environment"

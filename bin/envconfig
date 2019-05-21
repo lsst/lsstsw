@@ -16,7 +16,7 @@ usage() {
   fi
 
   # note that heredocs are prefixed with tab chars
-  echo "$(cat <<-EOF
+  (cat <<-EOF
 
 		Usage: $0  [-i] [-n] [-b] [-h]
 
@@ -27,7 +27,7 @@ usage() {
         -h          show this message
 
 		EOF
-  )"
+  )
 
   finish=true
    
@@ -95,36 +95,46 @@ export PATH="$LSSTSW/bin:$PATH"
 export MANPATH="$LSSTSW/lfs/share/man:"
 
 # need to activate the miniconda base environment to get the correct list of environments
+# shellcheck disable=SC1091
 source activate "${LSSTSW}/miniconda"
 
 if $INTERACTIVE ; then
+  raw_envs=()
   # get the list of available environments
-  IFS=$'\n' raw_envs=( $( conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base" ) )
+  while IFS=$'\n' read -r line 
+  do 
+    if [[ "$line" != '' ]] ; then
+      raw_envs+=("$line")
+    fi
+  done < <(conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base")
   envs=()
   l=0
   for i in "${raw_envs[@]}"; do
     ((l++))
-    envs[l]=`echo "${i}" | cut -f 1 -d ' '`
+    envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
     echo "${l} - ${envs[${l}]}"
   done
-  read -p "Choose environment [1 to ${l}]: " eid
+  read -r -p "Choose environment [1 to ${l}]: " eid
   if [[ -z "${envs[${eid}]}" ]] ; then
     echo "User input error: ${eid} not in range."
     return
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
+    # shellcheck disable=SC1091
     source activate "$LSST_CONDA_ENV_NAME"
   fi
 
 elif [[ $ENVREF != "" ]]; then
   echo "Setting $ENVREF environment..."  
   LSST_CONDA_ENV_NAME=${ENVREF}
+  # shellcheck disable=SC1091
   source activate "$LSST_CONDA_ENV_NAME"
 
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/${BUILD_ID}.env" ]]; then
-    LSST_CONDA_ENV_NAME=`cat "build/${BUILD_ID}.env" | grep 'environment_name' | cut -f 2 -d ' '`
+    LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/"${BUILD_ID}".env | cut -f 2 -d ' ')
+    # shellcheck disable=SC1091
     source activate "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
@@ -135,6 +145,7 @@ elif [[ $BUILD_ID != "" ]]; then
 else
   echo "Setting the default environment..."
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  # shellcheck disable=SC1091
   source activate "$LSST_CONDA_ENV_NAME"
 
 fi
@@ -142,6 +153,7 @@ export LSST_CONDA_ENV_NAME
 export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
 #echo "${PATH}"
 
+# shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 
 setup -r "$LSSTSW/lsst_build"
