@@ -132,8 +132,8 @@ elif [[ $ENVREF != "" ]]; then
 
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
-  if [[ -f "build/${BUILD_ID}.env" ]]; then
-    LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/"${BUILD_ID}".env | cut -f 2 -d ' ')
+  if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
+    LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
     # shellcheck disable=SC1091
     source activate "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"

@@ -20,6 +20,7 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-1172c30}
 
 set -e
 
@@ -183,7 +184,6 @@ main() {
     rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVREF})
     reftip=$(echo "$rawreftip" | cut -c1-7)
     reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
-    echo ">> $reftype"
     if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then
         # the provided ref is not a branch
         LSST_SPLENV_REF="${ENVREF}"
@@ -194,18 +194,16 @@ main() {
         # the provided ref is a branch
         LSST_SPLENV_REF="$reftip"
         # Defining environment name based on branch and SHA1 from the tip of the branch
-        LSST_CONDA_ENV_NAME="scipipe-env-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
+        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
     fi
   else
-    LSST_SPLENV_REF=${LSST_SPLENV_REF:-1172c30}
     local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
   fi
 
   cd "$LSSTSW"
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
-  echo "$env_url"
 
   echo "::: conda environment file: ${env_file}"
 
