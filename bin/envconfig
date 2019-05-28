@@ -96,7 +96,7 @@ export MANPATH="$LSSTSW/lfs/share/man:"
 
 # need to activate the miniconda base environment to get the correct list of environments
 # shellcheck disable=SC1091
-source activate "${LSSTSW}/miniconda"
+source activate base
 
 if $INTERACTIVE ; then
   raw_envs=()
