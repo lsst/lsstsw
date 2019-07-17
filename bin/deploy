@@ -20,8 +20,6 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
-# this git ref controls which set of conda packages are used to initialize the
-# the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-1172c30}
 
 set -e
@@ -45,13 +43,14 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-2] [-3] [-b] [-h]
+		Usage: $0 [-2] [-3] [-b] [-h] [-r]
 
 		Specific options:
-		    -b          use bleeding edge conda packages
-		    -3          use Python 3 (default)
-		    -2          use Python 2 (no longer supported -- fatal error)
-		    -h          show this message
+	    -b          use bleeding edge conda packages
+	    -r REF      git ref in scipipe_conda_env (hash, branch, tag)
+	    -3          use Python 3 (default)
+	    -2          use Python 2 (no longer supported -- fatal error)
+	    -h          show this message
 
 		EOF
   )"
@@ -95,7 +94,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "23bh" opt; do
+  while getopts "23bhr" opt; do
     case "$opt" in
     b)
       BLEED_DEPLOY=true
@@ -108,6 +107,10 @@ parse_args() {
       ;;
     h)
       usage
+      ;;
+    r)
+      shift;
+      ENVREF=$1
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -132,12 +135,18 @@ am_I_sourced() {
   fi
 }
 
+
+
 main() {
   config_curl
 
   BLEED_DEPLOY=false
 
+  ENVREF=""
+
   parse_args "$@"
+  # Create safe directory name from git ref
+  FIXED_ENVREF=${ENVREF//[.\/]/-}
 
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
@@ -169,23 +178,45 @@ main() {
   local conda_packages
   conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.yml"
 
+  if [[ $FIXED_ENVREF != '' ]]; then
+    # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
+    # if the REF is not a branch (or a tag), the reftip will be empty
+    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVREF})
+    reftip=${rawreftip:0:7}
+    reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
+    if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then
+        # the provided ref is not a branch
+        LSST_SPLENV_REF="${ENVREF}"
+        # Defining environment name based on the provided fixed reference
+        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}"
+        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_packages}"
+    else
+        # the provided ref is a branch
+        LSST_SPLENV_REF="$reftip"
+        # Defining environment name based on branch and SHA1 from the tip of the branch
+        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
+        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
+    fi
+  else
+    local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
+  fi
+
   cd "$LSSTSW"
   # conda environment reference
-  local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
 
   echo "::: conda environment file: ${env_file}"
 
   cd env
-  if [ -e "${LSST_SPLENV_REF}"/"${conda_packages}" ]; then
-    echo ":::  conda environment already present"
+  if [ -e "${env_file}" ]; then
+    echo "::: conda environment already present"
   else
-    mkdir "${LSST_SPLENV_REF}"
+    # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
+    mkdir -p "${env_file%/*}"
     $CURL "${CURL_OPTS[@]}" -# -L \
        "${env_url}/${conda_packages}" \
-       --output "${LSST_SPLENV_REF}/${conda_packages}"
+       --output "${env_file}"
   fi
-  echo "::: conda environment revision: ${LSST_SPLENV_REF}"
 
   cd "$LSSTSW"
 
@@ -260,7 +291,9 @@ main() {
 
   # intentionally outside of a lockfile subshell
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+  # shellcheck disable=SC1091
+  source activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env
   #
@@ -425,15 +458,21 @@ main() {
   echo "Done. Run the following:"
   echo
 
-  if [[ $SHELL =~ bash$ ]]; then
-    echo "    . ${LSSTSW}/bin/setup.sh"
-  elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-    echo "    . ${LSSTSW}/bin/setup.csh"
-  elif [[ $SHELL =~ zsh$ ]]; then
-    echo "    . ${LSSTSW}/bin/setup.sh"
+  if [[ $ENVREF == '' ]]; then
+    if [[ $SHELL =~ bash$ ]]; then
+      echo "    . ${LSSTSW}/bin/setup.sh"
+    elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
+      echo "    . ${LSSTSW}/bin/setup.csh"
+    elif [[ $SHELL =~ zsh$ ]]; then
+      echo "    . ${LSSTSW}/bin/setup.sh"
+    else
+      echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
+      echo "    (Warning: ${SHELL} is an unsupported shell)"
+    fi
   else
-    echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
-    echo "    (Warning: ${SHELL} is an unsupported shell)"
+    echo "    . ${LSSTSW}/bin/envconfig -r ${LSST_CONDA_ENV_NAME}"
+    echo "      or "
+    echo "    . ${LSSTSW}/bin/envconfig -i"
   fi
 
   echo

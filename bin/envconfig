@@ -1,0 +1,163 @@
+#!/bin/bash
+
+# setup lsstsw environment
+#
+# source this file from your ~/.bashrc or ~/.zshrc
+#
+# relative to <lsstsw>/bin/
+
+print_error() {
+  >&2 echo -e "$@"
+}
+
+usage() {
+  if [[ ! -z "$1" ]]; then
+    print_error "$0: $1"
+  fi
+
+  # note that heredocs are prefixed with tab chars
+  (cat <<-EOF
+
+		Usage: $0  [-i] [-n] [-b] [-h]
+
+		Specific options:
+        -i          interactive, choose from a list of available environments
+        -n NAME      environment name
+        -b bXXXX    activate the environment used for the build with id bXXXX
+        -h          show this message
+
+		EOF
+  )
+
+  finish=true
+   
+}
+
+parse_args() {
+  local OPTIND
+  local opt
+
+  while getopts "bnih" opt; do
+    case "$opt" in
+    b)
+      shift;
+      BUILD_ID=$1
+      ;;
+    n)
+      shift;
+      ENVREF=$1
+      ;;
+    i)
+      INTERACTIVE=true
+      ;;
+    h)
+      usage
+      ;;
+    *)
+      usage "Unknown option: ${opt}"
+      ;;
+    esac
+  done
+  shift $((OPTIND-1))
+}
+
+##############
+
+INTERACTIVE=false
+ENVREF=""
+BUILD_ID=""
+finish=false
+
+parse_args "$@"
+
+if [ "$finish" = true ]; then
+  return
+fi
+
+if [[ -z $ZSH_NAME ]]; then
+  LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
+  SUFFIX='sh'
+else
+  LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  SUFFIX='zsh'
+fi
+
+if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
+  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
+  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
+  return
+fi
+
+export PATH="$LSSTSW/miniconda/bin:$PATH"
+export PATH="$LSSTSW/lfs/bin:$PATH"
+export PATH="$LSSTSW/bin:$PATH"
+
+export MANPATH="$LSSTSW/lfs/share/man:"
+
+# need to activate the miniconda base environment to get the correct list of environments
+# shellcheck disable=SC1091
+source activate base
+
+if $INTERACTIVE ; then
+  raw_envs=()
+  # get the list of available environments
+  while IFS=$'\n' read -r line 
+  do 
+    if [[ "$line" != '' ]] ; then
+      raw_envs+=("$line")
+    fi
+  done < <(conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base")
+  envs=()
+  l=0
+  for i in "${raw_envs[@]}"; do
+    ((l++))
+    envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
+    echo "${l} - ${envs[${l}]}"
+  done
+  read -r -p "Choose environment [1 to ${l}]: " eid
+  if [[ -z "${envs[${eid}]}" ]] ; then
+    echo "User input error: ${eid} not in range."
+    return
+  else
+    LSST_CONDA_ENV_NAME="${envs[${eid}]}"
+    # shellcheck disable=SC1091
+    source activate "$LSST_CONDA_ENV_NAME"
+  fi
+
+elif [[ $ENVREF != "" ]]; then
+  echo "Setting $ENVREF environment..."  
+  LSST_CONDA_ENV_NAME=${ENVREF}
+  # shellcheck disable=SC1091
+  source activate "$LSST_CONDA_ENV_NAME"
+
+elif [[ $BUILD_ID != "" ]]; then
+  echo "Looking for the environment used in build ${BUILD_ID}..."
+  if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
+    LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
+    # shellcheck disable=SC1091
+    source activate "$LSST_CONDA_ENV_NAME"
+    echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+  else
+    echo "No build found with id ${BUILD_ID}"
+    return
+  fi
+
+else
+  echo "Setting the default environment..."
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  # shellcheck disable=SC1091
+  source activate "$LSST_CONDA_ENV_NAME"
+
+fi
+export LSST_CONDA_ENV_NAME
+export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
+#echo "${PATH}"
+
+# shellcheck disable=SC1090
+. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+
+setup -r "$LSSTSW/lsst_build"
+
+echo "notice: lsstsw tools have been set up."
+
+# vim: tabstop=2 shiftwidth=2 expandtab
