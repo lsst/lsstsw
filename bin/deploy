@@ -209,7 +209,7 @@ main() {
 
   cd env
   if [ -e "${env_file}" ]; then
-    echo "::: conda environment already present"
+    echo "::: conda environment file already present"
   else
     # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
     mkdir -p "${env_file%/*}"
