@@ -115,7 +115,7 @@ if $INTERACTIVE ; then
     echo "${l} - ${envs[${l}]}"
   done
   echo "0 EXIT (return)"
-  read -r -p "Choose environment [1 to ${l}]: " eid
+  read -r -p "Choose environment [0 to ${l}] or 0 to exit: " eid
   if  [[ "${eid}" -eq 0 ]] ; then
     return
   fi
