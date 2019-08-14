@@ -457,7 +457,7 @@ main() {
 
   echo ""
   echo "::: Deploy completed."
-  echo "::: To active the just deployed environment use the following command:"
+  echo "::: To activate the just deployed environment use the following command:"
   echo
 
   if [[ $ENVREF == '' ]]; then
@@ -468,8 +468,8 @@ main() {
     elif [[ $SHELL =~ zsh$ ]]; then
       echo "    . ${LSSTSW}/bin/setup.sh"
     else
-      echo "::: The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
-      echo "::: (Warning: ${SHELL} is an unsupported shell)"
+      echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
+      echo "    (Warning: ${SHELL} is an unsupported shell)"
     fi
   else
     echo "    . ${LSSTSW}/bin/envconfig -r ${LSST_CONDA_ENV_NAME}"
