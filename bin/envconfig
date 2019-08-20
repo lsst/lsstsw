@@ -114,7 +114,11 @@ if $INTERACTIVE ; then
     envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
     echo "${l} - ${envs[${l}]}"
   done
-  read -r -p "Choose environment [1 to ${l}]: " eid
+  echo "0 EXIT (return)"
+  read -r -p "Choose environment [0 to ${l}] or 0 to exit: " eid
+  if  [[ "${eid}" -eq 0 ]] ; then
+    return
+  fi
   if [[ -z "${envs[${eid}]}" ]] ; then
     echo "User input error: ${eid} not in range."
     return
