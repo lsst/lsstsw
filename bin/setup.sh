@@ -13,12 +13,11 @@ echo "=========================="
 
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
-  SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
-  SUFFIX='zsh'
 fi
 
 echo "Sourcing bin/envconfig instead"
+# shellcheck disable=SC1090
 source "${LSSTSW}/bin/envconfig"
 
