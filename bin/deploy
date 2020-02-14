@@ -473,7 +473,7 @@ main() {
       echo "    (Warning: ${SHELL} is an unsupported shell)"
     fi
   else
-    echo "    . ${LSSTSW}/bin/envconfig -r ${LSST_CONDA_ENV_NAME}"
+    echo "    . ${LSSTSW}/bin/envconfig -n ${LSST_CONDA_ENV_NAME}"
     echo ""
     echo "::: or choose the environment to activate using:"
     echo "    . ${LSSTSW}/bin/envconfig -i"
