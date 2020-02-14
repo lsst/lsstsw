@@ -8,7 +8,7 @@ set BUILD_ID = ""
 
 if ( ! "$?1" ) then
   if ( "$1" == "-h" ) then
-    echo "Usage: source bin/setup.csh [-i] [-n] [-b] [-h]" 
+    echo "Usage: source bin/envconfig.csh [-i] [-n] [-b] [-h]" 
     echo
     echo "    -i          interactive, choose from a list of available environments"
     echo "    -n NAME     activate the environment NAME"
