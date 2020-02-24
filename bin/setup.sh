@@ -5,19 +5,35 @@
 # source this file from your ~/.bashrc or ~/.zshrc
 #
 # relative to <lsstsw>/bin/
-
-echo "=========================="
-echo "bin/setup.sh is deprecated"
-echo "Please use bin/envconfig"
-echo "=========================="
-
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
+  SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  SUFFIX='zsh'
 fi
 
-echo "Sourcing bin/envconfig instead"
-# shellcheck disable=SC1090
-source "${LSSTSW}/bin/envconfig"
+if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
+  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
+  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
+  return
+fi
 
+export PATH="$LSSTSW/miniconda/bin:$PATH"
+export PATH="$LSSTSW/lfs/bin:$PATH"
+export PATH="$LSSTSW/bin:$PATH"
+
+export MANPATH="$LSSTSW/lfs/share/man:"
+
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+# shellcheck disable=SC1091
+source activate "$LSST_CONDA_ENV_NAME"
+
+# shellcheck disable=SC1090
+. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+
+setup -r "$LSSTSW/lsst_build"
+
+echo "notice: lsstsw tools have been set up."
+
+# vim: tabstop=2 shiftwidth=2 expandtab

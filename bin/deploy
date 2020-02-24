@@ -20,6 +20,7 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-984c9f7}
 
 set -e
 
@@ -197,8 +198,6 @@ main() {
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
     fi
   else
-    # in case no ref is given as parameter, attach the default SHA-1 to lsst-scipipe
-    LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"lsst-scipipe-${LSST_SPLENV_REF}"}
     local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
   fi
 
@@ -463,17 +462,17 @@ main() {
 
   if [[ $ENVREF == '' ]]; then
     if [[ $SHELL =~ bash$ ]]; then
-      echo "    . ${LSSTSW}/bin/envconfig (bin/setup.sh is deprecated)"
+      echo "    . ${LSSTSW}/bin/setup.sh"
     elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-      echo "    . ${LSSTSW}/bin/envconfig.csh (bin/setup.csh is deprecated)"
+      echo "    . ${LSSTSW}/bin/setup.csh"
     elif [[ $SHELL =~ zsh$ ]]; then
-      echo "    . ${LSSTSW}/bin/envconfig (bin/setup.sh is deprecated)"
+      echo "    . ${LSSTSW}/bin/setup.sh"
     else
       echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
       echo "    (Warning: ${SHELL} is an unsupported shell)"
     fi
   else
-    echo "    . ${LSSTSW}/bin/envconfig -n ${LSST_CONDA_ENV_NAME}"
+    echo "    . ${LSSTSW}/bin/envconfig -r ${LSST_CONDA_ENV_NAME}"
     echo ""
     echo "::: or choose the environment to activate using:"
     echo "    . ${LSSTSW}/bin/envconfig -i"
