@@ -22,7 +22,7 @@ usage() {
 
 		Specific options:
         -i          interactive, choose from a list of available environments
-        -n NAME      environment name
+        -n NAME     activate the environment name
         -b bXXXX    activate the environment used for the build with id bXXXX
         -h          show this message
 
@@ -81,6 +81,9 @@ else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
   SUFFIX='zsh'
 fi
+
+# shellcheck disable=SC1090
+source "${LSSTSW}/etc/settings.cfg.sh"
 
 if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   echo "error: eups not found in $LSSTSW/eups/current" 1>&2
@@ -147,8 +150,9 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 
 else
-  echo "Setting the default environment..."
-  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  # in case no ref is given as parameter, attach the default SHA-1 to lsst-scipipe
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"lsst-scipipe-${LSST_SPLENV_REF}"}
+  echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
   source activate "$LSST_CONDA_ENV_NAME"
 
