@@ -5,9 +5,6 @@
 # Config file with environment variables used by ~lsstsw builder
 #
 
-# scipipe-conda-env reference
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-984c9f7}
-
 # top-level products
 PRODUCTS='lsst_distrib qserv_distrib dax_webserv'
 
@@ -36,6 +33,9 @@ VERSIONDB=${LSSTSW}/versiondb
 
 # location of exclusions.txt file for 'lsst-build prepare' command
 EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
+
+# name of conda env to create/update/use
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
 
 #
 # exported variables
