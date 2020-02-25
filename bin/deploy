@@ -187,18 +187,18 @@ main() {
         # the provided ref is not a branch
         LSST_SPLENV_REF="${ENVREF}"
         # Defining environment name based on the provided fixed reference
-        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}"
+        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}"
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_packages}"
     else
         # the provided ref is a branch
         LSST_SPLENV_REF="$reftip"
         # Defining environment name based on branch and SHA1 from the tip of the branch
-        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
+        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
     fi
   else
-    # in case no ref is given as parameter, attach the default SHA-1 to lsst-scipipe
-    LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"lsst-scipipe-${LSST_SPLENV_REF}"}
+    # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
+    LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
     local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
   fi
 

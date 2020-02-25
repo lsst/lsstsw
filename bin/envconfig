@@ -21,10 +21,10 @@ usage() {
 		Usage: $0  [-i] [-n] [-b] [-h]
 
 		Specific options:
-        -i          interactive, choose from a list of available environments
-        -n NAME     activate the environment name
-        -b bXXXX    activate the environment used for the build with id bXXXX
-        -h          show this message
+	-i          interactive, choose from a list of available environments
+	-n NAME     activate the environment name
+	-b bXXXX    activate the environment used for the build with id bXXXX
+	-h          show this message
 
 		EOF
   )
@@ -150,8 +150,8 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 
 else
-  # in case no ref is given as parameter, attach the default SHA-1 to lsst-scipipe
-  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"lsst-scipipe-${LSST_SPLENV_REF}"}
+  # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
   echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
   source activate "$LSST_CONDA_ENV_NAME"
@@ -159,7 +159,6 @@ else
 fi
 export LSST_CONDA_ENV_NAME
 export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
-#echo "${PATH}"
 
 # shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"

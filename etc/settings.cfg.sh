@@ -7,6 +7,7 @@
 
 # scipipe-conda-env reference
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-984c9f7}
+SPLENV_BASE_NAME="lsst-scipipe"
 
 # top-level products
 PRODUCTS='lsst_distrib qserv_distrib dax_webserv'

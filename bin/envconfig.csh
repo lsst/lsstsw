@@ -124,6 +124,10 @@ if ( ! $?LSST_SPLENV_REF) then
    set LSST_SPLENV_REF=`cat $LSSTSW/etc/settings.cfg.sh | grep LSST_SPLENV_REF | awk '{print substr($0,36,7)}'`
 endif
 
+if ( ! $?SPLENV_BASE_NAME) then
+   set SPLENV_BASE_NAME=`cat $LSSTSW/etc/settings.cfg.sh | grep SPLENV_BASE_NAME | awk -F '"' '{print $2}'`
+endif
+
 if ( ! $?LSST_CONDA_ENV_NAME ) then
   set LSST_CONDA_ENV_NAME="lsst-scipipe-$LSST_SPLENV_REF"
 endif
