@@ -224,6 +224,7 @@ main() {
   fetch_repos.yaml 'master'
 
   # install miniconda
+  # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
     miniconda_file_name="Miniconda${pyver_prefix}"
@@ -241,6 +242,7 @@ main() {
     touch "$miniconda_lock"
   )
 
+  # shellcheck disable=SC1090 
   . "${miniconda_path}/etc/profile.d/conda.sh"
 
   (
@@ -292,7 +294,7 @@ main() {
   # shellcheck disable=SC1091
   echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
-  source "${miniconda_path}/bin/activate" "${LSST_CONDA_ENV_NAME}"
+  conda activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env
   #

@@ -54,5 +54,5 @@ export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
 # the location of the distribution server
 export EUPS_PKGROOT=${EUPS_PKGROOT:-${LSSTSW}/distserver/production}
 
-# the miniconda patch
-miniconda_path="${LSSTSW}/miniconda"
+# defining where the miniconda is installed
+export miniconda_path="${LSSTSW}/miniconda"
