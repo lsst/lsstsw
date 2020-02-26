@@ -241,6 +241,8 @@ main() {
     touch "$miniconda_lock"
   )
 
+  . "${miniconda_path}/etc/profile.d/conda.sh"
+
   (
     # configure alt conda channel(s)
     if [[ -n $LSST_CONDA_CHANNELS ]]; then
