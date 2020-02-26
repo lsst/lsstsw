@@ -19,5 +19,5 @@ fi
 
 echo "Sourcing bin/envconfig instead"
 # shellcheck disable=SC1090
-source "${LSSTSW}/bin/envconfig"
+source "${LSSTSW}/bin/envconfig" 0
 
