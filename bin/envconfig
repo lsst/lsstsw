@@ -91,7 +91,6 @@ if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   return
 fi
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
@@ -99,7 +98,7 @@ export MANPATH="$LSSTSW/lfs/share/man:"
 
 # need to activate the miniconda base environment to get the correct list of environments
 # shellcheck disable=SC1091
-source activate base
+source "${miniconda_path}/bin/activate" base
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -128,21 +127,21 @@ if $INTERACTIVE ; then
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
     # shellcheck disable=SC1091
-    source activate "$LSST_CONDA_ENV_NAME"
+    source "${miniconda_path}/bin/activate" "$LSST_CONDA_ENV_NAME"
   fi
 
 elif [[ $ENVREF != "" ]]; then
   echo "Setting $ENVREF environment..."  
   LSST_CONDA_ENV_NAME=${ENVREF}
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  source "${miniconda_path}/bin/activate" "$LSST_CONDA_ENV_NAME"
 
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
     # shellcheck disable=SC1091
-    source activate "$LSST_CONDA_ENV_NAME"
+    source "${miniconda_path}/bin/activate" "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
     echo "No build found with id ${BUILD_ID}"
@@ -154,7 +153,7 @@ else
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
   echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  source "${miniconda_path}/bin/activate" "$LSST_CONDA_ENV_NAME"
 
 fi
 export LSST_CONDA_ENV_NAME

@@ -106,7 +106,7 @@ fi
 
 (
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  source "${miniconda_path}/bin/activate" "$LSST_CONDA_ENV_NAME"
 
   # true if `lsst-build prepare` has run successfully
   PREPARED=false
