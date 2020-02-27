@@ -160,7 +160,6 @@ else
 
 fi
 export LSST_CONDA_ENV_NAME
-export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
 
 # shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"

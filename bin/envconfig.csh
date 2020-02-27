@@ -70,10 +70,11 @@ if ( ! -f "$LSSTSW/eups/current/bin/setups.csh" ) then
   exit 1
 endif
 
-setenv PATH "$LSSTSW/miniconda/bin:$PATH"
 setenv PATH "$LSSTSW/lfs/bin:$PATH"
 setenv PATH "$LSSTSW/bin:$PATH"
 rehash
+
+source "$LSSTSW/miniconda/etc/profile.d/conda.csh"
 
 setenv MANPATH "$LSSTSW/lfs/share/man:"
 
@@ -130,10 +131,6 @@ endif
 
 if ( ! $?LSST_CONDA_ENV_NAME ) then
   set LSST_CONDA_ENV_NAME="lsst-scipipe-$LSST_SPLENV_REF"
-endif
-
-if ( ! $?CONDA_DEFAULT_ENV ) then
-  source "$LSSTSW/miniconda/etc/profile.d/conda.csh"
 endif
 
 conda activate "$LSST_CONDA_ENV_NAME"

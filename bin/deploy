@@ -463,11 +463,11 @@ main() {
 
   if [[ $ENVREF == '' ]]; then
     if [[ $SHELL =~ bash$ ]]; then
-      echo "    . ${LSSTSW}/bin/envconfig (bin/setup.sh is deprecated)"
+      echo "    . ${LSSTSW}/bin/envconfig"
     elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-      echo "    . ${LSSTSW}/bin/envconfig.csh (bin/setup.csh is deprecated)"
+      echo "    source ${LSSTSW}/bin/envconfig.csh"
     elif [[ $SHELL =~ zsh$ ]]; then
-      echo "    . ${LSSTSW}/bin/envconfig (bin/setup.sh is deprecated)"
+      echo "    . ${LSSTSW}/bin/envconfig"
     else
       echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
       echo "    (Warning: ${SHELL} is an unsupported shell)"
