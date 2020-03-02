@@ -20,7 +20,6 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-984c9f7}
 
 set -e
 
@@ -188,16 +187,18 @@ main() {
         # the provided ref is not a branch
         LSST_SPLENV_REF="${ENVREF}"
         # Defining environment name based on the provided fixed reference
-        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}"
+        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}"
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_packages}"
     else
         # the provided ref is a branch
         LSST_SPLENV_REF="$reftip"
         # Defining environment name based on branch and SHA1 from the tip of the branch
-        LSST_CONDA_ENV_NAME="lsst-scipipe-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
+        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
         local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
     fi
   else
+    # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
+    LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
     local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
   fi
 
@@ -223,7 +224,7 @@ main() {
   fetch_repos.yaml 'master'
 
   # install miniconda
-  miniconda_path="${LSSTSW}/miniconda"
+  # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
     miniconda_file_name="Miniconda${pyver_prefix}"
@@ -241,8 +242,8 @@ main() {
     touch "$miniconda_lock"
   )
 
-  # intentionally outside of a lockfile subshell
-  export PATH="$LSSTSW/miniconda/bin:$PATH"
+  # shellcheck disable=SC1090 
+  . "${miniconda_path}/etc/profile.d/conda.sh"
 
   (
     # configure alt conda channel(s)
@@ -293,7 +294,7 @@ main() {
   # shellcheck disable=SC1091
   echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
-  source activate "${LSST_CONDA_ENV_NAME}"
+  conda activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env
   #
@@ -462,17 +463,17 @@ main() {
 
   if [[ $ENVREF == '' ]]; then
     if [[ $SHELL =~ bash$ ]]; then
-      echo "    . ${LSSTSW}/bin/setup.sh"
+      echo "    . ${LSSTSW}/bin/envconfig"
     elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-      echo "    . ${LSSTSW}/bin/setup.csh"
+      echo "    source ${LSSTSW}/bin/envconfig.csh"
     elif [[ $SHELL =~ zsh$ ]]; then
-      echo "    . ${LSSTSW}/bin/setup.sh"
+      echo "    . ${LSSTSW}/bin/envconfig"
     else
       echo "    The setup script in ${LSSTSW}/bin most appropriate for ${SHELL}"
       echo "    (Warning: ${SHELL} is an unsupported shell)"
     fi
   else
-    echo "    . ${LSSTSW}/bin/envconfig -r ${LSST_CONDA_ENV_NAME}"
+    echo "    . ${LSSTSW}/bin/envconfig -n ${LSST_CONDA_ENV_NAME}"
     echo ""
     echo "::: or choose the environment to activate using:"
     echo "    . ${LSSTSW}/bin/envconfig -i"

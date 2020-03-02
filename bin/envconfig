@@ -21,10 +21,10 @@ usage() {
 		Usage: $0  [-i] [-n] [-b] [-h]
 
 		Specific options:
-        -i          interactive, choose from a list of available environments
-        -n NAME      environment name
-        -b bXXXX    activate the environment used for the build with id bXXXX
-        -h          show this message
+	-i          interactive, choose from a list of available environments
+	-n NAME     activate the environment name
+	-b bXXXX    activate the environment used for the build with id bXXXX
+	-h          show this message
 
 		EOF
   )
@@ -82,13 +82,19 @@ else
   SUFFIX='zsh'
 fi
 
+# shellcheck disable=SC1090
+source "${LSSTSW}/etc/settings.cfg.sh"
+
+# shellcheck disable=SC1090
+# shellcheck disable=SC2154
+. "${miniconda_path}/etc/profile.d/conda.sh"
+
 if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
   echo "error: eups not found in $LSSTSW/eups/current" 1>&2
   echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
   return
 fi
 
-export PATH="$LSSTSW/miniconda/bin:$PATH"
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
@@ -96,7 +102,7 @@ export MANPATH="$LSSTSW/lfs/share/man:"
 
 # need to activate the miniconda base environment to get the correct list of environments
 # shellcheck disable=SC1091
-source activate base
+conda activate base
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -125,21 +131,20 @@ if $INTERACTIVE ; then
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
     # shellcheck disable=SC1091
-    source activate "$LSST_CONDA_ENV_NAME"
+    conda activate "$LSST_CONDA_ENV_NAME"
   fi
 
 elif [[ $ENVREF != "" ]]; then
   echo "Setting $ENVREF environment..."  
   LSST_CONDA_ENV_NAME=${ENVREF}
-  # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  conda activate "$LSST_CONDA_ENV_NAME"
 
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
     # shellcheck disable=SC1091
-    source activate "$LSST_CONDA_ENV_NAME"
+    conda activate "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
     echo "No build found with id ${BUILD_ID}"
@@ -147,15 +152,14 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 
 else
-  echo "Setting the default environment..."
-  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe}
+  # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
+  echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  conda activate "$LSST_CONDA_ENV_NAME"
 
 fi
 export LSST_CONDA_ENV_NAME
-export PATH="$LSSTSW/miniconda/envs/$LSST_CONDA_ENV_NAME/bin:$PATH"
-#echo "${PATH}"
 
 # shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"

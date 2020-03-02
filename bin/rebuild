@@ -44,7 +44,7 @@ save_build_env() {
   echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
   grep "^prefix" "${tmp_file}" >> "${filename}"
   grep -v "^prefix" "${tmp_file}" > "${active_env}"
-  if [[ "${LSST_CONDA_ENV_NAME}" != "lsst-scipipe" ]]; then
+  if [[ "${LSST_CONDA_ENV_NAME}" != "${SPLENV_BASE_NAME}" ]]; then
     ref="${LSST_CONDA_ENV_NAME:13}"
     if [[ $ref == *"."* ]]; then
       ref1=$(echo "${ref}" | cut -f 1 -d .)
@@ -105,8 +105,11 @@ if [[ "$#" != "0" ]]; then
 fi
 
 (
+  # shellcheck disable=SC1090
+  # shellcheck disable=SC2154
+  . "${miniconda_path}/etc/profile.d/conda.sh"
   # shellcheck disable=SC1091
-  source activate "$LSST_CONDA_ENV_NAME"
+  conda activate "$LSST_CONDA_ENV_NAME"
 
   # true if `lsst-build prepare` has run successfully
   PREPARED=false
