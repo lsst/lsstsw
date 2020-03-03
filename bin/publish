@@ -76,8 +76,11 @@ fi
 
 PRODUCTS=("$@")
 
+# shellcheck disable=SC1090
+# shellcheck disable=SC2154
+. "${miniconda_path}/etc/profile.d/conda.sh"
 # shellcheck disable=SC1091
-source activate "$LSST_CONDA_ENV_NAME"
+conda activate "$LSST_CONDA_ENV_NAME"
 
 for prod in "${PRODUCTS[@]}"; do
   if [[ -z "$prod" ]]; then
