@@ -359,6 +359,11 @@ main() {
     touch "${LSSTSW}/lfs/.git-lfs.deployed"
   )
 
+  # definition EUPS_PATH depending on the environment:
+  # including the last 7 characters of the environment name
+  export EUPS_PATH="${LSSTSW}/stack${LSST_CONDA_ENV_NAME: -7}"
+  echo "EUPS_PATH defined to ${EUPS_PATH}"
+
   # backwards compatibility if EUPS wasn't installed to a versioned directory
   test -f "${LSSTSW}/eups/.deployed" && ( # EUPS
     echo "::: Moving old EUPS to eups/legacy"
@@ -396,7 +401,7 @@ main() {
     ./configure \
       --prefix="${LSSTSW}/eups/${LSST_EUPS_VERSION}" \
       --with-python="${LSSTSW}/miniconda/bin/python" \
-      --with-eups="${LSSTSW}/stack"
+      --with-eups="${EUPS_PATH}"
     make
     make install
     touch "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed"
@@ -408,11 +413,11 @@ main() {
     ln -s "${LSST_EUPS_VERSION}" "${LSSTSW}/eups/current"
   fi
 
-  test -f "${LSSTSW}/stack/.deployed" || ( # Adjust the stack config
+  test -f "${EUPS_PATH}/.deployed" || ( # Adjust the stack config
     echo "::: Deploying manifest.remap"
-    cd stack/site
+    cd ${EUPS_PATH}/site
     ln -sf ../../etc/manifest.remap
-    touch "${LSSTSW}/stack/.deployed"
+    touch "${EUPS_PATH}/.deployed"
   )
 
   test -f "${LSSTSW}/versiondb/.deployed" || ( # Clone the version database

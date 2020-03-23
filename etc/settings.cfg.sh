@@ -46,9 +46,6 @@ EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 # repository path for 'eups distrib create'
 export EUPSPKG_REPOSITORY_PATH="${LSSTSW_BUILD_DIR}/\$PRODUCT"
 
-# location of the EUPS stack
-export EUPS_PATH=${LSSTSW}/stack
-
 # use 'package' for public releases, use 'git' for development releases
 export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
 
