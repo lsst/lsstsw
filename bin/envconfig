@@ -120,8 +120,8 @@ if $INTERACTIVE ; then
     envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
     echo "${l} - ${envs[${l}]}"
   done
-  echo "0 EXIT (return)"
-  read -r -p "Choose environment [0 to ${l}] or 0 to exit: " eid
+  echo "0 - EXIT (return)"
+  read -r -p "Choose environment [0 to ${l}]: " eid
   if  [[ "${eid}" -eq 0 ]] ; then
     return
   fi
