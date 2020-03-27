@@ -416,7 +416,7 @@ main() {
   test -f "${EUPS_PATH}/.deployed" || ( # Adjust the stack config
     mkdir -p "${EUPS_PATH}"/{site,ups_db}
     echo "::: Deploying manifest.remap"
-    cd ${EUPS_PATH}/site
+    cd "${EUPS_PATH}/site"
     ln -sf ../../etc/manifest.remap
     touch "${EUPS_PATH}/.deployed"
   )
