@@ -81,6 +81,7 @@ PRODUCTS=("$@")
 . "${miniconda_path}/etc/profile.d/conda.sh"
 # shellcheck disable=SC1091
 conda activate "$LSST_CONDA_ENV_NAME"
+CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
 
 for prod in "${PRODUCTS[@]}"; do
   if [[ -z "$prod" ]]; then
@@ -130,7 +131,7 @@ if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
-  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1"
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
   src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
   dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
 
