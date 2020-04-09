@@ -8,6 +8,7 @@
 # scipipe-conda-env reference
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-984c9f7}
 SPLENV_BASE_NAME="lsst-scipipe"
+LSST_SPLENV_REPO=${LSST_SPLENV_REPO:-https://github.com/lsst/scipipe_conda_env.git}
 
 # top-level products
 PRODUCTS='lsst_distrib qserv_distrib dax_webserv'
