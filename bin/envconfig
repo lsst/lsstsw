@@ -120,8 +120,8 @@ if $INTERACTIVE ; then
     envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
     echo "${l} - ${envs[${l}]}"
   done
-  echo "0 EXIT (return)"
-  read -r -p "Choose environment [0 to ${l}] or 0 to exit: " eid
+  echo "0 - EXIT (return)"
+  read -r -p "Choose environment [0 to ${l}]: " eid
   if  [[ "${eid}" -eq 0 ]] ; then
     return
   fi
@@ -163,6 +163,11 @@ export LSST_CONDA_ENV_NAME
 
 # shellcheck disable=SC1090
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+
+# definition EUPS_PATH depending on the environment:
+# including the last 7 characters of the environment name
+export EUPS_PATH="${LSSTSW}/stack/${LSST_SPLENV_REF}"
+echo "EUPS_PATH set to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
 
