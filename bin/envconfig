@@ -166,8 +166,8 @@ export LSST_CONDA_ENV_NAME
 
 # definition EUPS_PATH depending on the environment:
 # including the last 7 characters of the environment name
-export EUPS_PATH="${LSSTSW}/stack${LSST_CONDA_ENV_NAME: -7}"
-echo "EUPS_PATH defined to ${EUPS_PATH}"
+export EUPS_PATH="${LSSTSW}/stack/${LSST_SPLENV_REF}"
+echo "EUPS_PATH set to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
 

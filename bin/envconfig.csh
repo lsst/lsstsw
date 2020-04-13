@@ -140,7 +140,7 @@ source "$LSSTSW/eups/current/bin/setups.csh"
 # definition EUPS_PATH depending on the environment:
 # including the last 7 characters of the environment name
 set env_ref = `echo $LSST_CONDA_ENV_NAME | awk '{print substr($0, length($0) - 6)}'`
-set EUPS_PATH="$LSSTSW/stack$env_ref"
+set EUPS_PATH="$LSSTSW/stack/$env_ref"
 echo "EUPS_PATH defined to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
