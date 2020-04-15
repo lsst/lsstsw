@@ -417,7 +417,7 @@ main() {
     mkdir -p "${EUPS_PATH}"/{site,ups_db}
     echo "::: Deploying manifest.remap"
     cd "${EUPS_PATH}/site"
-    ln -sf ../../etc/manifest.remap
+    ln -sf "${LSSTSW}/etc/manifest.remap"
     touch "${EUPS_PATH}/.deployed"
   )
 
