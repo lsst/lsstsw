@@ -413,13 +413,9 @@ main() {
     ln -s "${LSST_EUPS_VERSION}" "${LSSTSW}/eups/current"
   fi
 
-  test -f "${EUPS_PATH}/.deployed" || ( # Adjust the stack config
-    mkdir -p "${EUPS_PATH}"/{site,ups_db}
-    echo "::: Deploying manifest.remap"
-    cd "${EUPS_PATH}/site"
-    ln -sf "${LSSTSW}/etc/manifest.remap"
-    touch "${EUPS_PATH}/.deployed"
-  )
+  mkdir -p "${EUPS_PATH}"/{site,ups_db}
+  echo "::: Deploying manifest.remap"
+  ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
 
   test -f "${LSSTSW}/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
