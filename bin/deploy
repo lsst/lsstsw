@@ -14,7 +14,7 @@ LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eu
 LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-""}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
@@ -250,14 +250,13 @@ main() {
     if [[ -n $LSST_CONDA_CHANNELS ]]; then
       # remove any previously configured non-default channels
       # XXX allowed to fail
-      conda config --remove-key channels || true
+      conda config --env --remove-key channels || true
 
       for c in $LSST_CONDA_CHANNELS; do
-        conda config --add channels "$c"
+        conda config --env --add channels "$c"
       done
 
-      # remove the default channels
-      conda config --remove channels defaults
+      conda config --env --set channel_priority strict
 
       conda config --show
     fi
