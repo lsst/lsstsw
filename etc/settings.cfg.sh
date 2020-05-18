@@ -6,7 +6,7 @@
 #
 
 # scipipe-conda-env reference
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-cf0ec7b}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-973126a}
 SPLENV_BASE_NAME="lsst-scipipe"
 LSST_SPLENV_REPO=${LSST_SPLENV_REPO:-https://github.com/lsst/scipipe_conda_env.git}
 
