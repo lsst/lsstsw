@@ -75,7 +75,7 @@ save_build_env() {
 PREP_ONLY=false
 NO_FETCH=false
 UPDATE=false
-REF=
+refs=()
 
 while getopts ":pnur:t:" o; do
   case "$o" in
@@ -89,7 +89,7 @@ while getopts ":pnur:t:" o; do
     UPDATE=true
     ;;
   r)
-    REF="$REF --ref $OPTARG"
+    refs+=("--ref" "$OPTARG")
     ;;
   t)
     TAG="$OPTARG"
@@ -157,10 +157,7 @@ fi
   ARGS+=("--exclusion-map=${EXCLUSIONS}")
   ARGS+=("--version-git-repo=${VERSIONDB}")
   ARGS+=("$LSSTSW_BUILD_DIR")
-  if [[ ! -z "$REF" ]]; then
-    IFS=" " read -r -a refs <<< "$REF"
-    ARGS+=("${refs[@]}")
-  fi
+  ARGS+=("${refs[@]}")
   ARGS+=("${PRODUCTS[@]}")
 
   lsst-build prepare "${ARGS[@]}"
