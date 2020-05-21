@@ -334,29 +334,34 @@ main() {
     touch "${LSSTSW}/lfs/.git.deployed"
   )
 
-  test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
-    echo "::: Deploying git-lfs"
+  # check if git-lfs is available (in scipipe_conda_env since w_2020_19)
+  if (which git-lfs >/dev/null 2>&1); then
+    test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
+      echo "::: Deploying git-lfs"
 
-    case $(uname -s) in
-      Linux*)  lfs_platform="linux-amd64" ;;
-      Darwin*) lfs_platform="darwin-amd64" ;;
-      *)
-        fail "Cannot install git-lfs: unsupported platform $(uname -s)"
-        ;;
-    esac
+      case $(uname -s) in
+        Linux*)  lfs_platform="linux-amd64" ;;
+        Darwin*) lfs_platform="darwin-amd64" ;;
+        *)
+          fail "Cannot install git-lfs: unsupported platform $(uname -s)"
+          ;;
+      esac
 
-    cd sources
-    LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
-    LFS_ARCHIVE="git-lfs-${lfs_platform}-${LSST_LFS_VERSION}.tar.gz"
-    $CURL "${CURL_OPTS[@]}" -L \
-      -O "${LFS_BASE_URL}/v${LSST_LFS_VERSION}/${LFS_ARCHIVE}"
+      cd sources
+      LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
+      LFS_ARCHIVE="git-lfs-${lfs_platform}-${LSST_LFS_VERSION}.tar.gz"
+      $CURL "${CURL_OPTS[@]}" -L \
+        -O "${LFS_BASE_URL}/v${LSST_LFS_VERSION}/${LFS_ARCHIVE}"
 
-    tar xzf "$LFS_ARCHIVE"
-    mkdir -p "${LSSTSW}/lfs/bin"
-    cp "git-lfs-${LSST_LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
-    cd "$LSSTSW"
-    touch "${LSSTSW}/lfs/.git-lfs.deployed"
-  )
+      tar xzf "$LFS_ARCHIVE"
+      mkdir -p "${LSSTSW}/lfs/bin"
+      cp "git-lfs-${LSST_LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
+      cd "$LSSTSW"
+      touch "${LSSTSW}/lfs/.git-lfs.deployed"
+    )
+  else
+    echo "::: Using installed git-lfs"
+  fi
 
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
