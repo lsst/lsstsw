@@ -75,6 +75,7 @@ save_build_env() {
 PREP_ONLY=false
 NO_FETCH=false
 UPDATE=false
+REF=
 
 while getopts ":pnur:t:" o; do
   case "$o" in
