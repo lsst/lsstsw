@@ -336,6 +336,8 @@ main() {
 
   # check if git-lfs is available (in scipipe_conda_env since w_2020_19)
   if (which git-lfs >/dev/null 2>&1); then
+    echo "::: Using installed git-lfs"
+  else
     test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
       echo "::: Deploying git-lfs"
 
@@ -359,8 +361,6 @@ main() {
       cd "$LSSTSW"
       touch "${LSSTSW}/lfs/.git-lfs.deployed"
     )
-  else
-    echo "::: Using installed git-lfs"
   fi
 
   # Define EUPS_PATH depending on the environment,
