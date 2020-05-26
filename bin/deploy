@@ -11,7 +11,6 @@ LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
-LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
@@ -42,13 +41,11 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-2] [-3] [-b] [-h] [-r]
+		Usage: $0 [-b] [-h] [-r]
 
 		Specific options:
 	    -b          use bleeding edge conda packages
 	    -r REF      git ref in scipipe_conda_env (hash, branch, tag)
-	    -3          use Python 3 (default)
-	    -2          use Python 2 (no longer supported -- fatal error)
 	    -h          show this message
 
 		EOF
@@ -152,7 +149,6 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  local pyver_prefix=$LSST_PYTHON_VERSION
   local miniconda_version=$LSST_MINICONDA_VERSION
 
   local deploy_mode=packages
@@ -174,8 +170,8 @@ main() {
       ;;
   esac
 
-  local conda_packages
-  conda_packages="conda${pyver_prefix}_${deploy_mode}-${pkg_postfix}.yml"
+  local conda_bleed="conda3_bleed-${pkg_postfix}.yml"
+  local conda_lockfile="conda-${pkg_postfix}.lock"
 
   if [[ $FIXED_ENVREF != '' ]]; then
     # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
@@ -188,18 +184,21 @@ main() {
         LSST_SPLENV_REF="${ENVREF}"
         # Defining environment name based on the provided fixed reference
         LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}"
-        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_packages}"
+        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_bleed}"
+        local lock_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_lockfile}"
     else
         # the provided ref is a branch
         LSST_SPLENV_REF="$reftip"
         # Defining environment name based on branch and SHA1 from the tip of the branch
         LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
-        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_packages}"
+        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_bleed}"
+        local lock_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_lockfile}"
     fi
   else
     # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
     LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
-    local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_packages}"
+    local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_bleed}"
+    local lock_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_lockfile}"
   fi
 
   cd "$LSSTSW"
@@ -215,8 +214,18 @@ main() {
     # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
     mkdir -p "${env_file%/*}"
     $CURL "${CURL_OPTS[@]}" -# -L \
-       "${env_url}/${conda_packages}" \
+       "${env_url}/${conda_bleed}" \
        --output "${env_file}"
+  fi
+
+  if [ -e "${lock_file}" ]; then
+    echo "::: conda lock file already present"
+  else
+    # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
+    mkdir -p "${lock_file%/*}"
+    $CURL "${CURL_OPTS[@]}" -# -L \
+       "${env_url}/${conda_lockfile}" \
+       --output "${lock_file}"
   fi
 
   cd "$LSSTSW"
@@ -227,8 +236,7 @@ main() {
   # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
-    miniconda_file_name="Miniconda${pyver_prefix}"
-    miniconda_file_name+="-${miniconda_version}-${ana_platform}.sh"
+    miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
@@ -244,6 +252,44 @@ main() {
 
   # shellcheck disable=SC1090 
   . "${miniconda_path}/etc/profile.d/conda.sh"
+
+  # cleanup orphaned lock file
+  local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
+  [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
+
+  (
+    # Install packages on which the stack is known to depend
+
+    # conda may leave behind lock files from an uncompleted package
+    # installation attempt.  These need to be cleaned up before [re]attempting
+    # to install packages.
+    conda clean -y --all
+    if [[ $deploy_mode == "bleed" ]]; then
+      ARGS=()
+      ARGS+=('env' 'update')
+      ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
+      ARGS+=("--file" "$env_file")
+    else
+      ARGS=()
+      ARGS+=('create')
+      ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
+      ARGS+=("--file" "$lock_file")
+    fi
+
+    # disable the conda install progress bar when not attached to a tty. Eg.,
+    # when running under CI
+    if [[ ! -t 1 ]]; then
+      ARGS+=("--quiet")
+    fi
+
+    conda "${ARGS[@]}"
+  )
+
+  # intentionally outside of a lockfile subshell
+  # shellcheck disable=SC1091
+  echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+  # shellcheck disable=SC1091
+  conda activate "${LSST_CONDA_ENV_NAME}"
 
   (
     # configure alt conda channel(s)
@@ -261,39 +307,6 @@ main() {
       conda config --show
     fi
   )
-
-  # cleanup orphaned lock file
-  local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
-  [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
-
-  (
-    # Install packages on which the stack is known to depend
-
-    # conda may leave behind lock files from an uncompleted package
-    # installation attempt.  These need to be cleaned up before [re]attempting
-    # to install packages.
-    conda clean -y --all
-
-    ARGS=()
-    ARGS+=('env' 'update')
-    ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
-
-    # disable the conda install progress bar when not attached to a tty. Eg.,
-    # when running under CI
-    if [[ ! -t 1 ]]; then
-      ARGS+=("--quiet")
-    fi
-
-    ARGS+=("--file" "$env_file")
-
-    conda "${ARGS[@]}"
-  )
-
-  # intentionally outside of a lockfile subshell
-  # shellcheck disable=SC1091
-  echo "Activating environment ${LSST_CONDA_ENV_NAME}"
-  # shellcheck disable=SC1091
-  conda activate "${LSST_CONDA_ENV_NAME}"
 
   # report packages in the current conda env
   #
