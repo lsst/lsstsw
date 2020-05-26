@@ -283,6 +283,9 @@ main() {
     fi
 
     conda "${ARGS[@]}"
+    echo "Cleaning conda environment..."
+    conda clean -y -a > /dev/null
+    echo "done"
   )
 
   # intentionally outside of a lockfile subshell
