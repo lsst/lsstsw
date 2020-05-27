@@ -273,6 +273,7 @@ main() {
       ARGS=()
       ARGS+=('create')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
+      ARGS+=('-y')
       ARGS+=("--file" "$lock_file")
     fi
 
