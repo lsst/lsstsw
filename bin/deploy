@@ -205,7 +205,11 @@ main() {
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
 
-  echo "::: conda environment file: ${env_file}"
+  if [[ $deploy_mode == "bleed" ]]; then
+    echo "::: conda environment file: ${env_file}"
+  else
+    echo "::: conda lock file: ${lock_file}"
+  fi
 
   cd env
   if [ -e "${env_file}" ]; then
@@ -300,7 +304,7 @@ main() {
     if [[ -n $LSST_CONDA_CHANNELS ]]; then
       # remove any previously configured non-default channels
       # XXX allowed to fail
-      conda config --env --remove-key channels || true
+      conda config --env --remove-key channels 2>/dev/null || true
 
       for c in $LSST_CONDA_CHANNELS; do
         conda config --env --add channels "$c"
