@@ -403,59 +403,16 @@ main() {
     )
   fi
 
+  # check if eups is not already installed, and install it from conda
+  EUPS_CHECK=`which eups`
+  if [[ "$?" != 0 ]]; then
+    conda install -y eups -c conda-forge
+  fi
+
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
   export EUPS_PATH="${LSSTSW}/stack/${LSST_SPLENV_REF}"
   echo "EUPS_PATH set to ${EUPS_PATH}"
-
-  # backwards compatibility if EUPS wasn't installed to a versioned directory
-  test -f "${LSSTSW}/eups/.deployed" && ( # EUPS
-    echo "::: Moving old EUPS to eups/legacy"
-    mv "${LSSTSW}/eups" "${LSSTSW}/eups-tmp"
-    mkdir -p "${LSSTSW}/eups"
-    mv "${LSSTSW}/eups-tmp" "${LSSTSW}/eups/legacy"
-    ln -s legacy "${LSSTSW}/eups/current"
-  )
-
-  # if a LSST_EUPS_GITREV is set, use that as the version dir name
-  if [[ -n $LSST_EUPS_GITREV ]]; then
-    LSST_EUPS_VERSION=$LSST_EUPS_GITREV
-  fi
-
-  test -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
-    echo "::: Deploying eups ${LSST_EUPS_VERSION}"
-    if [[ -e "${LSSTSW}/eups/${LSST_EUPS_VERSION}" ]]; then
-      chmod -R +w "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
-      rm -rf "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
-    fi
-
-    cd sources
-    if [[ -n $LSST_EUPS_GITREV ]]; then
-      git clone "$LSST_EUPS_GITREPO" eups
-      cd eups
-      git checkout "$LSST_EUPS_GITREV"
-    else
-      $CURL "${CURL_OPTS[@]}" -L \
-        -o "eups-${LSST_EUPS_VERSION}.tar.gz" \
-        "https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz"
-      tar xzf "eups-${LSST_EUPS_VERSION}.tar.gz"
-      cd "eups-${LSST_EUPS_VERSION}"
-    fi
-
-    ./configure \
-      --prefix="${LSSTSW}/eups/${LSST_EUPS_VERSION}" \
-      --with-python="${LSSTSW}/miniconda/bin/python" \
-      --with-eups="${EUPS_PATH}"
-    make
-    make install
-    touch "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed"
-  )
-
-  if [[ "$(readlink "${LSSTSW}/eups/current")" != "$LSST_EUPS_VERSION" ]]; then
-    echo "::: Making eups ${LSST_EUPS_VERSION} the default"
-    rm -f "${LSSTSW}/eups/current"
-    ln -s "${LSST_EUPS_VERSION}" "${LSSTSW}/eups/current"
-  fi
 
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
