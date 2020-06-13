@@ -90,16 +90,10 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "23bhr" opt; do
+  while getopts "bhrP" opt; do
     case "$opt" in
     b)
       BLEED_DEPLOY=true
-      ;;
-    3)
-      # noop
-      ;;
-    2)
-      fail 'Python 2.x is no longer supported.'
       ;;
     h)
       usage
@@ -107,6 +101,9 @@ parse_args() {
     r)
       shift;
       ENVREF=$1
+      ;;
+    P)
+      USE_EXISTING_CONDA=true
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -139,6 +136,8 @@ main() {
   BLEED_DEPLOY=false
 
   ENVREF=""
+
+  USE_EXISTING_CONDA=false
 
   parse_args "$@"
   # Create safe directory name from git ref
@@ -236,30 +235,47 @@ main() {
 
   fetch_repos.yaml 'master'
 
-  # install miniconda
-  # shellcheck disable=SC2154
-  miniconda_lock="${miniconda_path}/.deployed"
-  test -f "$miniconda_lock" || (
-    miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
-    echo "::: Deploying ${miniconda_file_name}"
+  if [[ $USE_EXISTING_CONDA == true ]]; then
+    # check which comman
+    if ! type "which" > /dev/null ; then
+      fail "which command not present, impossible to verify conda. Avoid using option -p to deploy miniconda"
+    fi
+    # check if conda is available
+    CONDA_PATH=`which conda`
+    if [[ "$?" != 0 ]]; then
+      fail "Conda not found in PATH. Avoid using option -P to deploy miniconda."
+    fi
+    CONDA_DIR=`dirname "${CONDA_PATH}"`
+    # activating conda
+    echo "Using existing conda available at ${CONDA_DIR}"
+    . "${CONDA_DIR}/../etc/profile.d/conda.sh"
+  else
+    # install miniconda
+    # shellcheck disable=SC2154
+    miniconda_lock="${miniconda_path}/.deployed"
+    test -f "$miniconda_lock" || (
+      miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
-    cd sources
-    $CURL "${CURL_OPTS[@]}" -# -L \
-      -O "${LSST_MINICONDA_BASE_URL}/${miniconda_file_name}"
+      echo "::: Deploying ${miniconda_file_name}"
 
-    rm -rf "$miniconda_path"
-    bash "$miniconda_file_name" -b -p "$miniconda_path"
+      cd sources
+      $CURL "${CURL_OPTS[@]}" -# -L \
+        -O "${LSST_MINICONDA_BASE_URL}/${miniconda_file_name}"
 
-    touch "$miniconda_lock"
-  )
+      rm -rf "$miniconda_path"
+      bash "$miniconda_file_name" -b -p "$miniconda_path"
 
-  # shellcheck disable=SC1090 
-  . "${miniconda_path}/etc/profile.d/conda.sh"
+      touch "$miniconda_lock"
+    )
 
-  # cleanup orphaned lock file
-  local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
-  [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
+    # shellcheck disable=SC1090 
+    . "${miniconda_path}/etc/profile.d/conda.sh"
+
+    # cleanup orphaned lock file
+    local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
+    [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
+  fi
 
   (
     # Install packages on which the stack is known to depend
@@ -338,7 +354,7 @@ main() {
   # canoncial env files, doesn't seem to list pip installed packages.  The the
   # "newer" yaml env file format from `conda env export` does include pip/pypi
   # packages.
-  conda env export
+  # conda env export
 
   test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
@@ -400,9 +416,14 @@ main() {
     )
   fi
 
+  conda info
   # check if eups is not already installed, and install it from conda
-  EUPS_CHECK=`which eups`
-  if [[ "$?" != 0 ]]; then
+  set +e  # disable set -e to check if eups is available 
+  which eups > /dev/null
+  EUPS_CHECK="$?"
+  set -e
+  if [[ "$EUPS_CHECK" != 0 ]]; then
+    echo "Instaling eups from conda-forge in the active environment"
     conda install -y eups -c conda-forge
   fi
 
