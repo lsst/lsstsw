@@ -114,11 +114,12 @@ if [[ "$#" != "0" ]]; then
 fi
 
 (
-  # shellcheck disable=SC1090
-  # shellcheck disable=SC2154
-  . "${miniconda_path}/etc/profile.d/conda.sh"
-  # shellcheck disable=SC1091
-  conda activate "$LSST_CONDA_ENV_NAME"
+  if [[ "${miniconda_path}" ]]; then
+    # shellcheck disable=SC1090
+    # shellcheck disable=SC2154
+    echo "Using local miniconda at ${miniconda_path}"
+    . "${miniconda_path}/etc/profile.d/conda.sh"
+  fi
 
   # true if `lsst-build prepare` has run successfully
   PREPARED=false
