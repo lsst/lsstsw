@@ -85,24 +85,23 @@ fi
 # shellcheck disable=SC1090
 source "${LSSTSW}/etc/settings.cfg.sh"
 
-# shellcheck disable=SC1090
-# shellcheck disable=SC2154
-. "${miniconda_path}/etc/profile.d/conda.sh"
-
-if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
-  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
-  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
-  return
+if [[ "${miniconda_path}" ]]; then
+  # shellcheck disable=SC1090
+  # shellcheck disable=SC2154
+  echo "Using local miniconda at ${miniconda_path}"
+  . "${miniconda_path}/etc/profile.d/conda.sh"
+else
+  # this implies the system conda shall be used
+  CONDA_PATH=`which conda`
+  conda_path=`dirname "${CONDA_PATH}"`
+  echo "Using system conda at ${conda_path}"
+  source "${conda_path}/../etc/profile.d/conda.sh"
 fi
 
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
-
-# need to activate the miniconda base environment to get the correct list of environments
-# shellcheck disable=SC1091
-conda activate base
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -161,8 +160,14 @@ else
 fi
 export LSST_CONDA_ENV_NAME
 
+if [[ ! -f "${EUPS_DIR}/bin/setups.${SUFFIX}" ]]; then
+  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
+  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
+  return
+fi
+
 # shellcheck disable=SC1090
-. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+. "${EUPS_DIR}/bin/setups.${SUFFIX}"
 
 # definition EUPS_PATH depending on the environment:
 # including the last 7 characters of the environment name

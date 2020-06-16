@@ -76,9 +76,12 @@ fi
 
 PRODUCTS=("$@")
 
-# shellcheck disable=SC1090
-# shellcheck disable=SC2154
-. "${miniconda_path}/etc/profile.d/conda.sh"
+if [[ "${miniconda_path}" ]]; then
+  # shellcheck disable=SC1090
+  # shellcheck disable=SC2154
+  . "${miniconda_path}/etc/profile.d/conda.sh"
+fi
+
 # shellcheck disable=SC1091
 conda activate "$LSST_CONDA_ENV_NAME"
 CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
