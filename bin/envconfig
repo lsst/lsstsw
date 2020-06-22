@@ -153,9 +153,16 @@ elif [[ $BUILD_ID != "" ]]; then
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
+  # cheking if the environment exists
   echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
   conda activate "$LSST_CONDA_ENV_NAME"
+  if [ "$?" != 0 ]; then
+    echo "Problem activating environment $LSST_CONDA_ENV_NAME"
+    echo "  you may need to call bin/deploy first"
+    echo "  or call bin/enconfig -i to see wich environments are available."
+    exit
+  fi
 
 fi
 export LSST_CONDA_ENV_NAME
