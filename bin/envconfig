@@ -6,9 +6,21 @@
 #
 # relative to <lsstsw>/bin/
 
-print_error() {
-  >&2 echo -e "$@"
-}
+if [[ -z $ZSH_NAME ]]; then
+  LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
+  SUFFIX='sh'
+else
+  LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  SUFFIX='zsh'
+fi
+
+# shellcheck disable=SC1090
+source "${LSSTSW}/etc/settings.cfg.sh"
+#
+# Source script with shared functions
+# shellcheck disable=SC1090
+source "${LSSTSW}/bin/utils.sh"
+
 
 usage() {
   if [[ ! -z "$1" ]]; then
@@ -18,12 +30,13 @@ usage() {
   # note that heredocs are prefixed with tab chars
   (cat <<-EOF
 
-		Usage: $0  [-i] [-n] [-b] [-h]
+		Usage: $0  [-i] [-n] [-b] [-r]  [-h]
 
 		Specific options:
 	-i          interactive, choose from a list of available environments
 	-n NAME     activate the environment name
 	-b bXXXX    activate the environment used for the build with id bXXXX
+	-r REF      git ref in scipipe_conda_env (hash, branch, tag)
 	-h          show this message
 
 		EOF
@@ -37,7 +50,7 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "bnih" opt; do
+  while getopts "bnirh" opt; do
     case "$opt" in
     b)
       shift;
@@ -45,10 +58,14 @@ parse_args() {
       ;;
     n)
       shift;
-      ENVREF=$1
+      ENVNAME=$1
       ;;
     i)
       INTERACTIVE=true
+      ;;
+    r)
+      shift;
+      ENVREF=$1
       ;;
     h)
       usage
@@ -62,11 +79,14 @@ parse_args() {
 }
 
 ##############
+config_curl
 
 INTERACTIVE=false
-ENVREF=""
+ENVNAME=""
 BUILD_ID=""
+ENVREF=""
 finish=false
+new_env=false
 
 parse_args "$@"
 
@@ -74,16 +94,6 @@ if [ "$finish" = true ]; then
   return
 fi
 
-if [[ -z $ZSH_NAME ]]; then
-  LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
-  SUFFIX='sh'
-else
-  LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
-  SUFFIX='zsh'
-fi
-
-# shellcheck disable=SC1090
-source "${LSSTSW}/etc/settings.cfg.sh"
 
 if [[ "${miniconda_path}" ]]; then
   # shellcheck disable=SC1090
@@ -95,7 +105,7 @@ else
   CONDA_PATH=`which conda`
   conda_path=`dirname "${CONDA_PATH}"`
   echo "Using system conda at ${conda_path}"
-  source "${conda_path}/../etc/profile.d/conda.sh"
+  . "${conda_path}/../etc/profile.d/conda.sh"
 fi
 
 export PATH="$LSSTSW/lfs/bin:$PATH"
@@ -125,46 +135,73 @@ if $INTERACTIVE ; then
     return
   fi
   if [[ -z "${envs[${eid}]}" ]] ; then
-    echo "User input error: ${eid} not in range."
-    return
+    fail "User input error: ${eid} not in range."
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
   fi
 
-elif [[ $ENVREF != "" ]]; then
-  echo "Setting $ENVREF environment..."  
-  LSST_CONDA_ENV_NAME=${ENVREF}
-  conda activate "$LSST_CONDA_ENV_NAME"
+elif [[ $ENVNAME != "" ]]; then
+  echo "Setting $ENVNAME environment..."  
+  LSST_CONDA_ENV_NAME=${ENVNAME}
+  # look for environment exists
+  if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+    fail "Environment not found."
+  fi
 
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
-    echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+    # look for environment exists
+    if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+      fail "Build found, but environment not found. It has probably been removed."
+    fi
   else
     echo "No build found with id ${BUILD_ID}"
     return
   fi
 
+elif [[ $ENVREF != "" ]]; then
+  echo "Activativating environment for reference ${ENVREF}"
+
+  # given the imput reference, provides the correct
+  # - environment Name
+  # - git reference
+  # - local folder where to store environemnt files
+  expand_ref "${ENVREF}"
+
+  # look for environment exists
+  #env_check=$(echo -n $(conda env list | awk '{ print $1 }' | grep -E "(^|\s)$LSST_CONDA_ENV_NAME($|\s)"))
+  if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+    echo "The environment do not exist... Creating environment..."
+    new_env=true
+    discover_platform
+    deploy_env
+  fi
+
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
-  # cheking if the environment exists
   echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
-  # shellcheck disable=SC1091
-  conda activate "$LSST_CONDA_ENV_NAME"
-  if [ "$?" != 0 ]; then
-    echo "Problem activating environment $LSST_CONDA_ENV_NAME"
+
+  # look for environment exists
+  if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+    echo "... Environment not found"
     echo "  you may need to call bin/deploy first"
     echo "  or call bin/enconfig -i to see wich environments are available."
-    exit
+    return
   fi
 
 fi
+
+echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+# shellcheck disable=SC1091
+conda activate "$LSST_CONDA_ENV_NAME"
+if [ "$?" != 0 ]; then
+  echo "Problem activating environment"
+  return
+fi
+
 export LSST_CONDA_ENV_NAME
 
 if [[ ! -f "${EUPS_DIR}/bin/setups.${SUFFIX}" ]]; then
@@ -180,6 +217,13 @@ fi
 # including the last 7 characters of the environment name
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME: -7}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
+
+# in case the environment is just deployed
+if [ "$new_env" = true ]; then
+  mkdir -p "${EUPS_PATH}"/{site,ups_db}
+  echo "::: Deploying manifest.remap"
+  ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
+fi
 
 setup -r "$LSSTSW/lsst_build"
 
