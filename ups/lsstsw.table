@@ -1,1 +1,2 @@
 envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/src, |)
+envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/redhat/el7/conda-system/miniconda3-py37_4.8.2-1a1d771, |)
