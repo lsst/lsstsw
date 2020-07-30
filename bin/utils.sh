@@ -196,10 +196,10 @@ deploy_env() {
   )
 
   # check if eups is not already installed, and install it from conda
-  if ! command -v eups > /dev/null; then
-    echo "Instaling eups from conda-forge in the active environment"
-    conda install -y eups
-  fi
+  #if ! command -v eups > /dev/null; then
+  #  echo "Instaling eups from conda-forge in the active environment"
+  #  conda install -y eups
+  #fi
 
   conda deactivate
 
