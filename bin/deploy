@@ -182,7 +182,7 @@ main() {
 
 
   #create avanila eups conda environment, to use in case the provided environment do not have eups
-  conda create -y --name eups eups
+  conda create -y --name eups eups -c conda-forge
 
   # given the imput reference, provides the correct
   # - environment Name
