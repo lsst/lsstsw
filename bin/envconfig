@@ -50,7 +50,7 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "bnirh" opt; do
+  while getopts "bnirhp" opt; do
     case "$opt" in
     b)
       shift;
@@ -70,6 +70,9 @@ parse_args() {
     h)
       usage
       ;;
+    p)
+      PULL=true
+      ;;
     *)
       usage "Unknown option: ${opt}"
       ;;
@@ -87,6 +90,7 @@ BUILD_ID=""
 ENVREF=""
 finish=false
 new_env=false
+PULL=false
 
 parse_args "$@"
 
@@ -94,6 +98,10 @@ if [ "$finish" = true ]; then
   return
 fi
 
+if [[ "$PULL" == "true" ]]; then
+  echo "Updating lsstsw from remote."
+  git pull
+fi
 
 if [[ "${miniconda_path}" ]]; then
   # shellcheck disable=SC1090
@@ -202,13 +210,20 @@ if [ "$?" != 0 ]; then
   return
 fi
 
-export LSST_CONDA_ENV_NAME
-
-if [[ ! -f "${EUPS_DIR}/bin/setups.${SUFFIX}" ]]; then
-  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
-  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
-  return
+# check if eups is not already installed, and install it from conda
+if ! command -v eups > /dev/null; then
+  echo "No eups found in the active environment ..."
+  echo "  ... trying to use a stacked eups environment"
+  conda deactivate
+  if ! conda env list | grep "^eups " > /dev/null; then
+    echo "ERROR: Environment EUPS base environment missing. Try redeploying lsstsw."
+    return
+  fi
+  conda activate eups
+  conda activate --stack "$LSST_CONDA_ENV_NAME"
 fi
+
+export LSST_CONDA_ENV_NAME
 
 # shellcheck disable=SC1090
 . "${EUPS_DIR}/bin/setups.${SUFFIX}"
