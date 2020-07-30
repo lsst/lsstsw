@@ -187,6 +187,10 @@ main() {
     [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
   fi
 
+
+  #create avanila eups conda environment, to use in case the provided environment do not have eups
+  conda create -y --name eups eups -c conda-forge
+
   # given the imput reference, provides the correct
   # - environment Name
   # - git reference
