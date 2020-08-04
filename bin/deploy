@@ -273,12 +273,29 @@ main() {
       ARGS+=('env' 'update')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("--file" "$env_file")
+      conda "${ARGS[@]}"
     else
       ARGS=()
       ARGS+=('create')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=('-y')
       ARGS+=("--file" "$lock_file")
+      # check if env exists and is consistent with the lock file
+      tmp_lock="$(mktemp)"
+      if (conda run -n ${LSST_CONDA_ENV_NAME} conda list --explicit > ${tmp_lock}); then
+        # check if environment is unchanged
+        # -B ignores blank lines
+        if (diff -B ${tmp_lock} ${lock_file}); then
+          echo "Environment exists and is consistent with its definition"
+        else
+          # environment has changed, it will be recreated
+          conda "${ARGS[@]}"
+        fi
+      else
+        # environment do not exist, it will be created
+        conda "${ARGS[@]}"
+      fi
+      rm ${tmp_lock}
     fi
 
     # disable the conda install progress bar when not attached to a tty. Eg.,
@@ -287,7 +304,6 @@ main() {
       ARGS+=("--quiet")
     fi
 
-    conda "${ARGS[@]}"
     echo "Cleaning conda environment..."
     conda clean -y -a > /dev/null
     echo "done"
