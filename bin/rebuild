@@ -65,9 +65,11 @@ save_build_env() {
     # searching for the saved envirronment file
     ref_file=$(find "${local_env_dir}" -name "conda*.lock*" -exec basename {} \;)
     local_env_file="${local_env_dir}/${ref_file}"
-    echo "" >> "${filename}"
-    echo "env_ref_file: ${local_env_file}" >> "${filename}"
-    echo "" >> "${filename}"
+    {
+      echo ""
+      echo "env_ref_file: ${local_env_file}"
+      echo ""
+    } >> "${filename}"
     grep -v "^name" "${local_env_file}" > "${ref_env}"
     # save diff in file
     echo "Differences between active anvironment and reference environment:" >> "${filename}"
