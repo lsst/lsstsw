@@ -37,37 +37,51 @@ save_build_env() {
   mkdir -p "${LSSTSW_BUILD_DIR}/builds"
   filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}.env"
   echo "Saving environment information in ${filename}"
-  tmp_file="$(mktemp)"
+
   active_env="$(mktemp)"
   ref_env="$(mktemp)"
-  conda env export > "${tmp_file}"
+
+  # saving information in envinronment name
   echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
-  grep "^prefix" "${tmp_file}" >> "${filename}"
-  grep -v "^prefix" "${tmp_file}" > "${active_env}"
-  if [[ "${LSST_CONDA_ENV_NAME}" != "${SPLENV_BASE_NAME}" ]]; then
-    ref="${LSST_CONDA_ENV_NAME:13}"
-    if [[ $ref == *"."* ]]; then
-      ref1=$(echo "${ref}" | cut -f 1 -d .)
-      ref2=$(echo "${ref}" | cut -f 2 -d .)
-      local_env_dir="${LSSTSW}/env/${ref1}/${ref2}"
-    else
-      local_env_dir="${LSSTSW}/env/${ref}"
-    fi 
-    if [ -d "${local_env_dir}" ]; then
-      ref_file=$(find "${local_env_dir}" -name "conda*.yml" -exec basename {} \;)
-      local_env_file="${local_env_dir}/${ref_file}"
-      echo "env_ref_file: ${local_env_file}" >> "${filename}"
-      grep -v "^name" "${local_env_file}" > "${ref_env}"
-      set +e  # disable set -e for the diff commands.
-      diff -u "${active_env}" "${ref_env}" >> "${filename}"
-      echo "Differences between active anvironment and reference environment"
-      diff -u "${active_env}" "${ref_env}"
-      set -e
-    else
-      echo "No environment file definition in ${local_env_dir}. Nothing recorded."
-    fi
+
+  # generating pinned list of environment content
+  conda list --explicit > "${active_env}"
+  cat "${active_env}" >> "${filename}"
+
+  # extract the git reference from the environment name
+  ref="${LSST_CONDA_ENV_NAME:13}"
+    
+  if [[ $ref == *"."* ]]; then
+    # the reference is a branch
+    ref1=$(echo "${ref}" | cut -f 1 -d .)
+    ref2=$(echo "${ref}" | cut -f 2 -d .)
+    local_env_dir="${LSSTSW}/env/${ref1}/${ref2}"
+  else
+    # the reference is a sha1 or a tag
+    local_env_dir="${LSSTSW}/env/${ref}"
   fi
-  rm "${tmp_file}"
+
+  if [ -d "${local_env_dir}" ]; then
+    # searching for the saved envirronment file
+    ref_file=$(find "${local_env_dir}" -name "conda*.lock*" -exec basename {} \;)
+    local_env_file="${local_env_dir}/${ref_file}"
+    echo "" >> "${filename}"
+    echo "env_ref_file: ${local_env_file}" >> "${filename}"
+    echo "" >> "${filename}"
+    grep -v "^name" "${local_env_file}" > "${ref_env}"
+    # save diff in file
+    echo "Differences between active anvironment and reference environment:" >> "${filename}"
+    echo "Differences between active anvironment and reference environment:"
+    set +e  # disable set -e for the diff commands.
+    diff -B "${active_env}" "${ref_env}" >> "${filename}"
+    # show diff in output
+    diff -u "${active_env}" "${ref_env}"
+    set -e
+    echo "^^^^ end of diff ^^^^^^^" >> "${filename}"
+    echo "^^^^ end of diff ^^^^^^^"
+  else
+    echo "No environment file definition in ${local_env_dir}. Nothing recorded."
+  fi
   rm "${active_env}"
   rm "${ref_env}"
 }
