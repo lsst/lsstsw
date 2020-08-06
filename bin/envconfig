@@ -100,7 +100,8 @@ fi
 
 if [[ "$PULL" == "true" ]]; then
   echo "Updating lsstsw from remote."
-  git pull
+  # https://stackoverflow.com/questions/55237191/git-pull-not-executing-through-a-webhook-in-bash-script
+  git --git-dir="${HOME}/lsstsw/.git" --work-tree="${HOME}/lsstsw" pull https://github.com/lsst/lsstsw
 fi
 
 if [[ "${miniconda_path}" ]]; then
