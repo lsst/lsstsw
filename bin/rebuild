@@ -70,11 +70,9 @@ save_build_env() {
     # save diff in file
     echo "Differences between active anvironment and reference environment:" >> "${filename}"
     echo "Differences between active anvironment and reference environment:"
-    set +e  # disable set -e for the diff commands.
-    diff -B "${active_env}" "${ref_env}" >> "${filename}"
+    diff -B "${active_env}" "${ref_env}" >> "${filename}" || true  # OK for this to fail
     # show diff in output
-    diff -u "${active_env}" "${ref_env}"
-    set -e
+    diff -u "${active_env}" "${ref_env}" || true  # OK for this to fail
     echo "^^^^ end of diff ^^^^^^^" >> "${filename}"
     echo "^^^^ end of diff ^^^^^^^"
   else
