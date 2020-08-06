@@ -105,7 +105,7 @@ if [[ "$PULL" == "true" ]]; then
   # find the branch I am on
   branch=$(git status| grep "On branch" | awk '{print $3}')
   echo " ... on branch ${branch}"
-  git fetch origin "${branch}"
+  git --git-dir="${HOME}/lsstsw/.git" --work-tree="${HOME}/lsstsw" fetch origin "${branch}"
   git reset --hard "origin/${branch}"
 fi
 
