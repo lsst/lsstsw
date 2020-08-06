@@ -101,7 +101,11 @@ fi
 if [[ "$PULL" == "true" ]]; then
   echo "Updating lsstsw from remote."
   # https://stackoverflow.com/questions/55237191/git-pull-not-executing-through-a-webhook-in-bash-script
-  git --git-dir="${HOME}/lsstsw/.git" --work-tree="${HOME}/lsstsw" pull https://github.com/lsst/lsstsw
+  #git --git-dir="${HOME}/lsstsw/.git" --work-tree="${HOME}/lsstsw" pull https://github.com/lsst/lsstsw
+  # find the branch I am on
+  branch=$(git status| grep "On branch" | awk '{print $3}')
+  git fetch origin "${branch}"
+  git reset --hard "origin/${branch}"
 fi
 
 if [[ "${miniconda_path}" ]]; then
