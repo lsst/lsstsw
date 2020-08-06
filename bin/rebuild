@@ -41,7 +41,7 @@ save_build_env() {
   active_env="$(mktemp)"
   ref_env="$(mktemp)"
 
-  # saving information in envinronment name
+  # saving information in environment name
   echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
 
   # generating pinned list of environment content
