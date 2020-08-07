@@ -147,14 +147,18 @@ deploy_env() {
     # installation attempt.  These need to be cleaned up before [re]attempting
     # to install packages.
     conda clean -y --all
+    ARGS=()
+    # disable the conda install progress bar when not attached to a tty. Eg.,
+    # when running under CI
+    if [[ ! -t 1 ]]; then
+      ARGS+=("--quiet")
+    fi
     if [[ $deploy_mode == "bleed" ]]; then
-      ARGS=()
       ARGS+=('env' 'update')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("--file" "$env_file")
       conda "${ARGS[@]}"
     else
-      ARGS=()
       ARGS+=('create')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=('-y')
@@ -178,13 +182,6 @@ deploy_env() {
       rm "${tmp_lock}"
     fi
 
-    # disable the conda install progress bar when not attached to a tty. Eg.,
-    # when running under CI
-    if [[ ! -t 1 ]]; then
-      ARGS+=("--quiet")
-    fi
-
-
     echo "Cleaning conda environment..."
     conda clean -y -a > /dev/null
     echo "done"
@@ -207,9 +204,11 @@ deploy_env() {
       done
 
       conda config --env --set channel_priority strict
-      echo "-------- show ------------------------------------------"
-      conda config --show
-      echo "-------- end show  -------------------------------------"
+      if [[ ! -t 1 ]]; then
+        echo "-------- show ------------------------------------------"
+        conda config --show
+        echo "-------- end show  -------------------------------------"
+      fi
     fi
   )
 
@@ -221,7 +220,9 @@ deploy_env() {
 
   conda deactivate
 
-  echo "-------------------------------------------------------------."
+  # initialize eups stack
+  mkdir -p "${LSSTSW}/stack/${LSST_SPLENV_REF}"/{site,ups_db}
+  echo
   cd "${LSSTSW}"
 
 }
