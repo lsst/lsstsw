@@ -149,26 +149,30 @@ deploy_env() {
     conda clean -y --all
     ARGS=()
     # disable the conda install progress bar when not attached to a tty. Eg.,
-    # when running under CI
-    if [[ ! -t 1 ]]; then
-      ARGS+=("--quiet")
-    fi
     if [[ $deploy_mode == "bleed" ]]; then
       ARGS+=('env' 'update')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("--file" "$env_file")
+      # when running under CI
+      if [[ ! -t 1 ]]; then
+        ARGS+=("--quiet")
+      fi
       conda "${ARGS[@]}"
     else
       ARGS+=('create')
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=('-y')
       ARGS+=("--file" "$lock_file")
+      # when running under CI
+      if [[ ! -t 1 ]]; then
+        ARGS+=("--quiet")
+      fi
       # check if env exists and is consistent with the lock file
       tmp_lock="$(mktemp)"
       if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}"); then
         # check if environment is unchanged
-        # -B ignores blank lines
-        if (diff -B "${tmp_lock}" "${lock_file}"); then
+        # -B ignores blank lines, need to sort
+        if (diff -B <(sort "${tmp_lock}") <(sort "${lock_file}")); then
           echo "Environment exists and is consistent with its definition"
         else
           # environment has changed, it will be recreated
@@ -181,6 +185,7 @@ deploy_env() {
       fi
       rm "${tmp_lock}"
     fi
+
 
     echo "Cleaning conda environment..."
     conda clean -y -a > /dev/null
