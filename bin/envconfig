@@ -185,14 +185,8 @@ elif [[ $ENVREF != "" ]]; then
   # - local folder where to store environemnt files
   expand_ref "${ENVREF}"
 
-  #-# look for environment exists
-  #-# env_check=$(echo -n $(conda env list | awk '{ print $1 }' | grep -E "(^|\s)$LSST_CONDA_ENV_NAME($|\s)"))
-  #- if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
-  #-  echo "The environment do not exist... Creating environment..."
-  #-  new_env=true
-    discover_platform
-    deploy_env
-  #- fi
+  discover_platform
+  deploy_env
 
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
@@ -202,9 +196,11 @@ else
   # look for environment exists
   if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
     echo "... Environment not found"
-    echo "  you may need to call bin/deploy first"
-    echo "  or call bin/enconfig -i to see wich environments are available."
-    return
+    echo " deploying new environment for reference ${LSST_SPLENV_REF}"
+    #echo "  or call bin/enconfig -i to see wich environments are available."
+    #return
+    discover_platform
+    deploy_env
   fi
 
 fi
