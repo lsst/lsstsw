@@ -70,7 +70,7 @@ save_build_env() {
     # save diff in file and print it to console
     {
       echo "Differences between active anvironment and reference environment:"
-      diff -B -C0 "${active_env}" "${ref_env}" || true  # OK for this to fail
+      diff -B -C0 <(sort "${active_env}")  <(sort "${ref_env}") || true  # OK for this to fail
       echo "^^^^ end of diff ^^^^^^^"
     } | tee -a "${filename}"
   else
