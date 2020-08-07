@@ -14,7 +14,7 @@ PWD=$(pwd)
   echo "Updating lsstsw from remote."
   # find the current branch
   cd "${LSSTSW}"
-  branch=$(git status| grep "On branch" | awk '{print $3}')
+  branch=$(git rev-parse --abbrev-ref HEAD)
   echo " ... on branch ${branch}"
   git fetch origin "${branch}"
   git reset --hard "origin/${branch}"
