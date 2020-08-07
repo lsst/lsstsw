@@ -1,0 +1,193 @@
+#!/bin/bash
+
+#
+# ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
+# **********             SERIOUS DAMAGE MAY OCCUR             ********
+#
+# Publish built $PRODUCTs and their dependencies
+#
+# $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
+#
+# Example:
+#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
+#    and tag it as 'current' on the distribution server
+#
+# ------------------------------------------------------------------------
+# the publish is done in 2 steps:
+# 1- the packages are published in a local TMP_PKGROOT
+#      TMP_PKGROOT is set to a folder inside lsstsw and cleaned before each use
+# 2- the packages are published to the EUPS_PKGROOT
+#      EUPS_PKGREPO shall be defined in the environemnt where the script is executed
+#      it can be:
+#      - a local folder (used mainly for debug) 
+#      - a remote aws s3 bucket
+#      The packages will be publish to ${EUPS_PKGREPO}/stack/src
+
+
+DISTRIBTAG=
+BUILD=
+
+set -e
+DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck disable=SC1090
+. "${DIR}/../etc/settings.cfg.sh"
+
+TMP_PKGROOT=$LSSTSW/tmp_distrib
+
+usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+
+run() {
+  if [[ $DRYRUN == true ]]; then
+    echo "$@"
+  elif [[ $DEBUG == true ]]; then
+    (set -x; "$@")
+  else
+    "$@"
+  fi
+}
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
+  vars+=("${eups_vars[@]}")
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
+}
+
+while getopts ":b:t:d" o; do
+  case "$o" in
+  b)
+    BUILD="$OPTARG"
+    ;;
+  t)
+    DISTRIBTAG="$OPTARG"
+    ;;
+  d)
+    DEBUG=true
+    ;;
+  *)
+    usage
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]]; then
+  usage
+fi
+
+PRODUCTS=("$@")
+
+# to source envconfig instead
+#if [[ "${miniconda_path}" ]]; then
+#  # shellcheck disable=SC1090
+#  # shellcheck disable=SC2154
+#  . "${miniconda_path}/etc/profile.d/conda.sh"
+#fi
+#
+## shellcheck disable=SC1091
+# conda activate "$LSST_CONDA_ENV_NAME"
+# CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+
+for prod in "${PRODUCTS[@]}"; do
+  if [[ -z "$prod" ]]; then
+    echo "zero length product names are not permitted"
+    usage
+  fi
+  if [[ $prod == *[[:space:]]* ]]; then
+    echo "white spaces are not permitted in product names"
+    usage
+  fi
+done
+
+if [[ -z $BUILD ]]; then
+  if [[ ! -z $DISTRIBTAG ]]; then
+    # Default the build ID to distserver tag value
+    BUILD="$DISTRIBTAG"
+    echo "[publish] Build ID defaulting to distserver tag, $BUILD."
+  else
+    # Find out the build ID
+    eval "$(run grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
+    echo "[publish] Build ID deduced from manifest.txt, $BUILD."
+  fi
+fi
+
+# once the buildID is givem the environment name can be identified
+LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
+echo "[publish] $LSST_CONDA_ENV_NAME used for build."
+CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+
+# activating the environment it has been used for the build
+source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
+
+# set local (empty) pkgroot
+run rm -rf "${TMP_PKGROOT}"
+mkdir -p "${TMP_PKGROOT}"/tags
+
+if [[ $DEBUG == true ]]; then
+	cat <<-EOF
+	----------------------------------------------------------------
+	$(print_settings)
+	----------------------------------------------------------------
+	EOF
+fi
+
+#
+# Create the distribution packages
+#
+for product in "${PRODUCTS[@]}"; do
+  run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
+done
+
+#
+# Declare the build tag, and declare it $DISTRIBTAG, if set
+#
+run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
+
+if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
+  echo "Adding tag '$DISTRIBTAG' at the distribution server."
+
+  match='EUPS distribution ([^ ]+) version list. Version 1.0'
+  # shellcheck disable=SC1117
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
+  src_tag="${TMP_PKGROOT}/tags/${BUILD}.list"
+  dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+  run sed -r "s|${match}|${sub}|" "$src_tag" > "$dst_tag"
+
+  # remove the original bNNNN tag to reduce tag proliferation
+  rm "$src_tag"
+fi
+
+## -- ignored for the moment
+## Publish the newinstall script, if declared current
+##
+#if [[ $DISTRIBTAG == current ]] && eups list -t "$BUILD" lsst >/dev/null 2>&1; then
+#  echo "Copying newinstall.sh to the distribution server."
+#  run cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
+#fi
+
+
+if [[ -z $EUPS_PKGREPO ]]; then
+  # push to final PKGROOT enabled
+  if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+    # the PKGROOT is a local filesystem
+    run cp -R "${TMP_PKGROOT}" "${EUPS_PKGREPO}/stack/src"
+  else
+    # the PKGROOT is a remote aws s3
+    echo "To Be Implemented."
+  fi
+fi 
+
+# vim: tabstop=2 shiftwidth=2 expandtab
