@@ -87,8 +87,6 @@ if [[ $# -eq 0 ]]; then
   usage
 fi
 
-PRODUCTS=("$@")
-
 # to source envconfig instead
 #if [[ "${miniconda_path}" ]]; then
 #  # shellcheck disable=SC1090
@@ -100,6 +98,33 @@ PRODUCTS=("$@")
 # conda activate "$LSST_CONDA_ENV_NAME"
 # CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
 
+if [[ -z $BUILD ]]; then
+  # retriving buildID from manifest.txt
+  BUILD=$(grep '^BUILD=' $LSSTSW/build/manifest.txt | awk -F '=' '{print $2}')
+fi
+
+if [[ -z $DISTRIBTAG ]]; then
+  # set DISTRIBTAG equal to buildID
+  DISTRIBTAG="${BUILD}"
+fi
+
+# once the buildID is givem the environment name can be identified
+LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
+ENVREF="${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+echo
+echo "[publish-src] $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
+echo
+
+# activating the environment it has been used for the build
+source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
+
+# set local (empty) pkgroot
+run rm -rf "${TMP_PKGROOT}"
+mkdir -p "${TMP_PKGROOT}"/tags
+
+PRODUCTS=("$@")
+
 for prod in "${PRODUCTS[@]}"; do
   if [[ -z "$prod" ]]; then
     echo "zero length product names are not permitted"
@@ -110,30 +135,6 @@ for prod in "${PRODUCTS[@]}"; do
     usage
   fi
 done
-
-if [[ -z $BUILD ]]; then
-  if [[ ! -z $DISTRIBTAG ]]; then
-    # Default the build ID to distserver tag value
-    BUILD="$DISTRIBTAG"
-    echo "[publish] Build ID defaulting to distserver tag, $BUILD."
-  else
-    # Find out the build ID
-    eval "$(run grep -E '^BUILD=' "$LSSTSW_BUILD_DIR"/manifest.txt)"
-    echo "[publish] Build ID deduced from manifest.txt, $BUILD."
-  fi
-fi
-
-# once the buildID is givem the environment name can be identified
-LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
-echo "[publish] $LSST_CONDA_ENV_NAME used for build."
-CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
-
-# activating the environment it has been used for the build
-source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
-
-# set local (empty) pkgroot
-run rm -rf "${TMP_PKGROOT}"
-mkdir -p "${TMP_PKGROOT}"/tags
 
 if [[ $DEBUG == true ]]; then
 	cat <<-EOF
@@ -147,6 +148,7 @@ fi
 # Create the distribution packages
 #
 for product in "${PRODUCTS[@]}"; do
+  # echo eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
   run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
 done
 
@@ -179,15 +181,18 @@ fi
 #fi
 
 
-if [[ -z $EUPS_PKGREPO ]]; then
+if [[ ! -z $EUPS_PKGREPO ]]; then
   # push to final PKGROOT enabled
   if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+    echo "Publishing to filesystem: ${EUPS_PKGREPO}"
     # the PKGROOT is a local filesystem
-    run cp -R "${TMP_PKGROOT}" "${EUPS_PKGREPO}/stack/src"
+    run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/stack/src/"
   else
     # the PKGROOT is a remote aws s3
     echo "To Be Implemented."
   fi
+else
+  echo "No Publishing."
 fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab
