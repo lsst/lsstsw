@@ -189,7 +189,7 @@ else
 
 fi
 
-echo "Activating environment ${LSST_CONDA_ENV_NAME}"
+#echo "Activating environment ${LSST_CONDA_ENV_NAME}"
 # shellcheck disable=SC1091
 conda activate "$LSST_CONDA_ENV_NAME"
 if [ "$?" != 0 ]; then
