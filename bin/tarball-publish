@@ -165,8 +165,8 @@ config_curl
 #  - tag
 #  - products
 #  - EUPS_PKGREPO
-  PRODUCTS=("$@")
-  for prod in "${PRODUCTS[@]}"; do
+  DISTRIB_PRODUCTS=("$@")
+  for prod in "${DISTRIB_PRODUCTS[@]}"; do
     if [[ -z "$prod" ]]; then
       echo "zero length product names are not permitted"
       usage
@@ -198,7 +198,7 @@ config_curl
   fi
   RAW_ENV_REPO=$(echo "${RAW_ENV_INFO}" | awk -F '=' '{ print $2 }')
   ENVREF=$(echo "${RAW_ENV_REPO}" | awk -F '@' '{ print $2 }')
-  LSST_CONDA_ENV_NAME= ${SPLENV_BASE_NAME}-${ENVREF}
+  LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${ENVREF}"
 
 # activate the correct environmen tusing envconfig -r ENVREF
   echo
@@ -206,8 +206,16 @@ config_curl
   echo
   source $LSSTSW/bin/envconfig -r $ENVREF
 
-# install the product from source pkgs using eups distrib install -t TAG PRODUCTS
+# install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
+  echo "[tarball-publish] Install products ${DISTRIB_PRODUCTS} from eups source packages"
+  EUPSPKG_ROOT="${EUPS_PKGREPO}/stack/src"
+  for product in "${DISTRIB_PRODUCTS[@]}"; do
+    echo "   eups distrib install -t ${DISTRIBTAG} ${product}"
+    run eups distrib install -t "${DISTRIBTAG}" "${product}"
+  done
+
 # generate the binaaries packages
+  echo "[tarball-publish] Generate tarballs for products ${DISTRIB_PRODUCTS}"
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
   mkdir -p "${TMP_PKGROOT}"/tags
@@ -218,7 +226,7 @@ config_curl
 	----------------------------------------------------------------
 	EOF
   fi
-  for product in "${PRODUCTS[@]}"; do
+  for product in "${DISTRIB_PRODUCTS[@]}"; do
     # echo eups distrib create --server-dir "$TMP_PKGROOT" -f tarball -t "$DISTRIBTAG" "$product"
     run eups distrib create --server-dir "$TMP_PKGROOT" -f tarball -t "$DISTRIBTAG" "$product"
   done
@@ -227,23 +235,23 @@ config_curl
 
 
 # publish the binaries packages
-define_platform
-compiler="conda-system"
+  define_platform
+  compiler="conda-system"
 
-if [[ ! -z $EUPS_PKGREPO ]]; then
-  # push to final PKGROOT enabled
-  deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
-  if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
-    echo "Publishing to filesystem: ${EUPS_PKGREPO}"
-    # the PKGROOT is a local filesystem
-    mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
-    run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+  if [[ ! -z $EUPS_PKGREPO ]]; then
+    # push to final PKGROOT enabled
+    deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      echo "Publishing to filesystem: ${EUPS_PKGREPO}"
+      # the PKGROOT is a local filesystem
+      mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+      run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+    else
+      # the PKGROOT is a remote aws s3
+      echo "To Be Implemented."
+    fi
   else
-    # the PKGROOT is a remote aws s3
-    echo "To Be Implemented."
-  fi
-else
-  echo "Publishing disabled. No EUPS_PKGREPO env var defined."
-fi 
+    echo "Publishing disabled. No EUPS_PKGREPO env var defined."
+  fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab
