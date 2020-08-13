@@ -102,7 +102,6 @@ define_platform() {
   echo "      os-release: ${osrelease}"
   echo "      os-platform: ${osplatform}"
   echo "      pkg_postfix: ${pkg_postfix}"
-
 }
 
 
@@ -160,10 +159,12 @@ if [[ $# -eq 0 ]]; then
   usage
 fi
 
+config_curl
+
 # TO-DO: check that the required input parameters are provided
 #  - tag
 #  - products
-#  - EUPSPKG_REPO
+#  - EUPS_PKGREPO
   PRODUCTS=("$@")
   for prod in "${PRODUCTS[@]}"; do
     if [[ -z "$prod" ]]; then
@@ -176,8 +177,8 @@ fi
     fi
   done
 
-# given the tag and EUPSPKG_REPO identify the ENVREF
-  LIST_BASE_URL="${EUPSPKG_REPO}/stack/src/tags"
+# given the tag and EUPS_PKGREPO identify the ENVREF
+  LIST_BASE_URL="${EUPS_PKGREPO}/stack/src/tags"
   LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
   # check if it is not an https link
   if [[ "${LIST_URL:0:4}" != "http" ]]; then
@@ -186,7 +187,7 @@ fi
       # sanity check on the provided path
       LIST_URL="file://${LIST_URL}"
     else
-      fail "Error defining EUPS_PKGROOT: provided wrong input in EUPSPKG_REPO:\\n -> ${EUPSPKG_REPO}"
+      fail "Error defining EUPS_PKGROOT: provided wrong input in EUPS_PKGREPO:\\n -> ${EUPS_PKGREPO}"
     fi
   fi
   # shellcheck disable=SC2028
