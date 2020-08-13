@@ -1,6 +1,7 @@
 #!/bin/bash
 # 
 
+# update lsstsw
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
   SUFFIX='sh'
@@ -20,3 +21,12 @@ PWD=$(pwd)
   git reset --hard "origin/${branch}"
 
 cd "${PWD}"
+
+# update lsst_build is deployed
+if [[ -d "lsst_build" ]]; then
+  # just update master for lsst
+  cd lsst_build
+  git pull
+fi
+
+# TBD: how we update versiondb? Ideally we should remove it from the loop
