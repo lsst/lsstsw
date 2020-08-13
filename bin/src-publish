@@ -158,7 +158,7 @@ done
 run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
 
 #if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
-  echo "Adding tag '$DISTRIBTAG' at the distribution server."
+  echo "[publish-src] Adding tag '$DISTRIBTAG' at the distribution server."
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
@@ -184,7 +184,7 @@ run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
 if [[ ! -z $EUPS_PKGREPO ]]; then
   # push to final PKGROOT enabled
   if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
-    echo "Publishing to filesystem: ${EUPS_PKGREPO}"
+    echo "[publish-src] Publishing to filesystem: ${EUPS_PKGREPO}"
     # the PKGROOT is a local filesystem
     run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/stack/src/"
   else
@@ -192,7 +192,7 @@ if [[ ! -z $EUPS_PKGREPO ]]; then
     echo "To Be Implemented."
   fi
 else
-  echo "No Publishing."
+  echo "[publish-src] No Publishing."
 fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab
