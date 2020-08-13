@@ -1,0 +1,248 @@
+#!/bin/bash
+
+#
+# ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
+# **********             SERIOUS DAMAGE MAY OCCUR             ********
+#
+# Generate and publish tarball built packages for $PRODUCTs and their dependencies
+#
+# $ tarball-publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
+#
+# Example:
+#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
+#    and tag it as 'current' on the distribution server
+#
+# ------------------------------------------------------------------------
+# the publish is done in 2 steps:
+# 1- the packages are published in a local TMP_PKGROOT
+#      TMP_PKGROOT is set to a folder inside lsstsw and cleaned before each use
+# 2- the packages are published to the EUPS_PKGROOT
+#      EUPS_PKGREPO shall be defined in the environemnt where the script is executed
+#      it can be:
+#      - a local folder (used mainly for debug) 
+#      - a remote aws s3 bucket
+#      The packages will be publish to ${EUPS_PKGREPO}/stack/src
+
+
+DISTRIBTAG=
+BUILD=
+
+set -e
+DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck disable=SC1090
+. "${DIR}/../etc/settings.cfg.sh"
+# Source script with shared functions
+# shellcheck disable=SC1090
+source "${LSSTSW}/bin/utils.sh"
+
+TMP_PKGROOT=$LSSTSW/tmp_distrib
+
+usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+
+
+# define architecture and platform the build is done
+define_platform() {
+
+  case $(uname -s) in
+    Linux*)
+      pkg_postfix='linux-64'
+      local release_file='/etc/redhat-release'
+      if [[ ! -e $release_file ]]; then
+         print_error "unknown osfamily"
+         #[[ $__debug == true ]] && print_error "unknown osfamily"
+      fi
+      osfamily="redhat"
+
+      # capture only major version number because "posix character classes"
+      if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
+         print_error "unable to find release string"
+         #[[ $__debug == true ]] && print_error "unable to find release string"
+      fi
+      osrelease="${BASH_REMATCH[1]}"
+      case $osrelease in
+        6)
+          osplatform=el6
+          ;;
+        7)
+          osplatform=el7
+          ;;
+        *)
+          print_error "unsupported release: $osrelease"
+          #[[ $__debug == true ]] && print_error "unsupported release: $__release"
+          ;;
+        esac
+      ;;
+    Darwin*)
+      osfamily="osx"
+      pkg_postfix='osx-64'
+
+      if ! release=$(sw_vers -productVersion); then
+         print_error "unable to find release string"
+         #[[ $__debug == true ]] && print_error "unable to find release string"
+      fi
+      osrelease=$(trimws "$release")
+      case $osrelease in
+        # XXX bash 3.2 on osx does not support case fall-through
+        10.9.* | 10.1?.* | 10.1?)
+          osplatform=10.9
+          ;;
+        *)
+          print_error "unsupported release: $osrelease"
+          #[[ $__debug == true ]] && print_error "unsupported release: $osrelease"
+          ;;
+        esac
+      ;;
+    *)
+      print_error "unknown osfamily"
+      #[[ $__debug == true ]] && print_error "unknown osfamily"
+      ;;
+  esac
+  echo "  ... configuring enfironment for:"
+  echo "      os-family: ${osfamily}"
+  echo "      os-release: ${osrelease}"
+  echo "      os-platform: ${osplatform}"
+  echo "      pkg_postfix: ${pkg_postfix}"
+
+}
+
+
+run() {
+  if [[ $DRYRUN == true ]]; then
+    echo "$@"
+  elif [[ $DEBUG == true ]]; then
+    (set -x; "$@")
+  else
+    "$@"
+  fi
+}
+
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
+  vars+=("${eups_vars[@]}")
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
+}
+
+
+##### main #####
+while getopts ":b:t:d" o; do
+  case "$o" in
+  b)
+    BUILD="$OPTARG"
+    ;;
+  t)
+    DISTRIBTAG="$OPTARG"
+    ;;
+  d)
+    DEBUG=true
+    ;;
+  *)
+    usage
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]]; then
+  usage
+fi
+
+# TO-DO: check that the required input parameters are provided
+#  - tag
+#  - products
+#  - EUPSPKG_REPO
+  PRODUCTS=("$@")
+  for prod in "${PRODUCTS[@]}"; do
+    if [[ -z "$prod" ]]; then
+      echo "zero length product names are not permitted"
+      usage
+    fi
+    if [[ $prod == *[[:space:]]* ]]; then
+      echo "white spaces are not permitted in product names"
+      usage
+    fi
+  done
+
+# given the tag and EUPSPKG_REPO identify the ENVREF
+  LIST_BASE_URL="${EUPSPKG_REPO}/stack/src/tags"
+  LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
+  # check if it is not an https link
+  if [[ "${LIST_URL:0:4}" != "http" ]]; then
+    # in this case the provided repo URL has to be an absolute path
+    if [[ "${LIST_URL:0:1}" == "/" ]]; then
+      # sanity check on the provided path
+      LIST_URL="file://${LIST_URL}"
+    else
+      fail "Error defining EUPS_PKGROOT: provided wrong input in EUPSPKG_REPO:\\n -> ${EUPSPKG_REPO}"
+    fi
+  fi
+  # shellcheck disable=SC2028
+  echo "Looking for environment information from:\\n --> ${LIST_URL}"
+  RAW_ENV_INFO=$("${CURL}" -s "${LIST_URL}" | grep CONDA_ENV)
+  if [ -z "${RAW_ENV_INFO}" ]; then
+    fail "Eups tag ${EUPS_TAG} not related to any environment."
+  fi
+  RAW_ENV_REPO=$(echo "${RAW_ENV_INFO}" | awk -F '=' '{ print $2 }')
+  ENVREF=$(echo "${RAW_ENV_REPO}" | awk -F '@' '{ print $2 }')
+  LSST_CONDA_ENV_NAME= ${SPLENV_BASE_NAME}-${ENVREF}
+
+# activate the correct environmen tusing envconfig -r ENVREF
+  echo
+  echo "[tarball-publish] $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
+  echo
+  source $LSSTSW/bin/envconfig -r $ENVREF
+
+# install the product from source pkgs using eups distrib install -t TAG PRODUCTS
+# generate the binaaries packages
+  # set local (empty) pkgroot
+  run rm -rf "${TMP_PKGROOT}"
+  mkdir -p "${TMP_PKGROOT}"/tags
+  if [[ $DEBUG == true ]]; then
+	cat <<-EOF
+	----------------------------------------------------------------
+	$(print_settings)
+	----------------------------------------------------------------
+	EOF
+  fi
+  for product in "${PRODUCTS[@]}"; do
+    # echo eups distrib create --server-dir "$TMP_PKGROOT" -f tarball -t "$DISTRIBTAG" "$product"
+    run eups distrib create --server-dir "$TMP_PKGROOT" -f tarball -t "$DISTRIBTAG" "$product"
+  done
+  # Declare the build tag, and declare it $DISTRIBTAG, if set
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$DISTRIBTAG"
+
+
+# publish the binaries packages
+define_platform
+compiler="conda-system"
+
+if [[ ! -z $EUPS_PKGREPO ]]; then
+  # push to final PKGROOT enabled
+  deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+  if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+    echo "Publishing to filesystem: ${EUPS_PKGREPO}"
+    # the PKGROOT is a local filesystem
+    mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+    run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+  else
+    # the PKGROOT is a remote aws s3
+    echo "To Be Implemented."
+  fi
+else
+  echo "Publishing disabled. No EUPS_PKGREPO env var defined."
+fi 
+
+# vim: tabstop=2 shiftwidth=2 expandtab
