@@ -4,9 +4,9 @@
 # ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
 # **********             SERIOUS DAMAGE MAY OCCUR             ********
 #
-# Publish built $PRODUCTs and their dependencies
+# Generate and publish src built packages for $PRODUCTs and their dependencies
 #
-# $ publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
+# $ src-publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
 #    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
@@ -157,7 +157,7 @@ done
 #
 run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
 
-if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
+#if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
@@ -170,7 +170,7 @@ if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
 
   # remove the original bNNNN tag to reduce tag proliferation
   rm "$src_tag"
-fi
+#fi
 
 ## -- ignored for the moment
 ## Publish the newinstall script, if declared current
