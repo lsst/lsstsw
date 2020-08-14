@@ -25,7 +25,6 @@
 
 
 DISTRIBTAG=
-BUILD=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -160,6 +159,9 @@ if [[ $# -eq 0 ]]; then
 fi
 
 config_curl
+
+# unset following variable that may affect the outcome of the build
+unset EUPS_PKGROOT
 
 # TO-DO: check that the required input parameters are provided
 #  - tag
