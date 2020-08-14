@@ -97,11 +97,11 @@ define_platform() {
       #[[ $__debug == true ]] && print_error "unknown osfamily"
       ;;
   esac
-  echo "  ... configuring enfironment for:"
-  echo "      os-family: ${osfamily}"
-  echo "      os-release: ${osrelease}"
-  echo "      os-platform: ${osplatform}"
-  echo "      pkg_postfix: ${pkg_postfix}"
+  echo "[tarballs-publish] Platform parameters for binary identification:"
+  echo "  -  os-family: ${osfamily}"
+  echo "  -  os-release: ${osrelease}"
+  echo "  -  os-platform: ${osplatform}"
+  echo "  -  pkg_postfix: ${pkg_postfix}"
 }
 
 
@@ -228,13 +228,13 @@ unset EUPS_PKGROOT
   echo "[tarballs-publish] Install products ${DISTRIB_PRODUCTS} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     mkdir -p "${TMP_PKGROOT}/${product}/tags"
-    echo "[               ] eups distrib install -t ${DISTRIBTAG} ${product}"
+    echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
     run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
   done
   echo "[tarballs-publish] Generate tarballs for products ${DISTRIB_PRODUCTS}"
   mkdir -p "${TMP_PKGROOT}"/tags
   for product in "${DISTRIB_PRODUCTS[@]}"; do
-    echo "[               ] eups distrib create --server-dir "$TMP_PKGROOT" -d tarball -t "$DISTRIBTAG" "$product" -v"
+    echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG" $product -v"
     run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
     # Declare the build tag, and declare it $DISTRIBTAG, if set
     run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
