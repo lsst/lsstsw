@@ -46,6 +46,7 @@ run() {
   fi
 }
 
+
 print_settings() {
   local vars=(
     BUILD
@@ -64,6 +65,10 @@ print_settings() {
     echo "${i}: ${!i}"
   done
 }
+
+
+# -------    main
+timestamp=$(date '+%Y%m%d%H%M%S')
 
 while getopts ":b:t:d" o; do
   case "$o" in
@@ -87,26 +92,16 @@ if [[ $# -eq 0 ]]; then
   usage
 fi
 
-# to source envconfig instead
-#if [[ "${miniconda_path}" ]]; then
-#  # shellcheck disable=SC1090
-#  # shellcheck disable=SC2154
-#  . "${miniconda_path}/etc/profile.d/conda.sh"
-#fi
-#
-## shellcheck disable=SC1091
-# conda activate "$LSST_CONDA_ENV_NAME"
-# CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
-
 if [[ -z $BUILD ]]; then
   # retriving buildID from manifest.txt
   BUILD=$(grep '^BUILD=' $LSSTSW/build/manifest.txt | awk -F '=' '{print $2}')
 fi
 
-if [[ -z $DISTRIBTAG ]]; then
+if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   # set DISTRIBTAG equal to buildID
-  DISTRIBTAG="${BUILD}"
+  DISTRIBTAG="${timestamp}"
 fi
+echo "[publish-src] Distribution Tag identification $DISTRIBTAG."
 
 # once the buildID is givem the environment name can be identified
 LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
@@ -119,9 +114,8 @@ echo
 # activating the environment it has been used for the build
 source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
 
-# set local (empty) pkgroot
+# rmpty local pkgroot
 run rm -rf "${TMP_PKGROOT}"
-mkdir -p "${TMP_PKGROOT}"/tags
 
 PRODUCTS=("$@")
 
@@ -148,29 +142,24 @@ fi
 # Create the distribution packages
 #
 for product in "${PRODUCTS[@]}"; do
+  echo "[publish-src] Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
+  mkdir -p "${TMP_PKGROOT}/${product}"/tags
   # echo eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
-  run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
-done
-
-#
-# Declare the build tag, and declare it $DISTRIBTAG, if set
-#
-run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
-
-#if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
+  run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "$BUILD" "$product"
+  # 
+  run eups distrib declare --server-dir="$TMP_PKGROOT/$product" -t "$BUILD"
   echo "[publish-src] Adding tag '$DISTRIBTAG' at the distribution server."
-
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
-  src_tag="${TMP_PKGROOT}/tags/${BUILD}.list"
-  dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
-
+  src_tag="${TMP_PKGROOT}/${product}/tags/${BUILD}.list"
+  dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
+  #
   run sed -r "s|${match}|${sub}|" "$src_tag" > "$dst_tag"
-
+  #
   # remove the original bNNNN tag to reduce tag proliferation
   rm "$src_tag"
-#fi
+done
 
 ## -- ignored for the moment
 ## Publish the newinstall script, if declared current
@@ -183,14 +172,17 @@ run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
 
 if [[ ! -z $EUPS_PKGREPO ]]; then
   # push to final PKGROOT enabled
-  if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+  for product in "${PRODUCTS[@]}"; do
+    deploy_destination="stack/$product/src/"
     echo "[publish-src] Publishing to filesystem: ${EUPS_PKGREPO}"
-    # the PKGROOT is a local filesystem
-    run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/stack/src/"
-  else
-    # the PKGROOT is a remote aws s3
-    echo "To Be Implemented."
-  fi
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      # the PKGROOT is a local filesystem
+      run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/stack/src/"
+    else
+      # the PKGROOT is a remote aws s3
+      echo "To Be Implemented."
+    fi
+  done
 else
   echo "[publish-src] No Publishing."
 fi 
