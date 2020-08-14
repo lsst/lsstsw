@@ -70,6 +70,9 @@ print_settings() {
 # -------    main
 timestamp=$(date '+%Y%m%d%H%M%S')
 
+# unset following variable that may affect the outcome of the build
+unset EUPS_PKGROOT
+
 while getopts ":b:t:d" o; do
   case "$o" in
   b)
@@ -99,7 +102,7 @@ fi
 
 if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   # set DISTRIBTAG equal to buildID
-  DISTRIBTAG="${timestamp}"
+  DISTRIBTAG="d${timestamp}"
 fi
 echo "[publish-src] Distribution Tag identification $DISTRIBTAG."
 
