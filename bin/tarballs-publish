@@ -25,6 +25,7 @@
 
 
 DISTRIBTAG=
+first_product=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -169,6 +170,10 @@ unset EUPS_PKGROOT
 #  - EUPS_PKGREPO
   DISTRIB_PRODUCTS=("$@")
   for prod in "${DISTRIB_PRODUCTS[@]}"; do
+    # save the first product to look for manifest
+    if [[ -z "${first_product}" ]]; then
+      first_product=$prod
+    fi
     if [[ -z "$prod" ]]; then
       echo "zero length product names are not permitted"
       usage
@@ -180,7 +185,7 @@ unset EUPS_PKGROOT
   done
 
 # given the tag and EUPS_PKGREPO identify the ENVREF
-  LIST_BASE_URL="${EUPS_PKGREPO}/stack/src/tags"
+  LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
   LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
   # check if it is not an https link
   if [[ "${LIST_URL:0:4}" != "http" ]]; then
