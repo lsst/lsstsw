@@ -226,7 +226,10 @@ deploy_env() {
   conda deactivate
 
   # initialize eups stack
-  mkdir -p "${LSSTSW}/stack/${LSST_SPLENV_REF}"/{site,ups_db}
+  local eups_path="${LSSTSW}/stack/${LSST_SPLENV_REF}"
+  mkdir -p "${eups_path}"/{site,ups_db}
+  echo "::: Deploying manifest.remap"
+  ln -sf "${LSSTSW}/etc/manifest.remap" "${eups_path}/site/manifest.remap"
   echo
   cd "${LSSTSW}"
 

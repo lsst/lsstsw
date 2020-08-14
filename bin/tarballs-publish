@@ -25,6 +25,7 @@
 
 
 DISTRIBTAG=
+first_product=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -96,11 +97,11 @@ define_platform() {
       #[[ $__debug == true ]] && print_error "unknown osfamily"
       ;;
   esac
-  echo "  ... configuring enfironment for:"
-  echo "      os-family: ${osfamily}"
-  echo "      os-release: ${osrelease}"
-  echo "      os-platform: ${osplatform}"
-  echo "      pkg_postfix: ${pkg_postfix}"
+  echo "[tarballs-publish] Platform parameters for binary identification:"
+  echo "  -  os-family: ${osfamily}"
+  echo "  -  os-release: ${osrelease}"
+  echo "  -  os-platform: ${osplatform}"
+  echo "  -  pkg_postfix: ${pkg_postfix}"
 }
 
 
@@ -169,6 +170,10 @@ unset EUPS_PKGROOT
 #  - EUPS_PKGREPO
   DISTRIB_PRODUCTS=("$@")
   for prod in "${DISTRIB_PRODUCTS[@]}"; do
+    # save the first product to look for manifest
+    if [[ -z "${first_product}" ]]; then
+      first_product=$prod
+    fi
     if [[ -z "$prod" ]]; then
       echo "zero length product names are not permitted"
       usage
@@ -180,7 +185,7 @@ unset EUPS_PKGROOT
   done
 
 # given the tag and EUPS_PKGREPO identify the ENVREF
-  LIST_BASE_URL="${EUPS_PKGREPO}/stack/src/tags"
+  LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
   LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
   # check if it is not an https link
   if [[ "${LIST_URL:0:4}" != "http" ]]; then
@@ -223,13 +228,13 @@ unset EUPS_PKGROOT
   echo "[tarballs-publish] Install products ${DISTRIB_PRODUCTS} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     mkdir -p "${TMP_PKGROOT}/${product}/tags"
-    echo "[               ] eups distrib install -t ${DISTRIBTAG} ${product}"
+    echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
     run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
   done
   echo "[tarballs-publish] Generate tarballs for products ${DISTRIB_PRODUCTS}"
   mkdir -p "${TMP_PKGROOT}"/tags
   for product in "${DISTRIB_PRODUCTS[@]}"; do
-    echo "[               ] eups distrib create --server-dir "$TMP_PKGROOT" -d tarball -t "$DISTRIBTAG" "$product" -v"
+    echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
     run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
     # Declare the build tag, and declare it $DISTRIBTAG, if set
     run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"

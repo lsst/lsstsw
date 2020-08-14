@@ -102,7 +102,8 @@ fi
 
 if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   # set DISTRIBTAG equal to buildID
-  DISTRIBTAG="d${timestamp}"
+  # it is recommended to have the buildID generated via timestamp (d${timestamp}) in lsst_build
+  DISTRIBTAG="$BUILD"
 fi
 echo "[publish-src] Distribution Tag identification $DISTRIBTAG."
 
@@ -182,6 +183,7 @@ if [[ ! -z $EUPS_PKGREPO ]]; then
       # the PKGROOT is a local filesystem
       mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
       run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+      echo "[publish-src] Done."
     else
       # the PKGROOT is a remote aws s3
       echo "To Be Implemented."
