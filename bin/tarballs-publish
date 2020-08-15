@@ -234,7 +234,7 @@ unset EUPS_PKGROOT
   echo "[tarballs-publish] Generate tarballs for products ${DISTRIB_PRODUCTS}"
   mkdir -p "${TMP_PKGROOT}"/tags
   for product in "${DISTRIB_PRODUCTS[@]}"; do
-    echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG" $product -v"
+    echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
     run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
     # Declare the build tag, and declare it $DISTRIBTAG, if set
     run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
