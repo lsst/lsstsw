@@ -162,7 +162,9 @@ for product in "${PRODUCTS[@]}"; do
   run sed -r "s|${match}|${sub}|" "$src_tag" > "$dst_tag"
   #
   # remove the original bNNNN tag to reduce tag proliferation
-  rm "$src_tag"
+  if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
+    rm "$src_tag"
+  fi
 done
 
 ## -- ignored for the moment
