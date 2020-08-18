@@ -103,7 +103,7 @@ fi
 if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   # set DISTRIBTAG equal to buildID
   # it is recommended to have the buildID generated via timestamp (d${timestamp}) in lsst_build
-  DISTRIBTAG="$BUILD"
+  DISTRIBTAG="b_${BUILD:1}"
 fi
 echo "[publish-src] Distribution Tag identification $DISTRIBTAG."
 
