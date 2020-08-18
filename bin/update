@@ -19,6 +19,7 @@ PWD=$(pwd)
   echo " ... on branch ${branch}"
   git fetch origin "${branch}"
   git reset --hard "origin/${branch}"
+  git pull
 
 cd "${PWD}"
 

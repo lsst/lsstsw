@@ -157,10 +157,13 @@ for product in "${PRODUCTS[@]}"; do
   # shellcheck disable=SC1117
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
   src_tag="${TMP_PKGROOT}/${product}/tags/${BUILD}.list"
+  tmp_list=$(mktemp)
   dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
   #
-  run sed -r "s|${match}|${sub}|" "$src_tag" > "$dst_tag"
+  run sed -r "s|${match}|${sub}|" "$src_tag" > "$tmp_list"
   #
+  cp "${tmp_list}" "${dst_tag}"
+  rm "${tmp_list}"
   # remove the original bNNNN tag to reduce tag proliferation
   if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
     rm "$src_tag"
