@@ -60,11 +60,11 @@ define_platform() {
       fi
       osrelease="${BASH_REMATCH[1]}"
       case $osrelease in
-        6)
-          osplatform=el6
-          ;;
         7)
           osplatform=el7
+          ;;
+        8)
+          osplatform=el8
           ;;
         *)
           print_error "unsupported release: $osrelease"
