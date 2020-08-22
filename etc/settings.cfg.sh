@@ -48,7 +48,8 @@ EXCLUSIONS=${LSSTSW}/etc/exclusions.txt
 export EUPSPKG_REPOSITORY_PATH="${LSSTSW_BUILD_DIR}/\$PRODUCT"
 
 # use 'package' for public releases, use 'git' for development releases
-export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
+#  removed from here and defined in the script where it is used
+#export EUPSPKG_SOURCE=${EUPSPKG_SOURCE:-git}
 
 # the location of the distribution server
 export EUPS_PKGROOT=${EUPS_PKGROOT:-${LSSTSW}/distserver/production}
