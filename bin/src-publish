@@ -9,7 +9,7 @@
 # $ src-publish [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
 #
 # Example:
-#    'publish -t current' will publish the build found in $LSSTSW_BUILD_DIR
+#    'src-publish -t current product_name' will publish the build found in $LSSTSW_BUILD_DIR
 #    and tag it as 'current' on the distribution server
 #
 # ------------------------------------------------------------------------
@@ -26,6 +26,10 @@
 
 DISTRIBTAG=
 BUILD=
+NAMESPACE=false
+
+# this is required in order to publish git packages
+export EUPSPKG_SOURCE=git
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -34,7 +38,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 TMP_PKGROOT=$LSSTSW/tmp_distrib
 
-usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
 run() {
   if [[ $DRYRUN == true ]]; then
@@ -68,18 +72,16 @@ print_settings() {
 
 
 # -------    main
-timestamp=$(date '+%Y%m%d%H%M%S')
-
-# unset following variable that may affect the outcome of the build
-unset EUPS_PKGROOT
-
-while getopts ":b:t:d" o; do
+while getopts ":b:t:nd" o; do
   case "$o" in
   b)
     BUILD="$OPTARG"
     ;;
   t)
     DISTRIBTAG="$OPTARG"
+    ;;
+  n)
+    NAMESPACE=true
     ;;
   d)
     DEBUG=true
@@ -95,30 +97,35 @@ if [[ $# -eq 0 ]]; then
   usage
 fi
 
+# unset following variable that may affect the outcome of the build
+unset EUPS_PKGROOT
+
 if [[ -z $BUILD ]]; then
   # retriving buildID from manifest.txt
   BUILD=$(grep '^BUILD=' $LSSTSW/build/manifest.txt | awk -F '=' '{print $2}')
 fi
 
 if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
-  # set DISTRIBTAG equal to buildID
-  # it is recommended to have the buildID generated via timestamp (d${timestamp}) in lsst_build
-  DISTRIBTAG="d${timestamp}"
+  # set DISTRIBTAG equal to buildID in case no tag is specified
+  # it should be recommended to have the buildID as timestamp ( d$(date '+%Y%m%d%H%M%S') ) generated in lsst_build
+  #DISTRIBTAG="b${BUILD:1}"
+  DISTRIBTAG="${BUILD}"
+  #DISTRIBTAG="d$(date '+%Y%m%d%H%M%S')"
 fi
-echo "[publish-src] Distribution Tag identification $DISTRIBTAG."
+echo "src-publish >> Distribution Tag identification $DISTRIBTAG. BuildID ${BUILD}"
 
 # once the buildID is givem the environment name can be identified
 LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
 ENVREF="${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
-CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+CONDA_ENV_REF="${LSST_SPLENV_REPO}@${ENVREF}"
 echo
-echo "[publish-src] $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
+echo "src-publish >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
 echo
 
 # activating the environment it has been used for the build
 source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
 
-# rmpty local pkgroot
+# empty local pkgroot
 run rm -rf "${TMP_PKGROOT}"
 
 PRODUCTS=("$@")
@@ -142,25 +149,61 @@ if [[ $DEBUG == true ]]; then
 	EOF
 fi
 
+
 #
 # Create the distribution packages
 #
-for product in "${PRODUCTS[@]}"; do
-  echo "[publish-src] Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
-  mkdir -p "${TMP_PKGROOT}/${product}"/tags
-  # echo eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
-  run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "$BUILD" "$product"
-  # 
-  run eups distrib declare --server-dir="$TMP_PKGROOT/$product" -t "$BUILD"
-  echo "[publish-src] Adding tag '$DISTRIBTAG' at the distribution server."
+if [ "${NAMESPACE}" = true ]; then
+  for product in "${PRODUCTS[@]}"; do
+    echo
+    echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
+    mkdir -p "${TMP_PKGROOT}/${product}"/tags
+    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT/${product} -f generic -d eupspkg -t ${BUILD} ${product}"
+    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}"
+    # 
+    echo "[  ] eups distrib declare -t $BUILD"
+    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD"
+    echo
+    echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
+    match='EUPS distribution ([^ ]+) version list. Version 1.0'
+    # shellcheck disable=SC1117
+    sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
+    src_tag="${TMP_PKGROOT}/${product}/tags/${BUILD}.list"
+    tmp_list=$(mktemp)
+    dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
+    #
+    run sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
+    #
+    cp "${tmp_list}" "${dst_tag}"
+    rm "${tmp_list}"
+    # remove the original bNNNN tag to reduce tag proliferation
+    if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
+      rm "$src_tag"
+    fi
+  done
+else
+  echo
+  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS}."
+  for product in "${PRODUCTS[@]}"; do
+    echo "src-publish >> Build sources for product ${product}."
+    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT -f generic -d eupspkg -t $BUILD $product"
+    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
+  done
+  # Declare the build tag, and declare it $DISTRIBTAG, if set
+  #
+  echo "[  ] eups distrib declare --server-dir=$TMP_PKGROOT -t $BUILD"
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
+  echo
+  echo "src-publish >> Adding tag '$DISTRIBTAG' at the distribution server."
+  #
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
-  src_tag="${TMP_PKGROOT}/${product}/tags/${BUILD}.list"
+  src_tag="$TMP_PKGROOT/tags/${BUILD}.list"
   tmp_list=$(mktemp)
-  dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
-  #
-  run sed -r "s|${match}|${sub}|" "$src_tag" > "$tmp_list"
+  dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+  run sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
   #
   cp "${tmp_list}" "${dst_tag}"
   rm "${tmp_list}"
@@ -168,34 +211,40 @@ for product in "${PRODUCTS[@]}"; do
   if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
     rm "$src_tag"
   fi
-done
-
-## -- ignored for the moment
-## Publish the newinstall script, if declared current
-##
-#if [[ $DISTRIBTAG == current ]] && eups list -t "$BUILD" lsst >/dev/null 2>&1; then
-#  echo "Copying newinstall.sh to the distribution server."
-#  run cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
-#fi
+fi
 
 
 if [[ ! -z $EUPS_PKGREPO ]]; then
   # push to final PKGROOT enabled
-  for product in "${PRODUCTS[@]}"; do
-    deploy_destination="stack/$product/src/"
-    echo "[publish-src] Publishing to filesystem: ${EUPS_PKGREPO}"
+  if [ "${NAMESPACE}" = true ]; then
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      for product in "${PRODUCTS[@]}"; do
+        deploy_destination="stack/$product/src/"
+        echo "src-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+        # the PKGROOT is a local filesystem
+        mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+        echo "src-publish >> Done."
+      done
+    else
+        # the PKGROOT is a remote aws s3
+        echo "To Be Implemented."
+    fi
+  else
+    deploy_destination="stack/src/"
+    echo "src-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
     if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
       # the PKGROOT is a local filesystem
       mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
-      run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
-      echo "[publish-src] Done."
+      run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+      echo "src-publish >> Done."
     else
       # the PKGROOT is a remote aws s3
       echo "To Be Implemented."
     fi
-  done
+  fi
 else
-  echo "[publish-src] No Publishing."
+  echo "src-publish >> No Publishing."
 fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab
