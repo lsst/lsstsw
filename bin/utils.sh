@@ -169,7 +169,7 @@ deploy_env() {
       fi
       # check if env exists and is consistent with the lock file
       tmp_lock="$(mktemp)"
-      if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}"); then
+      if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}" 2>/dev/null); then
         # check if environment is unchanged
         # -B ignores blank lines, need to sort
         if (diff -B <(sort "${tmp_lock}") <(sort "${lock_file}")); then
