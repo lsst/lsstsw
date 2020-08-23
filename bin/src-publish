@@ -97,6 +97,9 @@ if [[ $# -eq 0 ]]; then
   usage
 fi
 
+# unset following variable that may affect the outcome of the build
+unset EUPS_PKGROOT
+
 if [[ -z $BUILD ]]; then
   # retriving buildID from manifest.txt
   BUILD=$(grep '^BUILD=' $LSSTSW/build/manifest.txt | awk -F '=' '{print $2}')
@@ -152,15 +155,14 @@ fi
 #
 if [ "${NAMESPACE}" = true ]; then
   for product in "${PRODUCTS[@]}"; do
-    EUPS_PKGROOT="${TMP_PKGROOT}/${product}"
     echo
     echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
-    mkdir -p "${EUPS_PKGROOT}"/tags
-    echo "[  ] eups distrib create -f generic -d eupspkg -t ${BUILD} ${product}"
-    run eups distrib create -f generic -d eupspkg -t "${BUILD}" "${product}"
+    mkdir -p "${TMP_PKGROOT}/${product}"/tags
+    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT/${product} -f generic -d eupspkg -t ${BUILD} ${product}"
+    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}"
     # 
     echo "[  ] eups distrib declare -t $BUILD"
-    run eups distrib declare -t "$BUILD"
+    run eups distrib --server-dir="$TMP_PKGROOT/${product}" declare -t "$BUILD"
     echo
     echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
     match='EUPS distribution ([^ ]+) version list. Version 1.0'
@@ -180,13 +182,12 @@ if [ "${NAMESPACE}" = true ]; then
     fi
   done
 else
-  EUPS_PKGROOT="${TMP_PKGROOT}"
   echo
   echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS}."
   for product in "${PRODUCTS[@]}"; do
     echo "src-publish >> Build sources for product ${product}."
-    echo "[  ] eups distrib create -f generic -d eupspkg -t $BUILD $product"
-    run eups distrib create -f generic -d eupspkg -t "$BUILD" "$product"
+    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT -f generic -d eupspkg -t $BUILD $product"
+    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
   done
   # Declare the build tag, and declare it $DISTRIBTAG, if set
   #
@@ -198,9 +199,9 @@ else
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
-  src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
+  src_tag="$TMP_PKGROOT/tags/${BUILD}.list"
   tmp_list=$(mktemp)
-  dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
+  dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
 
   run sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
   #
@@ -211,14 +212,6 @@ else
     rm "$src_tag"
   fi
 fi
-
-## -- ignored for the moment
-## Publish the newinstall script, if declared current
-##
-#if [[ $DISTRIBTAG == current ]] && eups list -t "$BUILD" lsst >/dev/null 2>&1; then
-#  echo "Copying newinstall.sh to the distribution server."
-#  run cp -a "$(eups list -t "$BUILD" -d lsst)/bin/newinstall.sh" "${EUPS_PKGROOT}/"
-#fi
 
 
 if [[ ! -z $EUPS_PKGREPO ]]; then
