@@ -192,7 +192,11 @@ unset EUPS_PKGROOT
   done
 
 # given the tag and EUPS_PKGREPO identify the ENVREF
-  LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
+  if [ "${NAMESPACE}" = true ]; then
+    LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
+  else
+    LIST_BASE_URL="${EUPS_PKGREPO}/stack/src/tags"
+  fi
   LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
   # check if it is not an https link
   if [[ "${LIST_URL:0:4}" != "http" ]]; then
