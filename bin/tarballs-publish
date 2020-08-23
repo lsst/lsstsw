@@ -170,6 +170,7 @@ config_curl
 
 # unset following variable that may affect the outcome of the build
 unset EUPS_PKGROOT
+rm -rf $HOME/.eups
 
 # TO-DO: check that the required input parameters are provided
 #  - tag
@@ -192,7 +193,11 @@ unset EUPS_PKGROOT
   done
 
 # given the tag and EUPS_PKGREPO identify the ENVREF
-  LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
+  if [ "${NAMESPACE}" = true ]; then
+    LIST_BASE_URL="${EUPS_PKGREPO}/stack/${first_product}/src/tags"
+  else
+    LIST_BASE_URL="${EUPS_PKGREPO}/stack/src/tags"
+  fi
   LIST_URL="${LIST_BASE_URL}"/"${DISTRIBTAG}".list
   # check if it is not an https link
   if [[ "${LIST_URL:0:4}" != "http" ]]; then
@@ -230,26 +235,31 @@ unset EUPS_PKGROOT
 
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
+  mkdir -p "${TMP_PKGROOT}/"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
-    echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
-    run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
+    if [ "${NAMESPACE}" = true ]; then
+      echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
+    else
+      echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}"
+    fi
   done
+
+  env | grep EUPS
 
   if [ "${NAMESPACE}" = true ]; then
     echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
-    ### mkdir -p "${TMP_PKGROOT}"/tags
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      mkdir -p "${TMP_PKGROOT}/${product}"
-      echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
       # Declare the build tag, and declare it $DISTRIBTAG, if set
       run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
     done
   else
-    mkdir -p "${TMP_PKGROOT}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
       run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" -v
@@ -267,7 +277,7 @@ unset EUPS_PKGROOT
     if [ "${NAMESPACE}" = true ]; then
       for product in "${DISTRIB_PRODUCTS[@]}"; do
         deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
-        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
+        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
           # the PKGROOT is a local filesystem
           mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
@@ -279,11 +289,11 @@ unset EUPS_PKGROOT
       done
     else
       deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
-      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
+      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
         mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
-        run cp -r "${TMP_PKGROOT}." "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
       else
         # the PKGROOT is a remote aws s3
         echo "To Be Implemented."
