@@ -26,6 +26,7 @@
 
 DISTRIBTAG=
 first_product=
+NAMESPACE=false
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -37,7 +38,7 @@ source "${LSSTSW}/bin/utils.sh"
 
 TMP_PKGROOT=$LSSTSW/tmp_distrib
 
-usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
 
 # define architecture and platform the build is done
@@ -69,6 +70,8 @@ define_platform() {
         *)
           print_error "unsupported release: $osrelease"
           #[[ $__debug == true ]] && print_error "unsupported release: $__release"
+          # no publish
+          exit 1
           ;;
         esac
       ;;
@@ -89,15 +92,19 @@ define_platform() {
         *)
           print_error "unsupported release: $osrelease"
           #[[ $__debug == true ]] && print_error "unsupported release: $osrelease"
+          # no publush
+          exit 1
           ;;
         esac
       ;;
     *)
       print_error "unknown osfamily"
       #[[ $__debug == true ]] && print_error "unknown osfamily"
+      # no publish
+      exit 1
       ;;
   esac
-  echo "[tarballs-publish] Platform parameters for binary identification:"
+  echo "tarballs-publish >> Platform parameters for binary identification:"
   echo "  -  os-family: ${osfamily}"
   echo "  -  os-release: ${osrelease}"
   echo "  -  os-platform: ${osplatform}"
@@ -139,8 +146,8 @@ print_settings() {
 ##### main #####
 while getopts ":b:t:d" o; do
   case "$o" in
-  b)
-    BUILD="$OPTARG"
+  n)
+    NAMESPACE=true
     ;;
   t)
     DISTRIBTAG="$OPTARG"
@@ -198,7 +205,7 @@ unset EUPS_PKGROOT
     fi
   fi
   # shellcheck disable=SC2028
-  echo "Looking for environment information from:\\n --> ${LIST_URL}"
+  echo "tarballs-publish >> Looking for environment information from:\\n --> ${LIST_URL}"
   RAW_ENV_INFO=$("${CURL}" -s "${LIST_URL}" | grep CONDA_ENV)
   if [ -z "${RAW_ENV_INFO}" ]; then
     fail "Eups tag ${EUPS_TAG} not related to any environment."
@@ -209,7 +216,7 @@ unset EUPS_PKGROOT
 
 # activate the correct environmen tusing envconfig -r ENVREF
   echo
-  echo "[tarballs-publish] $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
+  echo "tarballs-publish >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
   echo
   source $LSSTSW/bin/envconfig -r $ENVREF
 
@@ -225,21 +232,31 @@ unset EUPS_PKGROOT
   run rm -rf "${TMP_PKGROOT}"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
-  echo "[tarballs-publish] Install products ${DISTRIB_PRODUCTS} from eups source packages"
+  echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
-    mkdir -p "${TMP_PKGROOT}/${product}"
     echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
     run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
   done
-  echo "[tarballs-publish] Generate tarballs for products ${DISTRIB_PRODUCTS}"
-  ### mkdir -p "${TMP_PKGROOT}"/tags
-  for product in "${DISTRIB_PRODUCTS[@]}"; do
-    echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-    run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
-    # Declare the build tag, and declare it $DISTRIBTAG, if set
-    run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
-  done
 
+  if [ "${NAMESPACE}" = true ]; then
+    echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
+    ### mkdir -p "${TMP_PKGROOT}"/tags
+    for product in "${DISTRIB_PRODUCTS[@]}"; do
+      mkdir -p "${TMP_PKGROOT}/${product}"
+      echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      # Declare the build tag, and declare it $DISTRIBTAG, if set
+      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
+    done
+  else
+    mkdir -p "${TMP_PKGROOT}"
+    for product in "${DISTRIB_PRODUCTS[@]}"; do
+      echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" -v
+    done
+    # Declare the build tag, and declare it $DISTRIBTAG, if set
+    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG"
+  fi
 
 # publish the binaries packages
   define_platform
@@ -247,20 +264,33 @@ unset EUPS_PKGROOT
 
   if [[ ! -z $EUPS_PKGREPO ]]; then
     # push to final PKGROOT enabled
-    echo "[tarballs-publish] Publishing to filesystem: ${EUPS_PKGREPO}"
-    for product in "${DISTRIB_PRODUCTS[@]}"; do
-      deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+    if [ "${NAMESPACE}" = true ]; then
+      for product in "${DISTRIB_PRODUCTS[@]}"; do
+        deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
+        if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+          # the PKGROOT is a local filesystem
+          mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+          run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+        else
+          # the PKGROOT is a remote aws s3
+          echo "To Be Implemented."
+        fi
+      done
+    else
+      deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
         mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
-        run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}." "${EUPS_PKGREPO}/${deploy_destination}"
       else
         # the PKGROOT is a remote aws s3
         echo "To Be Implemented."
       fi
-    done
+    fi
   else
-    echo "[tarballs-publish] Publishing disabled. No EUPS_PKGREPO env var defined."
+    echo "tarballs-publish >> Publishing disabled. No EUPS_PKGREPO env var defined."
   fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab
