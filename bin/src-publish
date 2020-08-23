@@ -162,7 +162,7 @@ if [ "${NAMESPACE}" = true ]; then
     run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}"
     # 
     echo "[  ] eups distrib declare -t $BUILD"
-    run eups distrib --server-dir="$TMP_PKGROOT/${product}" declare -t "$BUILD"
+    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD"
     echo
     echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
     match='EUPS distribution ([^ ]+) version list. Version 1.0'
@@ -191,8 +191,8 @@ else
   done
   # Declare the build tag, and declare it $DISTRIBTAG, if set
   #
-  echo "[  ] eups distrib declare -t $BUILD"
-  run eups distrib declare -t "$BUILD"
+  echo "[  ] eups distrib declare --server-dir=$TMP_PKGROOT -t $BUILD"
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
   echo
   echo "src-publish >> Adding tag '$DISTRIBTAG' at the distribution server."
   #
