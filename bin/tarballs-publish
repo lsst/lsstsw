@@ -144,7 +144,7 @@ print_settings() {
 
 
 ##### main #####
-while getopts ":n:t:d" o; do
+while getopts ":nt:d" o; do
   case "$o" in
   n)
     NAMESPACE=true
