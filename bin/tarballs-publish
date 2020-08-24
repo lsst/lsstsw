@@ -287,7 +287,7 @@ unset EUPS_PKGROOT
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
         mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
-        run cp -r "${TMP_PKGROOT}." "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
       else
         # the PKGROOT is a remote aws s3
         echo "To Be Implemented."
