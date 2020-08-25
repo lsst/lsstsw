@@ -234,6 +234,7 @@ unset EUPS_PKGROOT
 
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
+  mkdir -p "${TMP_PKGROOT}/"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
@@ -244,16 +245,13 @@ unset EUPS_PKGROOT
 
   if [ "${NAMESPACE}" = true ]; then
     echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
-    ### mkdir -p "${TMP_PKGROOT}"/tags
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      mkdir -p "${TMP_PKGROOT}/${product}"
       echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
       run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
       # Declare the build tag, and declare it $DISTRIBTAG, if set
       run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
     done
   else
-    mkdir -p "${TMP_PKGROOT}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
       run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" -v
@@ -271,7 +269,7 @@ unset EUPS_PKGROOT
     if [ "${NAMESPACE}" = true ]; then
       for product in "${DISTRIB_PRODUCTS[@]}"; do
         deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
-        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
+        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
           # the PKGROOT is a local filesystem
           mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
@@ -283,7 +281,7 @@ unset EUPS_PKGROOT
       done
     else
       deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
-      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}${deploy_destination}"
+      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
         mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
