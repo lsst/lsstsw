@@ -264,6 +264,8 @@ unset EUPS_PKGROOT
   define_platform
   compiler="conda-system"
 
+  env | grep EUPS
+
   if [[ ! -z $EUPS_PKGREPO ]]; then
     # push to final PKGROOT enabled
     if [ "${NAMESPACE}" = true ]; then
