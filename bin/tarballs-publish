@@ -27,7 +27,6 @@
 DISTRIBTAG=
 first_product=
 NAMESPACE=false
-EUPS_USERDATA="$HOME/.eups_userdata"
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -171,6 +170,7 @@ config_curl
 
 # unset following variable that may affect the outcome of the build
 unset EUPS_PKGROOT
+rm -rf $HOME/.eups
 
 # TO-DO: check that the required input parameters are provided
 #  - tag
