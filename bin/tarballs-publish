@@ -27,6 +27,7 @@
 DISTRIBTAG=
 first_product=
 NAMESPACE=false
+EUPS_USERDATA="$HOME/.eups_userdata"
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -253,14 +254,12 @@ unset EUPS_PKGROOT
   if [ "${NAMESPACE}" = true ]; then
     echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      export EUPS_PKGROOT="${TMP_PKGROOT}/${product}"
-      echo "[   ] eups distrib create --server-dir $TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir "${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
       # Declare the build tag, and declare it $DISTRIBTAG, if set
       run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
     done
   else
-    export EUPS_PKGROOT="${TMP_PKGROOT}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
       run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" -v
