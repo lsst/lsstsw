@@ -27,6 +27,8 @@
 DISTRIBTAG=
 first_product=
 NAMESPACE=false
+VERBOSE=false
+EUPSVERBOSE=""
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
@@ -36,7 +38,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${LSSTSW}/bin/utils.sh"
 
-TMP_PKGROOT=$LSSTSW/tmp_distrib
+TMP_PKGROOT=$LSSTSW/tmp_tarballs
 
 usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
@@ -118,6 +120,9 @@ run() {
   elif [[ $DEBUG == true ]]; then
     (set -x; "$@")
   else
+    if [[ $VERBOSE == true ]]; then
+      echo "[---]" "$@"
+    fi
     "$@"
   fi
 }
@@ -144,7 +149,7 @@ print_settings() {
 
 
 ##### main #####
-while getopts ":nt:d" o; do
+while getopts "ndvet" o; do
   case "$o" in
   n)
     NAMESPACE=true
@@ -154,6 +159,12 @@ while getopts ":nt:d" o; do
     ;;
   d)
     DEBUG=true
+    ;;
+  v)
+    VERBOSE=true
+    ;;
+  e)
+    EUPSVERBOSE="-vvv"
     ;;
   *)
     usage
@@ -168,9 +179,12 @@ fi
 
 config_curl
 
+if [[ $VERBOSE == true ]]; then
+  echo "VERBOSE  -----------"
+fi
+
 # unset following variable that may affect the outcome of the build
-unset EUPS_PKGROOT
-rm -rf $HOME/.eups
+run unset EUPS_PKGROOT
 
 # TO-DO: check that the required input parameters are provided
 #  - tag
@@ -224,6 +238,8 @@ rm -rf $HOME/.eups
   echo "tarballs-publish >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
   echo
   source $LSSTSW/bin/envconfig -r $ENVREF
+  # remove config.txt files from stack to avoid conflicts in publication
+  # run find "${EUPS_PATH}" -name config.txt | xargs rm
 
   if [[ $DEBUG == true ]]; then
 	cat <<-EOF
@@ -235,37 +251,39 @@ rm -rf $HOME/.eups
 
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
-  mkdir -p "${TMP_PKGROOT}/"
+  run mkdir -p "${TMP_PKGROOT}/"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
-      echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
+      #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
     else
-      echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}"
+      #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
     fi
   done
 
   env | grep EUPS
 
+  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
   if [ "${NAMESPACE}" = true ]; then
-    echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      #echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
       # Declare the build tag, and declare it $DISTRIBTAG, if set
-      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
+      #echo "eups distrib declare --server-dir=${TMP_PKGROOT}/${product} -t $DISTRIBTAG"
+      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
     done
   else
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      #echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
+      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
     done
     # Declare the build tag, and declare it $DISTRIBTAG, if set
-    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG"
+    # echo "eups distrib declare --server-dir=${TMP_PKGROOT} -t $DISTRIBTAG -vvv"
+    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
   fi
 
 # publish the binaries packages
@@ -280,7 +298,7 @@ rm -rf $HOME/.eups
         echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
           # the PKGROOT is a local filesystem
-          mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+          run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
           run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
         else
           # the PKGROOT is a remote aws s3
@@ -292,7 +310,7 @@ rm -rf $HOME/.eups
       echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
-        mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+        run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
         run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
       else
         # the PKGROOT is a remote aws s3
