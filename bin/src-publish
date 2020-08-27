@@ -149,20 +149,20 @@ if [[ $DEBUG == true ]]; then
 	EOF
 fi
 
-
 #
 # Create the distribution packages
 #
 if [ "${NAMESPACE}" = true ]; then
   for product in "${PRODUCTS[@]}"; do
+    export EUPS_PKGROOT="${EUPS_PKGREPO}/stack/${product}/src"
     echo
     echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
     mkdir -p "${TMP_PKGROOT}/${product}"/tags
     echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT/${product} -f generic -d eupspkg -t ${BUILD} ${product}"
-    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}"
+    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}" -vvv
     # 
     echo "[  ] eups distrib declare -t $BUILD"
-    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD"
+    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD" -vvv
     echo
     echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
     match='EUPS distribution ([^ ]+) version list. Version 1.0'
@@ -183,16 +183,17 @@ if [ "${NAMESPACE}" = true ]; then
   done
 else
   echo
+  export EUPS_PKGROOT="${EUPS_PKGREPO}/stack/src"
   echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS}."
   for product in "${PRODUCTS[@]}"; do
     echo "src-publish >> Build sources for product ${product}."
     echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT -f generic -d eupspkg -t $BUILD $product"
-    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product"
+    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" -vvv
   done
   # Declare the build tag, and declare it $DISTRIBTAG, if set
   #
   echo "[  ] eups distrib declare --server-dir=$TMP_PKGROOT -t $BUILD"
-  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD"
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD" -vvv
   echo
   echo "src-publish >> Adding tag '$DISTRIBTAG' at the distribution server."
   #
