@@ -242,10 +242,10 @@ rm -rf $HOME/.eups
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
       echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" -vvv
     else
       echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" -vvv
     fi
   done
 
@@ -255,9 +255,10 @@ rm -rf $HOME/.eups
     echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -v
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" -vvv
       # Declare the build tag, and declare it $DISTRIBTAG, if set
-      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG"
+      echo "eups distrib declare --server-dir=${TMP_PKGROOT}/${product} -t $DISTRIBTAG"
+      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" -vvv
     done
   else
     for product in "${DISTRIB_PRODUCTS[@]}"; do
