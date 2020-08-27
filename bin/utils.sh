@@ -52,7 +52,7 @@ expand_ref() {
   if [[ $FIXED_ENVREF != '' ]]; then
     # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
     # if the REF is not a branch (or a tag), the reftip will be empty
-    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git ${envref})
+    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git "${envref}")
     reftip=${rawreftip:0:7}
     reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
     if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then
@@ -109,17 +109,18 @@ deploy_env() {
   local env_file="${LSSTSW}/env/${ENV_FOLDER}/${conda_bleedfile}"
   local lock_file="${LSSTSW}/env/${ENV_FOLDER}/${conda_lockfile}"
 
-  cd "$LSSTSW"
+  cd "$LSSTSW" || return
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
 
+  # shellcheck disable=SC2154
   if [[ $deploy_mode == "bleed" ]]; then
     echo "::: conda environment file: ${env_file}"
   else
     echo "::: conda lock file: ${lock_file}"
   fi
 
-  cd env
+  cd env || return
   if [ -e "${env_file}" ]; then
     echo "::: conda environment file already present"
   else
@@ -181,7 +182,6 @@ deploy_env() {
       else
         # environment do not exist, it will be created
         conda "${ARGS[@]}"
-        new_env=true
       fi
       rm "${tmp_lock}"
     fi
@@ -231,6 +231,40 @@ deploy_env() {
   echo "::: Deploying manifest.remap"
   ln -sf "${LSSTSW}/etc/manifest.remap" "${eups_path}/site/manifest.remap"
   echo
-  cd "${LSSTSW}"
+  cd "${LSSTSW}" || return
 
+}
+
+
+run() {
+  if [[ $DRYRUN == true ]]; then
+    echo "$@"
+  elif [[ $DEBUG == true ]]; then
+    (set -x; "$@")
+  else
+    if [[ $VERBOSE == true ]]; then
+      echo "[- -]" "$@"
+    fi
+    "$@"
+  fi
+}
+
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
+  vars+=("${eups_vars[@]}")
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
 }

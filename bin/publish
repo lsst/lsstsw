@@ -76,6 +76,7 @@ fi
 
 PRODUCTS=("$@")
 
+# shellcheck disable=SC2154
 if [[ "${miniconda_path}" ]]; then
   # shellcheck disable=SC1090
   # shellcheck disable=SC2154

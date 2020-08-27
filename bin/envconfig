@@ -50,7 +50,7 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "bnirhp" opt; do
+  while getopts "bnirhpc" opt; do
     case "$opt" in
     b)
       shift;
@@ -70,6 +70,9 @@ parse_args() {
     h)
       usage
       ;;
+    c)
+      CLEANSTACK=true
+      ;;
     *)
       usage "Unknown option: ${opt}"
       ;;
@@ -86,7 +89,8 @@ ENVNAME=""
 BUILD_ID=""
 ENVREF=""
 finish=false
-new_env=false
+#new_env=false
+CLEANSTACK=false
 
 parse_args "$@"
 
@@ -94,16 +98,18 @@ if [ "$finish" = true ]; then
   return
 fi
 
+# shellcheck disable=SC2154
 if [[ "${miniconda_path}" ]]; then
-  # shellcheck disable=SC1090
   # shellcheck disable=SC2154
   echo "Using local miniconda at ${miniconda_path}"
+  # shellcheck disable=SC1090
   . "${miniconda_path}/etc/profile.d/conda.sh"
 else
   # this implies the system conda shall be used
-  CONDA_PATH=`which conda`
-  conda_path=`dirname "${CONDA_PATH}"`
+  CONDA_PATH=$(which conda)
+  conda_path=$(dirname "${CONDA_PATH}")
   echo "Using system conda at ${conda_path}"
+  # shellcheck disable=SC1090
   . "${conda_path}/../etc/profile.d/conda.sh"
 fi
 
@@ -161,7 +167,7 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 
 elif [[ $ENVREF != "" ]]; then
-  echo "Activativating environment for reference ${ENVREF}"
+  echo "Activating environment for reference ${ENVREF}"
 
   # given the imput reference, provides the correct
   # - environment Name
@@ -191,8 +197,7 @@ fi
 
 #echo "Activating environment ${LSST_CONDA_ENV_NAME}"
 # shellcheck disable=SC1091
-conda activate "$LSST_CONDA_ENV_NAME"
-if [ "$?" != 0 ]; then
+if ! conda activate "$LSST_CONDA_ENV_NAME" ; then
   echo "Problem activating environment"
   return
 fi
@@ -220,8 +225,11 @@ export LSST_CONDA_ENV_NAME
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME: -7}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 
-# in case the environment is just deployed
-if [ "$new_env" = true ]; then
+if [[ $CLEANSTACK = true ]]; then
+  rm -rf "${EUPS_PATH}"
+fi
+
+if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
   ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
