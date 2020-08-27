@@ -149,7 +149,7 @@ print_settings() {
 
 
 ##### main #####
-while getopts "ndvet" o; do
+while getopts "ndve:t:" o; do
   case "$o" in
   n)
     NAMESPACE=true
@@ -164,7 +164,7 @@ while getopts "ndvet" o; do
     VERBOSE=true
     ;;
   e)
-    EUPSVERBOSE="-vvv"
+    EUPSVERBOSE="$OPTARG"
     ;;
   *)
     usage
@@ -182,6 +182,21 @@ config_curl
 if [[ $VERBOSE == true ]]; then
   echo "VERBOSE  -----------"
 fi
+
+case "$EUPSVERBOSE" in
+  "1")
+    VOPT="-v"
+    ;;
+  "2")
+    VOPT="-vv"
+    ;;
+  "3")
+    VOPT="-vvv"
+    ;;
+  *)
+    VOPT=""
+    ;;
+esac
 
 # unset following variable that may affect the outcome of the build
 run unset EUPS_PKGROOT
@@ -258,10 +273,10 @@ run unset EUPS_PKGROOT
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
       #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
     else
       #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
     fi
   done
 
@@ -271,19 +286,19 @@ run unset EUPS_PKGROOT
   if [ "${NAMESPACE}" = true ]; then
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       #echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
       # Declare the build tag, and declare it $DISTRIBTAG, if set
       #echo "eups distrib declare --server-dir=${TMP_PKGROOT}/${product} -t $DISTRIBTAG"
-      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
+      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${VOPT}"
     done
   else
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       #echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
+      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
     done
     # Declare the build tag, and declare it $DISTRIBTAG, if set
     # echo "eups distrib declare --server-dir=${TMP_PKGROOT} -t $DISTRIBTAG -vvv"
-    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
+    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${VOPT}"
   fi
 
 # publish the binaries packages
