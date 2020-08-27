@@ -106,6 +106,7 @@ define_platform() {
       exit 1
       ;;
   esac
+  echo
   echo "tarballs-publish >> Platform parameters for binary identification:"
   echo "  -  os-family: ${osfamily}"
   echo "  -  os-release: ${osrelease}"
@@ -114,42 +115,8 @@ define_platform() {
 }
 
 
-run() {
-  if [[ $DRYRUN == true ]]; then
-    echo "$@"
-  elif [[ $DEBUG == true ]]; then
-    (set -x; "$@")
-  else
-    if [[ $VERBOSE == true ]]; then
-      echo "[---]" "$@"
-    fi
-    "$@"
-  fi
-}
-
-
-print_settings() {
-  local vars=(
-    BUILD
-    DISTRIBTAG
-    DEBUG
-    LSSTSW
-    LSSTSW_BUILD_DIR
-  )
-
-  # print env vars prefixed with ^EUPS
-  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
-  vars+=("${eups_vars[@]}")
-
-  for i in ${vars[*]}
-  do
-    echo "${i}: ${!i}"
-  done
-}
-
-
 ##### main #####
-while getopts "ndvet" o; do
+while getopts "ndve:t:" o; do
   case "$o" in
   n)
     NAMESPACE=true
@@ -164,7 +131,7 @@ while getopts "ndvet" o; do
     VERBOSE=true
     ;;
   e)
-    EUPSVERBOSE="-vvv"
+    EUPSVERBOSE="$OPTARG"
     ;;
   *)
     usage
@@ -180,8 +147,23 @@ fi
 config_curl
 
 if [[ $VERBOSE == true ]]; then
-  echo "VERBOSE  -----------"
+  echo "[---- VERBOSE  ----]"
 fi
+
+case "$EUPSVERBOSE" in
+  "1")
+    VOPT="-v"
+    ;;
+  "2")
+    VOPT="-vv"
+    ;;
+  "3")
+    VOPT="-vvv"
+    ;;
+  *)
+    VOPT=""
+    ;;
+esac
 
 # unset following variable that may affect the outcome of the build
 run unset EUPS_PKGROOT
@@ -223,11 +205,14 @@ run unset EUPS_PKGROOT
       fail "Error defining EUPS_PKGROOT: provided wrong input in EUPS_PKGREPO:\\n -> ${EUPS_PKGREPO}"
     fi
   fi
+  echo
   # shellcheck disable=SC2028
   echo "tarballs-publish >> Looking for environment information from:\\n --> ${LIST_URL}"
+  set +e
   RAW_ENV_INFO=$("${CURL}" -s "${LIST_URL}" | grep CONDA_ENV)
+  set -e
   if [ -z "${RAW_ENV_INFO}" ]; then
-    fail "Eups tag ${EUPS_TAG} not related to any environment."
+    fail "Tag ${DISTRIBTAG} not available in the SRC package repository."
   fi
   RAW_ENV_REPO=$(echo "${RAW_ENV_INFO}" | awk -F '=' '{ print $2 }')
   ENVREF=$(echo "${RAW_ENV_REPO}" | awk -F '@' '{ print $2 }')
@@ -236,8 +221,8 @@ run unset EUPS_PKGROOT
 # activate the correct environmen tusing envconfig -r ENVREF
   echo
   echo "tarballs-publish >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
-  echo
-  source $LSSTSW/bin/envconfig -r $ENVREF
+  # shellcheck disable=1090
+  source "$LSSTSW/bin/envconfig" -r "$ENVREF"
   # remove config.txt files from stack to avoid conflicts in publication
   # run find "${EUPS_PATH}" -name config.txt | xargs rm
 
@@ -251,39 +236,40 @@ run unset EUPS_PKGROOT
 
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
-  run mkdir -p "${TMP_PKGROOT}/"
+  run mkdir -p "${TMP_PKGROOT}"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
-  echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
+  echo
+  echo "tarballs-publish >> Install products" "${DISTRIB_PRODUCTS[@]}" "from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
-      #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/${product}/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
     else
-      #echo "[   ] eups distrib install --server-dir ${EUPS_PKGREPO}/stack/src -t ${DISTRIBTAG} ${product}"
-      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" "${EUPSVERBOSE}"
+      run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
     fi
   done
 
-  env | grep EUPS
+  if [[ $VERBOSE == true ]]; then
+    echo
+    echo "tarballs-publish >>  EUPS Environment Variables"
+    env | grep EUPS
+    echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+  fi
 
-  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
+  echo
+  echo "tarballs-publish >> Generate tarballs for products" "${DISTRIB_PRODUCTS[@]}"
   if [ "${NAMESPACE}" = true ]; then
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      #echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
+      run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
       # Declare the build tag, and declare it $DISTRIBTAG, if set
-      #echo "eups distrib declare --server-dir=${TMP_PKGROOT}/${product} -t $DISTRIBTAG"
-      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
+      run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${VOPT}"
     done
   else
     for product in "${DISTRIB_PRODUCTS[@]}"; do
-      #echo "[   ] eups distrib create --server-dir $TMP_PKGROOT -d tarball -t $DISTRIBTAG $product -v"
-      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
+      run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
     done
     # Declare the build tag, and declare it $DISTRIBTAG, if set
-    # echo "eups distrib declare --server-dir=${TMP_PKGROOT} -t $DISTRIBTAG -vvv"
-    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${EUPSVERBOSE}"
+    run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${VOPT}"
   fi
 
 # publish the binaries packages
@@ -295,6 +281,7 @@ run unset EUPS_PKGROOT
     if [ "${NAMESPACE}" = true ]; then
       for product in "${DISTRIB_PRODUCTS[@]}"; do
         deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+        echo
         echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
           # the PKGROOT is a local filesystem
@@ -307,6 +294,7 @@ run unset EUPS_PKGROOT
       done
     else
       deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+      echo
       echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
@@ -318,6 +306,7 @@ run unset EUPS_PKGROOT
       fi
     fi
   else
+    echo
     echo "tarballs-publish >> Publishing disabled. No EUPS_PKGREPO env var defined."
   fi 
 

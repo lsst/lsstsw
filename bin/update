@@ -4,29 +4,27 @@
 # update lsstsw
 if [[ -z $ZSH_NAME ]]; then
   LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd) || return 1
-  SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
-  SUFFIX='zsh'
 fi
 
 PWD=$(pwd)
 
   echo "Updating lsstsw from remote."
   # find the current branch
-  cd "${LSSTSW}"
+  cd "${LSSTSW}" || return
   branch=$(git rev-parse --abbrev-ref HEAD)
   echo " ... on branch ${branch}"
   git fetch origin "${branch}"
   git reset --hard "origin/${branch}"
   git pull
 
-cd "${PWD}"
+cd "${PWD}" || return
 
 # update lsst_build is deployed
 if [[ -d "lsst_build" ]]; then
   # just update master for lsst
-  cd lsst_build
+  cd lsst_build || return
   git pull
 fi
 

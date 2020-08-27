@@ -114,10 +114,11 @@ if [[ "$#" != "0" ]]; then
 fi
 
 (
+  # shellcheck disable=SC2154
   if [[ "${miniconda_path}" ]]; then
-    # shellcheck disable=SC1090
     # shellcheck disable=SC2154
     echo "Using local miniconda at ${miniconda_path}"
+    # shellcheck disable=SC1090
     . "${miniconda_path}/etc/profile.d/conda.sh"
   fi
 
