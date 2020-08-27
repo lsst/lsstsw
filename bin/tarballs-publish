@@ -38,7 +38,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${LSSTSW}/bin/utils.sh"
 
-TMP_PKGROOT=$LSSTSW/tmp_distrib
+TMP_PKGROOT=$LSSTSW/tmp_tarballs
 
 usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
@@ -149,7 +149,7 @@ print_settings() {
 
 
 ##### main #####
-while getopts ":nt:dve" o; do
+while getopts "ndvet" o; do
   case "$o" in
   n)
     NAMESPACE=true
@@ -178,6 +178,10 @@ if [[ $# -eq 0 ]]; then
 fi
 
 config_curl
+
+if [[ $VERBOSE == true ]]; then
+  echo "VERBOSE  -----------"
+fi
 
 # unset following variable that may affect the outcome of the build
 run unset EUPS_PKGROOT
@@ -235,7 +239,7 @@ run unset EUPS_PKGROOT
   echo
   source $LSSTSW/bin/envconfig -r $ENVREF
   # remove config.txt files from stack to avoid conflicts in publication
-  run find "${EUPS_PATH}" -name config.txt | xargs rm
+  # run find "${EUPS_PATH}" -name config.txt | xargs rm
 
   if [[ $DEBUG == true ]]; then
 	cat <<-EOF
@@ -263,8 +267,8 @@ run unset EUPS_PKGROOT
 
   env | grep EUPS
 
+  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
   if [ "${NAMESPACE}" = true ]; then
-    echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       #echo "[   ] eups distrib create --server-dir=$TMP_PKGROOT/$product -d tarball -t $DISTRIBTAG $product -v"
       run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${EUPSVERBOSE}"
