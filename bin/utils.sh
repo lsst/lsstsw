@@ -181,7 +181,6 @@ deploy_env() {
       else
         # environment do not exist, it will be created
         conda "${ARGS[@]}"
-        new_env=true
       fi
       rm "${tmp_lock}"
     fi
@@ -233,4 +232,38 @@ deploy_env() {
   echo
   cd "${LSSTSW}"
 
+}
+
+
+run() {
+  if [[ $DRYRUN == true ]]; then
+    echo "$@"
+  elif [[ $DEBUG == true ]]; then
+    (set -x; "$@")
+  else
+    if [[ $VERBOSE == true ]]; then
+      echo "[- -]" "$@"
+    fi
+    "$@"
+  fi
+}
+
+
+print_settings() {
+  local vars=(
+    BUILD
+    DISTRIBTAG
+    DEBUG
+    LSSTSW
+    LSSTSW_BUILD_DIR
+  )
+
+  # print env vars prefixed with ^EUPS
+  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
+  vars+=("${eups_vars[@]}")
+
+  for i in ${vars[*]}
+  do
+    echo "${i}: ${!i}"
+  done
 }

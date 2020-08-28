@@ -27,52 +27,30 @@
 DISTRIBTAG=
 BUILD=
 NAMESPACE=false
+VERBOSE=false
+EUPSVERBOSE=""
+
 
 # this is required in order to publish git packages
 export EUPSPKG_SOURCE=git
+
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 . "${DIR}/../etc/settings.cfg.sh"
+# Source script with shared functions
+# shellcheck disable=SC1090
+source "${LSSTSW}/bin/utils.sh"
 
 TMP_PKGROOT=$LSSTSW/tmp_distrib
 
+
 usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
-
-run() {
-  if [[ $DRYRUN == true ]]; then
-    echo "$@"
-  elif [[ $DEBUG == true ]]; then
-    (set -x; "$@")
-  else
-    "$@"
-  fi
-}
-
-
-print_settings() {
-  local vars=(
-    BUILD
-    DISTRIBTAG
-    DEBUG
-    LSSTSW
-    LSSTSW_BUILD_DIR
-  )
-
-  # print env vars prefixed with ^EUPS
-  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
-  vars+=("${eups_vars[@]}")
-
-  for i in ${vars[*]}
-  do
-    echo "${i}: ${!i}"
-  done
-}
 
 
 # -------    main
-while getopts ":b:t:nd" o; do
+while getopts ":b:t:ndve:" o; do
   case "$o" in
   b)
     BUILD="$OPTARG"
@@ -86,6 +64,12 @@ while getopts ":b:t:nd" o; do
   d)
     DEBUG=true
     ;;
+  v)
+    VERBOSE=true
+    ;;
+  e)
+    EUPSVERBOSE="$OPTARG"
+    ;;
   *)
     usage
     ;;
@@ -96,6 +80,21 @@ shift $((OPTIND-1))
 if [[ $# -eq 0 ]]; then
   usage
 fi
+
+case "$EUPSVERBOSE" in
+  "1")
+    VOPT="-v"
+    ;;
+  "2")
+    VOPT="-vv"
+    ;;
+  "3")
+    VOPT="-vvv"
+    ;;
+  *)
+    VOPT=""
+    ;;
+esac
 
 # unset following variable that may affect the outcome of the build
 unset EUPS_PKGROOT
@@ -112,6 +111,7 @@ if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   DISTRIBTAG="${BUILD}"
   #DISTRIBTAG="d$(date '+%Y%m%d%H%M%S')"
 fi
+echo
 echo "src-publish >> Distribution Tag identification $DISTRIBTAG. BuildID ${BUILD}"
 
 # once the buildID is givem the environment name can be identified
@@ -120,7 +120,6 @@ ENVREF="${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
 CONDA_ENV_REF="${LSST_SPLENV_REPO}@${ENVREF}"
 echo
 echo "src-publish >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
-echo
 
 # activating the environment it has been used for the build
 source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
@@ -154,15 +153,12 @@ fi
 #
 if [ "${NAMESPACE}" = true ]; then
   for product in "${PRODUCTS[@]}"; do
-    export EUPS_PKGROOT="${EUPS_PKGREPO}/stack/${product}/src"
     echo
     echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
     mkdir -p "${TMP_PKGROOT}/${product}"/tags
-    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT/${product} -f generic -d eupspkg -t ${BUILD} ${product}"
-    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}" -vvv
+    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}" "${VOPT}"
     # 
-    echo "[  ] eups distrib declare -t $BUILD"
-    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD" -vvv
+    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD" "${VOPT}"
     echo
     echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
     match='EUPS distribution ([^ ]+) version list. Version 1.0'
@@ -183,17 +179,14 @@ if [ "${NAMESPACE}" = true ]; then
   done
 else
   echo
-  export EUPS_PKGROOT="${EUPS_PKGREPO}/stack/src"
   echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS}."
   for product in "${PRODUCTS[@]}"; do
     echo "src-publish >> Build sources for product ${product}."
-    echo "[  ] eups distrib create --server-dir=$TMP_PKGROOT -f generic -d eupspkg -t $BUILD $product"
-    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" -vvv
+    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" "${VOPT}"
   done
   # Declare the build tag, and declare it $DISTRIBTAG, if set
   #
-  echo "[  ] eups distrib declare --server-dir=$TMP_PKGROOT -t $BUILD"
-  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD" -vvv
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD" "${VOPT}"
   echo
   echo "src-publish >> Adding tag '$DISTRIBTAG' at the distribution server."
   #
@@ -221,9 +214,10 @@ if [[ ! -z $EUPS_PKGREPO ]]; then
     if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
       for product in "${PRODUCTS[@]}"; do
         deploy_destination="stack/$product/src/"
+        echo
         echo "src-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         # the PKGROOT is a local filesystem
-        mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+        run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
         run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
         echo "src-publish >> Done."
       done
@@ -233,10 +227,11 @@ if [[ ! -z $EUPS_PKGREPO ]]; then
     fi
   else
     deploy_destination="stack/src/"
+    echo
     echo "src-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
     if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
       # the PKGROOT is a local filesystem
-      mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+      run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
       run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
       echo "src-publish >> Done."
     else

@@ -50,7 +50,7 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "bnirhp" opt; do
+  while getopts "bnirhpc" opt; do
     case "$opt" in
     b)
       shift;
@@ -70,6 +70,9 @@ parse_args() {
     h)
       usage
       ;;
+    c)
+      CLEANSTACK=true
+      ;;
     *)
       usage "Unknown option: ${opt}"
       ;;
@@ -86,7 +89,8 @@ ENVNAME=""
 BUILD_ID=""
 ENVREF=""
 finish=false
-new_env=false
+#new_env=false
+CLEANSTACK=false
 
 parse_args "$@"
 
@@ -161,7 +165,7 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 
 elif [[ $ENVREF != "" ]]; then
-  echo "Activativating environment for reference ${ENVREF}"
+  echo "Activating environment for reference ${ENVREF}"
 
   # given the imput reference, provides the correct
   # - environment Name
@@ -220,8 +224,11 @@ export LSST_CONDA_ENV_NAME
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME: -7}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 
-# in case the environment is just deployed
-if [ "$new_env" = true ]; then
+if [[ $CLEANSTACK = true ]]; then
+  rm -rf "${EUPS_PATH}"
+fi
+
+if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
   ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"

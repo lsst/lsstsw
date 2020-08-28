@@ -115,40 +115,6 @@ define_platform() {
 }
 
 
-run() {
-  if [[ $DRYRUN == true ]]; then
-    echo "$@"
-  elif [[ $DEBUG == true ]]; then
-    (set -x; "$@")
-  else
-    if [[ $VERBOSE == true ]]; then
-      echo "[- -]" "$@"
-    fi
-    "$@"
-  fi
-}
-
-
-print_settings() {
-  local vars=(
-    BUILD
-    DISTRIBTAG
-    DEBUG
-    LSSTSW
-    LSSTSW_BUILD_DIR
-  )
-
-  # print env vars prefixed with ^EUPS
-  IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
-  vars+=("${eups_vars[@]}")
-
-  for i in ${vars[*]}
-  do
-    echo "${i}: ${!i}"
-  done
-}
-
-
 ##### main #####
 while getopts "ndve:t:" o; do
   case "$o" in
