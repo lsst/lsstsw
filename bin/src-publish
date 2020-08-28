@@ -168,7 +168,7 @@ if [ "${NAMESPACE}" = true ]; then
     tmp_list=$(mktemp)
     dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
     #
-    run sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
+    sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
     #
     cp "${tmp_list}" "${dst_tag}"
     rm "${tmp_list}"
@@ -197,7 +197,7 @@ else
   tmp_list=$(mktemp)
   dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
 
-  run sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
+  sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
   #
   cp "${tmp_list}" "${dst_tag}"
   rm "${tmp_list}"
