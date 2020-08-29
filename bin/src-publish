@@ -123,6 +123,7 @@ echo
 echo "src-publish >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
 
 # activating the environment it has been used for the build
+# shellcheck disable=SC1090
 source "$LSSTSW/bin/envconfig" -n "$LSST_CONDA_ENV_NAME"
 
 # empty local pkgroot
