@@ -240,7 +240,7 @@ run unset EUPS_PKGROOT
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo
-  echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS[@]} from eups source packages"
+  echo "tarballs-publish >> Install products" "${DISTRIB_PRODUCTS[@]}" "from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
       run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
@@ -257,7 +257,7 @@ run unset EUPS_PKGROOT
   fi
 
   echo
-  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS[@]}"
+  echo "tarballs-publish >> Generate tarballs for products" "${DISTRIB_PRODUCTS[@]}"
   if [ "${NAMESPACE}" = true ]; then
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"

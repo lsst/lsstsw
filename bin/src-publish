@@ -180,7 +180,7 @@ if [ "${NAMESPACE}" = true ]; then
   done
 else
   echo
-  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS[@]}."
+  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products" "${PRODUCTS[@]}"
   for product in "${PRODUCTS[@]}"; do
     echo "src-publish >> Build sources for product ${product}."
     run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" "${VOPT}"
