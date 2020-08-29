@@ -116,9 +116,6 @@ main() {
 
   parse_args "$@"
 
-  # Create safe directory name from git ref
-  #FIXED_ENVREF=${ENVREF//[.\/]/-}
-
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,distserver/production,etc,env}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
@@ -128,6 +125,7 @@ main() {
 
   local deploy_mode=packages
   if [[ $BLEED_DEPLOY == true ]]; then
+    # shellcheck disable=SC2034
     deploy_mode=bleed
   fi
 
@@ -144,13 +142,13 @@ main() {
       fail "which command not present, impossible to verify conda. Avoid using option -p to deploy miniconda"
     fi
     # check if conda is available
-    CONDA_PATH=`which conda`
-    if [[ "$?" != 0 ]]; then
+    if ! CONDA_PATH=$(which conda) ; then
       fail "Conda not found in PATH. Avoid using option -P to deploy miniconda."
     fi
-    CONDA_DIR=`dirname "${CONDA_PATH}"`
+    CONDA_DIR=$(dirname "${CONDA_PATH}")
     # activating conda
     echo "Using existing conda available at ${CONDA_DIR}"
+    # shellcheck disable=SC1090
     . "${CONDA_DIR}/../etc/profile.d/conda.sh"
   else
     # install miniconda
@@ -158,6 +156,7 @@ main() {
     miniconda_path="${LSSTSW}/miniconda"
     miniconda_lock="${miniconda_path}/.deployed"
     test -f "$miniconda_lock" || (
+      # shellcheck disable=SC2154
       miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
       echo "::: Deploying ${miniconda_file_name}"
@@ -225,7 +224,6 @@ main() {
   else
     (
       echo "::: Updating lsst_build"
-      pwd
       cd lsst_build
       git fetch -fup origin "$LSST_BUILD_GITREV"
       # attempt to determine if this is a branch name or a commit id. If it is

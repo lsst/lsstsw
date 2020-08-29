@@ -98,16 +98,18 @@ if [ "$finish" = true ]; then
   return
 fi
 
+# shellcheck disable=SC2154
 if [[ "${miniconda_path}" ]]; then
-  # shellcheck disable=SC1090
   # shellcheck disable=SC2154
   echo "Using local miniconda at ${miniconda_path}"
+  # shellcheck disable=SC1090
   . "${miniconda_path}/etc/profile.d/conda.sh"
 else
   # this implies the system conda shall be used
-  CONDA_PATH=`which conda`
-  conda_path=`dirname "${CONDA_PATH}"`
+  CONDA_PATH=$(which conda)
+  conda_path=$(dirname "${CONDA_PATH}")
   echo "Using system conda at ${conda_path}"
+  # shellcheck disable=SC1090
   . "${conda_path}/../etc/profile.d/conda.sh"
 fi
 
@@ -195,8 +197,7 @@ fi
 
 #echo "Activating environment ${LSST_CONDA_ENV_NAME}"
 # shellcheck disable=SC1091
-conda activate "$LSST_CONDA_ENV_NAME"
-if [ "$?" != 0 ]; then
+if ! conda activate "$LSST_CONDA_ENV_NAME" ; then
   echo "Problem activating environment"
   return
 fi

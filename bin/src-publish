@@ -65,6 +65,7 @@ while getopts ":b:t:ndve:" o; do
     DEBUG=true
     ;;
   v)
+    # shellcheck disable=SC2034
     VERBOSE=true
     ;;
   e)
@@ -101,7 +102,7 @@ unset EUPS_PKGROOT
 
 if [[ -z $BUILD ]]; then
   # retriving buildID from manifest.txt
-  BUILD=$(grep '^BUILD=' $LSSTSW/build/manifest.txt | awk -F '=' '{print $2}')
+  BUILD=$(grep '^BUILD=' "$LSSTSW/build/manifest.txt" | awk -F '=' '{print $2}')
 fi
 
 if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
@@ -122,7 +123,7 @@ echo
 echo "src-publish >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
 
 # activating the environment it has been used for the build
-source $LSSTSW/bin/envconfig -n $LSST_CONDA_ENV_NAME
+source "$LSSTSW/bin/envconfig" -n "$LSST_CONDA_ENV_NAME"
 
 # empty local pkgroot
 run rm -rf "${TMP_PKGROOT}"
@@ -179,7 +180,7 @@ if [ "${NAMESPACE}" = true ]; then
   done
 else
   echo
-  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS}."
+  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products ${PRODUCTS[@]}."
   for product in "${PRODUCTS[@]}"; do
     echo "src-publish >> Build sources for product ${product}."
     run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" "${VOPT}"

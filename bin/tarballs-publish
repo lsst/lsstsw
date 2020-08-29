@@ -206,12 +206,13 @@ run unset EUPS_PKGROOT
     fi
   fi
   echo
+  # shellcheck disable=SC2028
   echo "tarballs-publish >> Looking for environment information from:\\n --> ${LIST_URL}"
   set +e
   RAW_ENV_INFO=$("${CURL}" -s "${LIST_URL}" | grep CONDA_ENV)
   set -e
   if [ -z "${RAW_ENV_INFO}" ]; then
-    fail "Tag ${DISTRIB_TAG} not available in the SRC package repository."
+    fail "Tag ${DISTRIBTAG} not available in the SRC package repository."
   fi
   RAW_ENV_REPO=$(echo "${RAW_ENV_INFO}" | awk -F '=' '{ print $2 }')
   ENVREF=$(echo "${RAW_ENV_REPO}" | awk -F '@' '{ print $2 }')
@@ -220,7 +221,8 @@ run unset EUPS_PKGROOT
 # activate the correct environmen tusing envconfig -r ENVREF
   echo
   echo "tarballs-publish >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
-  source $LSSTSW/bin/envconfig -r $ENVREF
+  # shellcheck disable=1090
+  source "$LSSTSW/bin/envconfig" -r "$ENVREF"
   # remove config.txt files from stack to avoid conflicts in publication
   # run find "${EUPS_PATH}" -name config.txt | xargs rm
 
@@ -234,11 +236,11 @@ run unset EUPS_PKGROOT
 
   # set local (empty) pkgroot
   run rm -rf "${TMP_PKGROOT}"
-  run mkdir -p "${TMP_PKGROOT}/"
+  run mkdir -p "${TMP_PKGROOT}"
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo
-  echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS} from eups source packages"
+  echo "tarballs-publish >> Install products ${DISTRIB_PRODUCTS[@]} from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
       run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
@@ -255,7 +257,7 @@ run unset EUPS_PKGROOT
   fi
 
   echo
-  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS}"
+  echo "tarballs-publish >> Generate tarballs for products ${DISTRIB_PRODUCTS[@]}"
   if [ "${NAMESPACE}" = true ]; then
     for product in "${DISTRIB_PRODUCTS[@]}"; do
       run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
