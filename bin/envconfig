@@ -37,6 +37,9 @@ usage() {
 	-n NAME     activate the environment name
 	-b bXXXX    activate the environment used for the build with id bXXXX
 	-r REF      git ref in scipipe_conda_env (hash, branch, tag)
+	            (do not recreate the environment if it exists)
+	-R REF      git ref in scipipe_conda_env (hash, branch, tag)
+	            (check if the environment is consistent and recreate if it is not or it doesn't exists)
 	-h          show this message
 
 		EOF
@@ -67,6 +70,11 @@ parse_args() {
       shift;
       ENVREF=$1
       ;;
+    R)
+      shift;
+      ENVREF=$1
+      CHECKENV=true
+      ;;
     h)
       usage
       ;;
@@ -91,6 +99,7 @@ ENVREF=""
 finish=false
 #new_env=false
 CLEANSTACK=false
+CHECKENV=false
 
 parse_args "$@"
 
@@ -150,7 +159,10 @@ elif [[ $ENVNAME != "" ]]; then
   LSST_CONDA_ENV_NAME=${ENVNAME}
   # look for environment exists
   if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
-    fail "Environment not found."
+    echo "... Environment not found"
+    echo " deploying new environment for reference ${LSST_SPLENV_REF}"
+    discover_platform
+    deploy_env
   fi
 
 elif [[ $BUILD_ID != "" ]]; then
@@ -159,7 +171,10 @@ elif [[ $BUILD_ID != "" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
     # look for environment exists
     if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
-      fail "Build found, but environment not found. It has probably been removed."
+      echo "... Environment not found"
+      echo " deploying new environment for reference ${LSST_SPLENV_REF}"
+      discover_platform
+      deploy_env
     fi
   else
     echo "No build found with id ${BUILD_ID}"
@@ -175,8 +190,14 @@ elif [[ $ENVREF != "" ]]; then
   # - local folder where to store environemnt files
   expand_ref "${ENVREF}"
 
-  discover_platform
-  deploy_env
+  if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+    echo "... Environment not found"
+    echo " deploying new environment for reference ${LSST_SPLENV_REF}"
+    discover_platform
+    deploy_env
+  else
+    echo "Environment $LSST_CONDA_ENV_NAME already present"
+  fi
 
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)

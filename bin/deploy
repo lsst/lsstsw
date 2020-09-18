@@ -189,8 +189,12 @@ main() {
   # - local folder where to store environemnt files
   expand_ref "${ENVREF}"
 
-  # deplying environment
-  deploy_env
+  if ! conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
+    # deplying environment
+    deploy_env
+  else
+    echo "::: Environment $LSST_CONDA_ENV_NAME already present."
+  fi
 
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
