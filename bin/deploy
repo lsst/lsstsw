@@ -41,11 +41,12 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-b] [-h] [-r]
+		Usage: $0 [-b] [-h] [-r] [-R]
 
 		Specific options:
 	    -b          use bleeding edge conda packages
-	    -r REF      git ref in scipipe_conda_env (hash, branch, tag)
+	    -r REF      git ref in scipipe_conda_env (hash, branch, tag), create new end only if it does not exists
+	    -R REF      like -r, but always check if it is consistent with the pinned file
 	    -h          show this message
 
 		EOF
@@ -90,7 +91,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "23bhr" opt; do
+  while getopts "23bhriR" opt; do
     case "$opt" in
     b)
       BLEED_DEPLOY=true
@@ -107,6 +108,11 @@ parse_args() {
     r)
       shift;
       ENVREF=$1
+      ;;
+    R)
+      shift;
+      ENVREF=$1
+      CHECKENV=true
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -137,6 +143,7 @@ main() {
   config_curl
 
   BLEED_DEPLOY=false
+  CHECKENV=false
 
   ENVREF=""
 
@@ -261,9 +268,12 @@ main() {
   local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
   [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
 
+  if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null && [[ $CHECKENV = false ]]; then
+    echo "::: Environment $LSST_CONDA_ENV_NAME already deployed."
+  else
   (
+    echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
     # Install packages on which the stack is known to depend
-
     # conda may leave behind lock files from an uncompleted package
     # installation attempt.  These need to be cleaned up before [re]attempting
     # to install packages.
@@ -308,6 +318,7 @@ main() {
     conda clean -y -a > /dev/null
     echo "done"
   )
+  fi
 
   # intentionally outside of a lockfile subshell
   # shellcheck disable=SC1091
