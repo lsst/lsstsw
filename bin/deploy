@@ -45,7 +45,7 @@ usage() {
 
 		Specific options:
 	    -b          use bleeding edge conda packages
-	    -r REF      git ref in scipipe_conda_env (hash, branch, tag), create new end only if it does not exists
+	    -r REF      git ref in scipipe_conda_env (hash, branch, tag), create new env only if it does not exists
 	    -R REF      like -r, but always check if it is consistent with the pinned file
 	    -h          show this message
 
