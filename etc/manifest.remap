@@ -14,3 +14,4 @@
 [create]ap_verify_ci_cosmos_pdr2 None
 [create]ap_pipe_testdata      None
 [create]testdata_latiss_cpp   None
+[create]testdata_ci_hsc       None
