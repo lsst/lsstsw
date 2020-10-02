@@ -165,8 +165,8 @@ export LSST_CONDA_ENV_NAME
 . "$LSSTSW/eups/current/bin/setups.$SUFFIX"
 
 # definition EUPS_PATH depending on the environment:
-# including the last 7 characters of the environment name
-export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME: -7}"
+# removing from the ENV_name the default prefix defined in SPLENV_BASE_NAME
+export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
