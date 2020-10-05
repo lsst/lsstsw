@@ -247,65 +247,13 @@ main() {
     fi
   )
 
-  test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
-    if hash git 2>/dev/null; then
-      GITVERNUM=$(git --version | cut -d\  -f 3)
-      # shellcheck disable=SC2183 disable=SC2046
-      GITVER=$(printf "%02d-%02d-%02d\\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
-    fi
-
-    if [[ $GITVER < "01-09-00" ]]; then
-      echo "::: Deploying git"
-      cd sources
-      GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${GIT_BASE_URL}/git-${LSST_GIT_VERSION}.tar.gz"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${GIT_BASE_URL}/git-manpages-${LSST_GIT_VERSION}.tar.gz"
-      tar xzf "git-${LSST_GIT_VERSION}.tar.gz"
-      cd "git-${LSST_GIT_VERSION}"
-      ./configure --prefix="${LSSTSW}/lfs"
-      make -j4
-      make install
-      man_dir="${LSSTSW}/lfs/share/man"
-      mkdir -p "$man_dir"
-      cd "$man_dir"
-      tar xzf "${LSSTSW}/sources/git-manpages-${LSST_GIT_VERSION}.tar.gz"
-      (cd "$LSSTSW" && git config push.default current)
-    else
-      echo "::: Using installed git"
-    fi
-    touch "${LSSTSW}/lfs/.git.deployed"
-  )
-
-  # check if git-lfs is available (in scipipe_conda_env since w_2020_19)
-  if (which git-lfs >/dev/null 2>&1); then
-    echo "::: Using installed git-lfs"
-  else
-    test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
-      echo "::: Deploying git-lfs"
-
-      case $(uname -s) in
-        Linux*)  lfs_platform="linux-amd64" ;;
-        Darwin*) lfs_platform="darwin-amd64" ;;
-        *)
-          fail "Cannot install git-lfs: unsupported platform $(uname -s)"
-          ;;
-      esac
-
-      cd sources
-      LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
-      LFS_ARCHIVE="git-lfs-${lfs_platform}-${LSST_LFS_VERSION}.tar.gz"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${LFS_BASE_URL}/v${LSST_LFS_VERSION}/${LFS_ARCHIVE}"
-
-      tar xzf "$LFS_ARCHIVE"
-      mkdir -p "${LSSTSW}/lfs/bin"
-      cp "git-lfs-${LSST_LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
-      cd "$LSSTSW"
-      touch "${LSSTSW}/lfs/.git-lfs.deployed"
-    )
-  fi
+  # report packages in the current conda env
+  #
+  # note that `conda list -e`, which is the current format being used for the
+  # canoncial env files, doesn't seem to list pip installed packages.  The the
+  # "newer" yaml env file format from `conda env export` does include pip/pypi
+  # packages.
+  conda env export
 
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
