@@ -326,7 +326,7 @@ main() {
   # shellcheck disable=SC1091
   conda activate "${LSST_CONDA_ENV_NAME}"
 
-  # Configuring propper channles at environment level
+  # Configuring proper channels at environment level
   (
     # configure alt conda channel(s)
     if [[ -n $LSST_CONDA_CHANNELS ]]; then
