@@ -45,7 +45,7 @@ parse_args() {
       ;;
     n)
       shift;
-      ENVREF=$1
+      ENV_NAME=$1
       ;;
     i)
       INTERACTIVE=true
@@ -64,7 +64,7 @@ parse_args() {
 ##############
 
 INTERACTIVE=false
-ENVREF=""
+ENV_NAME=""
 BUILD_ID=""
 finish=false
 
@@ -134,9 +134,9 @@ if $INTERACTIVE ; then
     conda activate "$LSST_CONDA_ENV_NAME"
   fi
 
-elif [[ $ENVREF != "" ]]; then
-  echo "Setting $ENVREF environment..."  
-  LSST_CONDA_ENV_NAME=${ENVREF}
+elif [[ $ENV_NAME != "" ]]; then
+  echo "Setting $ENV_NAME environment..."  
+  LSST_CONDA_ENV_NAME=${ENV_NAME}
   conda activate "$LSST_CONDA_ENV_NAME"
 
 elif [[ $BUILD_ID != "" ]]; then
