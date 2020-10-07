@@ -45,7 +45,7 @@ usage() {
 
 		Specific options:
 	    -b          use bleeding edge conda packages
-	    -r VERSION  a specific version of rubinenv conda package
+	    -r VERSION  a specific version of rubin-env conda package
 	    -h          show this message
 
 		EOF
@@ -215,9 +215,9 @@ main() {
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("-c conda-forge")
       if [[ $deploy_mode == "bleed" ]]; then
-        ARGS+=("rubinenv")
+        ARGS+=("rubin-env")
       else
-        ARGS+=("rubinenv=${RUBIN_ENV_VERSION}")
+        ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
       fi
       echo "conda ${ARGS[@]}"
       conda "${ARGS[@]}"
