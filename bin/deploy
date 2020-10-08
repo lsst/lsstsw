@@ -271,61 +271,62 @@ main() {
   if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null && [[ $CHECKENV = false ]]; then
     echo "::: Environment $LSST_CONDA_ENV_NAME already deployed."
   else
-    (
-      echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
-      # Install packages on which the stack is known to depend
-      # conda may leave behind lock files from an uncompleted package
-      # installation attempt.  These need to be cleaned up before [re]attempting
-      # to install packages.
-      conda clean -y --all
+      ARGS=()
       if [[ $deploy_mode == "bleed" ]]; then
-        ARGS=()
+        # Install packages on which the stack is known to depend
+        # conda may leave behind lock files from an uncompleted package
+        # installation attempt.  These need to be cleaned up before [re]attempting
+        # to install packages.
+        conda clean -y --all
         ARGS+=('env' 'update')
         ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
         ARGS+=("--file" "$env_file")
         conda "${ARGS[@]}"
       else
-        ARGS=()
         ARGS+=('create')
+        # disable the conda install progress bar when not attached to a tty. Eg.,
+        # when running under CI
+        if [[ ! -t 1 ]]; then
+          ARGS+=("--quiet")
+        fi
         ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
         ARGS+=('-y')
         ARGS+=("--file" "$lock_file")
         # check if env exists and is consistent with the lock file
         tmp_lock="$(mktemp)"
-        if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}"); then
+        if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}" 2>/dev/null); then
           # check if environment is unchanged
           # -B ignores blank lines
-          if (diff -B "${tmp_lock}" "${lock_file}"); then
-            echo "Environment exists and is consistent with its definition"
+          if (diff -B <(sort "${tmp_lock}") <(sort "${lock_file}") ); then
+            echo "Environment exists and is consistent with its definition."
           else
+            echo "::: Environment $LSST_CONDA_ENV_NAME inconsistent. Redeploying."
+            # see conda clean comment above
+            conda clean -y --all
             # environment has changed, it will be recreated
             conda "${ARGS[@]}"
           fi
         else
+          echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
+          # see conda clean comment above
+          conda clean -y --all
           # environment do not exist, it will be created
           conda "${ARGS[@]}"
         fi
         rm "${tmp_lock}"
       fi
 
-      # disable the conda install progress bar when not attached to a tty. Eg.,
-      # when running under CI
-      if [[ ! -t 1 ]]; then
-        ARGS+=("--quiet")
-      fi
-
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
-    )
   fi
 
   # intentionally outside of a lockfile subshell
-  # shellcheck disable=SC1091
   echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   # shellcheck disable=SC1091
   conda activate "${LSST_CONDA_ENV_NAME}"
 
+  # Configuring proper channels at environment level
   (
     # configure alt conda channel(s)
     if [[ -n $LSST_CONDA_CHANNELS ]]; then
@@ -339,17 +340,8 @@ main() {
 
       conda config --env --set channel_priority strict
 
-      conda config --show
     fi
   )
-
-  # report packages in the current conda env
-  #
-  # note that `conda list -e`, which is the current format being used for the
-  # canoncial env files, doesn't seem to list pip installed packages.  The the
-  # "newer" yaml env file format from `conda env export` does include pip/pypi
-  # packages.
-  conda env export
 
   test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
     if hash git 2>/dev/null; then
