@@ -103,6 +103,9 @@ CHECKENV=false
 
 parse_args "$@"
 
+# updatating repos.yaml
+fetch_repos.yaml master
+
 if [ "$finish" = true ]; then
   return
 fi

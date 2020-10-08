@@ -268,3 +268,17 @@ print_settings() {
     echo "${i}: ${!i}"
   done
 }
+
+
+fetch_repos.yaml() {
+  local ref=${1:-master}
+  local output_file=${2:-$REPOSFILE}
+  local repo=${3:-$REPOSFILE_REPO}
+
+  local baseurl="https://raw.githubusercontent.com/${repo}/${ref}"
+
+  $CURL "${CURL_OPTS[@]}" \
+    -L \
+    "${baseurl}/etc/repos.yaml" \
+    -o "$output_file"
+}
