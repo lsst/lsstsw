@@ -89,20 +89,10 @@ source "${LSSTSW}/etc/settings.cfg.sh"
 # shellcheck disable=SC2154
 . "${miniconda_path}/etc/profile.d/conda.sh"
 
-if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
-  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
-  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
-  return
-fi
-
 export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
 
 export MANPATH="$LSSTSW/lfs/share/man:"
-
-# need to activate the miniconda base environment to get the correct list of environments
-# shellcheck disable=SC1091
-conda activate base
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -161,8 +151,19 @@ else
 fi
 export LSST_CONDA_ENV_NAME
 
-# shellcheck disable=SC1090
-. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+# check if eups is not already available in the environment
+# made it available in a separe eups-base environment
+if ! command -v eups > /dev/null; then
+  echo "error: No eups found in the active environment ..."
+  echo "  ... trying to use a stacked eups-base environment"
+  conda deactivate
+  if ! conda env list | grep "^eups-base " > /dev/null; then
+    echo "::: Creating eups-base environment"
+    conda create -y --name eups-base eups -c conda-forge
+  fi
+  conda activate eups-base
+  conda activate --stack "$LSST_CONDA_ENV_NAME"
+fi
 
 # definition EUPS_PATH depending on the environment:
 # removing from the ENV_name the default prefix defined in SPLENV_BASE_NAME
