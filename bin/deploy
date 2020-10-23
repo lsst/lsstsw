@@ -41,10 +41,9 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-b] [-h] [-r] [-R]
+		Usage: $0 [-h] [-r]
 
 		Specific options:
-	    -b          use bleeding edge conda packages
 	    -r VERSION  a specific version of rubin-env conda package
 	    -h          show this message
 
@@ -90,11 +89,8 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "bhr" opt; do
+  while getopts "hr" opt; do
     case "$opt" in
-    b)
-      BLEED_DEPLOY=true
-      ;;
     h)
       usage
       ;;
@@ -129,9 +125,6 @@ am_I_sourced() {
 
 main() {
   config_curl
-
-  BLEED_DEPLOY=false
-  CHECKENV=false
 
   ENV_VERSION=""
 
