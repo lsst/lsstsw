@@ -89,10 +89,7 @@ source "${LSSTSW}/etc/settings.cfg.sh"
 # shellcheck disable=SC2154
 . "${miniconda_path}/etc/profile.d/conda.sh"
 
-export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
-
-export MANPATH="$LSSTSW/lfs/share/man:"
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -120,35 +117,34 @@ if $INTERACTIVE ; then
     return
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
   fi
-
 elif [[ $ENV_NAME != "" ]]; then
   echo "Setting $ENV_NAME environment..."  
   LSST_CONDA_ENV_NAME=${ENV_NAME}
-  conda activate "$LSST_CONDA_ENV_NAME"
-
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
     echo "No build found with id ${BUILD_ID}"
     return
   fi
-
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
   echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
-  # shellcheck disable=SC1091
-  conda activate "$LSST_CONDA_ENV_NAME"
-
 fi
+# Define and check EUPS_PATH
+eups_path="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+if [ ! -d "$eups_path" ]; then
+  mkdir -p "${eups_path}"/{site,ups_db}
+  echo "::: Deploying manifest.remap"
+  ln -sf "${LSSTSW}/etc/manifest.remap" "${eups_path}/site/manifest.remap"
+fi
+
+# shellcheck disable=SC1091
+conda activate "$LSST_CONDA_ENV_NAME"
 export LSST_CONDA_ENV_NAME
 
 # check if eups is not already available in the environment
@@ -167,7 +163,7 @@ fi
 
 # definition EUPS_PATH depending on the environment:
 # removing from the ENV_name the default prefix defined in SPLENV_BASE_NAME
-export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+export EUPS_PATH="${eups_path}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
