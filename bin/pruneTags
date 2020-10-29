@@ -9,7 +9,8 @@ ALWAYS_KEEP = ["lsstsw", "lsst_build"]
 def main(tags, dry_run=False, delete_untagged=False):
     eups = Eups()
     for product in eups.findProducts():
-        if product.name in ALWAYS_KEEP:
+        if (product.name in ALWAYS_KEEP
+                or product.version.startswith(product.LocalVersionPrefix)):
             continue
         removed = []
         for tag in product.tags:
