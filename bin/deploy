@@ -6,6 +6,9 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
+# load common functions
+# shellcheck disable=SC1090
+source "${SCRIPT_DIR}/../bin/utils.sh"
 
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
@@ -22,16 +25,6 @@ LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/sci
 
 set -e
 
-print_error() {
-  >&2 echo -e "$@"
-}
-
-fail() {
-  local code=${2:-1}
-  [[ -n $1 ]] && print_error "$1"
-  # shellcheck disable=SC2086
-  exit $code
-}
 
 usage() {
   if [[ -n "$1" ]]; then
@@ -44,44 +37,14 @@ usage() {
 		Usage: $0 [-h] [-r]
 
 		Specific options:
-	    -r VERSION  a specific version of rubin-env conda package
+	    -v VERSION  a specific version of rubin-env conda package
+	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
 	    -h          show this message
 
 		EOF
   )"
 }
 
-config_curl() {
-  # Prefer system curl; user-installed ones sometimes behave oddly
-  if [[ -x /usr/bin/curl ]]; then
-    CURL=${CURL:-/usr/bin/curl}
-  else
-    CURL=${CURL:-curl}
-  fi
-
-  # disable curl progress meter unless running under a tty -- this is intended to
-  # reduce the amount of console output when running under CI
-  CURL_OPTS=('-#')
-  if [[ ! -t 1 ]]; then
-    CURL_OPTS=('-sS')
-  fi
-
-  # curl will exit 0 on 404 without the fail flag
-  CURL_OPTS+=('--fail')
-}
-
-fetch_repos.yaml() {
-  local ref=${1:-master}
-  local output_file=${2:-$REPOSFILE}
-  local repo=${3:-$REPOSFILE_REPO}
-
-  local baseurl="https://raw.githubusercontent.com/${repo}/${ref}"
-
-  $CURL "${CURL_OPTS[@]}" \
-    -L \
-    "${baseurl}/etc/repos.yaml" \
-    -o "$output_file"
-}
 
 parse_args() {
   local OPTIND
@@ -89,14 +52,18 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hr" opt; do
+  while getopts "hrv" opt; do
     case "$opt" in
     h)
       usage
       ;;
-    r)
+    v)
       shift;
       ENV_VERSION=$1
+      ;;
+    r)
+      shift;
+      ENVREF=$1
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -105,6 +72,7 @@ parse_args() {
   done
   shift $((OPTIND-1))
 }
+
 
 #
 # test to see if script is being sourced or executed. Note that this function
@@ -122,16 +90,18 @@ am_I_sourced() {
 }
 
 
-
 main() {
   config_curl
 
   ENV_VERSION=""
+  ENVREF=""
 
   parse_args "$@"
 
   if [[ ! -z $ENV_VERSION ]]; then
     RUBIN_ENV_VERSION=$ENV_VERSION
+  elif [[ ! -z $ENVREF ]]; then
+    RUBIN_ENV_VERSION=$ENVREF
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
   fi
@@ -145,19 +115,8 @@ main() {
 
   local miniconda_version=$LSST_MINICONDA_VERSION
 
-  case $(uname -s) in
-    Linux*)
-      local ana_platform='Linux-x86_64'
-      local pkg_postfix='linux-64'
-      ;;
-    Darwin*)
-      local ana_platform='MacOSX-x86_64'
-      local pkg_postfix='osx-64'
-      ;;
-    *)
-      fail "Cannot install miniconda: unsupported platform $(uname -s)"
-      ;;
-  esac
+  # check wich platform we are running on
+  discover_platform
 
   cd "$LSSTSW"
 
@@ -191,6 +150,9 @@ main() {
   if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
     echo "::: Environment $LSST_CONDA_ENV_NAME already deployed."
   else
+    if [[ ! -z $ENVREF ]]; then
+      deploy_scipipe_env
+    else
       echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
       # Install packages on which the stack is known to depend
       # conda may leave behind lock files from an uncompleted package
@@ -218,6 +180,7 @@ main() {
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
+    fi
   fi
 
   # intentionally outside of a lockfile subshell
