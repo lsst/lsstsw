@@ -22,9 +22,32 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 . "${DIR}/../etc/settings.cfg.sh"
 # shellcheck disable=SC1090
-. "${DIR}/deploy"
+. "${DIR}/utils.sh"
 
-usage() { echo "Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] [product1 [product2 [...]]]" 1>&2; exit 1; }
+
+usage() {
+  if [[ ! -z "$1" ]]; then
+    print_error "$0: $1"
+  fi
+
+  # note that heredocs are prefixed with tab chars
+  fail "$(cat <<-EOF 
+		 Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
+
+	Build one or more products. 
+
+		 Specific options:
+	    -p            prepare only
+	    -n            pass "--no-fetch" parameter to lsst_build
+	    -u            update repos.yaml
+	    -r <ref>      git reference (branch or tags) to be built
+	    -t <eupstag>  specify the eupstag to use
+	    -h            show this message
+
+		EOF
+  )"
+}
+
 
 # centos 6 shipped with bash 4.1; this is the best that can be done for
 # returning a value prior to bash 4.3

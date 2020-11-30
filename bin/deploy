@@ -34,10 +34,11 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r]
+		Usage: $0 [-h] [-r] [-v]
 
 		Specific options:
-	    -v VERSION  a specific version of rubin-env conda package
+	    -v VERSION  a specific version of rubin-env conda package.
+	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
 	    -h          show this message
 
