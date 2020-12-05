@@ -1,0 +1,316 @@
+#!/bin/bash
+
+#
+# ********** DONT RUN THIS UNLESS YOU UNDERSTAND WHAT IT DOES ********
+# **********             SERIOUS DAMAGE MAY OCCUR             ********
+#
+# Generate and publish src and tarballs packages for $PRODUCTs and their dependencies
+#
+# $ full-publish [-n] [-v] [-b <build_id>] [-t <distservtag>] [product1 [product2 [...]]]
+#
+# If no parameters are give, it searchs the build/manifest.txt and
+# publush the artifacts for the last built product
+#
+# Example:
+#    'src-publish -t current product_name' will publish the build found in $LSSTSW_BUILD_DIR
+#    and tag it as 'current' on the distribution server
+#
+# ------------------------------------------------------------------------
+# the publish is done in 2 steps:
+# 1- the packages are published in a local TMP_PKGROOT
+#      TMP_PKGROOT is set to a folder inside lsstsw and cleaned before each use
+# 2- the packages are published to the EUPS_PKGROOT
+#      EUPS_PKGREPO shall be defined in the environemnt where the script is executed
+#      it can be:
+#      - a local folder (used mainly for debug) 
+#      - a remote aws s3 bucket
+#      The packages will be publish to ${EUPS_PKGREPO}/stack/src
+
+
+exec_name="$(basename -- $0)"
+echo "Executing $exec_name..."
+
+DISTRIBTAG=
+BUILD=
+NAMESPACE=false
+VERBOSE=false
+EUPSVERBOSE=""
+
+
+# this is required in order to publish git packages
+export EUPSPKG_SOURCE=git
+
+
+set -e
+DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck disable=SC1090
+. "${DIR}/../etc/settings.cfg.sh"
+# Source script with shared functions
+# shellcheck disable=SC1090
+source "${LSSTSW}/bin/utils.sh"
+
+TMP_PKGROOT=$LSSTSW/tmp_distrib
+
+
+usage() { echo "Usage: $exec_name [-n] [-v] [-e] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+
+
+# -------    main
+while getopts ":b:t:ndve:" o; do
+  case "$o" in
+  b)
+    BUILD="$OPTARG"
+    ;;
+  t)
+    DISTRIBTAG="$OPTARG"
+    ;;
+  n)
+    NAMESPACE=true
+    ;;
+  d)
+    DEBUG=true
+    ;;
+  v)
+    # shellcheck disable=SC2034
+    VERBOSE=true
+    ;;
+  e)
+    EUPSVERBOSE="$OPTARG"
+    ;;
+  *)
+    usage
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [[ $# -eq 0 ]]; then
+  usage
+fi
+
+case "$EUPSVERBOSE" in
+  "1")
+    VOPT="-v"
+    ;;
+  "2")
+    VOPT="-vv"
+    ;;
+  "3")
+    VOPT="-vvv"
+    ;;
+  *)
+    VOPT=""
+    ;;
+esac
+
+# unset following variable that may affect the outcome of the build
+unset EUPS_PKGROOT
+
+if [[ -z $BUILD ]]; then
+  # retriving buildID from manifest.txt
+  BUILD=$(grep '^BUILD=' "$LSSTSW/build/manifest.txt" | awk -F '=' '{print $2}')
+fi
+
+if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
+  # set DISTRIBTAG equal to buildID in case no tag is specified
+  # it should be recommended to have the buildID as timestamp ( d$(date '+%Y%m%d%H%M%S') ) generated in lsst_build
+  #DISTRIBTAG="b${BUILD:1}"
+  DISTRIBTAG="${BUILD}"
+  #DISTRIBTAG="d$(date '+%Y%m%d%H%M%S')"
+fi
+echo
+echo "$exec_name >> Distribution Tag identification $DISTRIBTAG. BuildID ${BUILD}"
+
+# once the buildID is givem the environment name can be identified
+LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
+ENVREF="${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
+CONDA_ENV_REF="${LSST_SPLENV_REPO}@${ENVREF}"
+echo
+echo "$exec_name >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
+
+# activating the environment it has been used for the build
+# shellcheck disable=SC1090
+source "$LSSTSW/bin/envconfig" -n "$LSST_CONDA_ENV_NAME"
+
+# empty local pkgroot
+run rm -rf "${TMP_PKGROOT}"
+
+PRODUCTS=("$@")
+
+for prod in "${PRODUCTS[@]}"; do
+  if [[ -z "$prod" ]]; then
+    # I need to pick the product from manifest.txt
+    echo "zero length product names are not permitted"
+    usage
+  fi
+  if [[ $prod == *[[:space:]]* ]]; then
+    echo "white spaces are not permitted in product names"
+    usage
+  fi
+done
+
+if [[ $DEBUG == true ]]; then
+	cat <<-EOF
+	----------------------------------------------------------------
+	$(print_settings)
+	----------------------------------------------------------------
+	EOF
+fi
+
+#
+# Create the distribution packages
+#
+if [ "${NAMESPACE}" = true ]; then
+  for product in "${PRODUCTS[@]}"; do
+    echo
+    echo "$exec_name >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
+    mkdir -p "${TMP_PKGROOT}/${product}"/tags
+    run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}" "${VOPT}"
+    # 
+    run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD" "${VOPT}"
+    echo
+    echo "$exec_name >> Adding tag '${DISTRIBTAG}' at the distribution server."
+    match='EUPS distribution ([^ ]+) version list. Version 1.0'
+    # shellcheck disable=SC1117
+    sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
+    src_tag="${TMP_PKGROOT}/${product}/tags/${BUILD}.list"
+    tmp_list=$(mktemp)
+    dst_tag="${TMP_PKGROOT}/${product}/tags/${DISTRIBTAG}.list"
+    #
+    sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
+    #
+    cp "${tmp_list}" "${dst_tag}"
+    rm "${tmp_list}"
+    # remove the original bNNNN tag to reduce tag proliferation
+    if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
+      rm "$src_tag"
+    fi
+  done
+else
+  echo
+  echo "$exec_name >> Preparing tag '$DISTRIBTAG' (sources) for products" "${PRODUCTS[@]}"
+  for product in "${PRODUCTS[@]}"; do
+    echo "$exec_name >> Build sources for product ${product}."
+    run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" "${VOPT}"
+  done
+  # Declare the build tag, and declare it $DISTRIBTAG, if set
+  #
+  run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD" "${VOPT}"
+  echo
+  echo "$exec_name >> Adding tag '$DISTRIBTAG' at the distribution server."
+  #
+  match='EUPS distribution ([^ ]+) version list. Version 1.0'
+  # shellcheck disable=SC1117
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
+  src_tag="$TMP_PKGROOT/tags/${BUILD}.list"
+  tmp_list=$(mktemp)
+  dst_tag="${TMP_PKGROOT}/tags/${DISTRIBTAG}.list"
+
+  sed -r "s|${match}|${sub}|" "$src_tag" > "${tmp_list}"
+  #
+  cp "${tmp_list}" "${dst_tag}"
+  rm "${tmp_list}"
+  # remove the original bNNNN tag to reduce tag proliferation
+  if [[ "${BUILD}" != "${DISTRIBTAG}" ]]; then
+    rm "$src_tag"
+  fi
+fi
+
+
+if [[ ! -z $EUPS_PKGREPO ]]; then
+  # push to final PKGROOT enabled
+  if [ "${NAMESPACE}" = true ]; then
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      for product in "${PRODUCTS[@]}"; do
+        deploy_destination="stack/$product/src/"
+        echo
+        echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+        # the PKGROOT is a local filesystem
+        run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+        echo "exec_name >> Done publishing SRC packages."
+      done
+    else
+        # the PKGROOT is a remote aws s3
+        echo "To Be Implemented."
+    fi
+  else
+    deploy_destination="stack/src/"
+    echo
+    echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      # the PKGROOT is a local filesystem
+      run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+      run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+      echo "$exec_name >> Done publishing SRC packages."
+    else
+      # the PKGROOT is a remote aws s3
+      echo "To Be Implemented."
+    fi
+  fi
+else
+  echo "$exec_name >> No Publishing."
+fi 
+
+TMP_PKGROOT=$LSSTSW/tmp_tarballs
+# set local (empty) pkgroot
+run rm -rf "${TMP_PKGROOT}"
+run mkdir -p "${TMP_PKGROOT}"
+
+echo "$exec_name >> Generate tarballs for products" "${PRODUCTS[@]}"
+
+if [ "${NAMESPACE}" = true ]; then
+  for product in "${PRODUCTS[@]}"; do
+    run eups distrib create --server-dir="${TMP_PKGROOT}/${product}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
+    # Declare the build tag, and declare it $DISTRIBTAG, if set
+    run eups distrib declare --server-dir="${TMP_PKGROOT}/${product}" -t "$DISTRIBTAG" "${VOPT}"
+  done
+else
+  for product in "${PRODUCTS[@]}"; do
+    run eups distrib create --server-dir "${TMP_PKGROOT}" -d tarball -t "$DISTRIBTAG" "$product" "${VOPT}"
+  done
+  # Declare the build tag, and declare it $DISTRIBTAG, if set
+  run eups distrib declare --server-dir="${TMP_PKGROOT}" -t "$DISTRIBTAG" "${VOPT}"
+fi
+
+# publish the binaries packages
+define_platform
+compiler="conda-system"
+
+if [[ ! -z $EUPS_PKGREPO ]]; then
+  # push to final PKGROOT enabled
+  if [ "${NAMESPACE}" = true ]; then
+    for product in "${PRODUCTS[@]}"; do
+      deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+      echo
+      echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+      if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+        # the PKGROOT is a local filesystem
+        run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+        run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+        echo "$exec_name >> Done publishing BIN packages."
+      else
+        # the PKGROOT is a remote aws s3
+        echo "To Be Implemented."
+      fi
+    done
+  else
+    deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
+    echo
+    echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+    if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
+      # the PKGROOT is a local filesystem
+      run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
+      run cp -r "${TMP_PKGROOT}/." "${EUPS_PKGREPO}/${deploy_destination}"
+      echo "$exec_name >> Done publishing BIN packages."
+    else
+      # the PKGROOT is a remote aws s3
+      echo "To Be Implemented."
+    fi
+  fi
+else
+  echo
+  echo "tarballs-publish >> Publishing disabled. No EUPS_PKGREPO env var defined."
+fi
+
+# vim: tabstop=2 shiftwidth=2 expandtab
