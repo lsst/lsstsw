@@ -23,6 +23,8 @@
 #      - a remote aws s3 bucket
 #      The packages will be publish to ${EUPS_PKGREPO}/stack/src
 
+exec_name="$(basename -- $0)"
+echo "Executing $exec_name..."
 
 DISTRIBTAG=
 first_product=
@@ -41,78 +43,6 @@ source "${LSSTSW}/bin/utils.sh"
 TMP_PKGROOT=$LSSTSW/tmp_tarballs
 
 usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
-
-
-# define architecture and platform the build is done
-define_platform() {
-
-  case $(uname -s) in
-    Linux*)
-      pkg_postfix='linux-64'
-      local release_file='/etc/redhat-release'
-      if [[ ! -e $release_file ]]; then
-         print_error "unknown osfamily"
-         #[[ $__debug == true ]] && print_error "unknown osfamily"
-      fi
-      osfamily="redhat"
-
-      # capture only major version number because "posix character classes"
-      if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
-         print_error "unable to find release string"
-         #[[ $__debug == true ]] && print_error "unable to find release string"
-      fi
-      osrelease="${BASH_REMATCH[1]}"
-      case $osrelease in
-        7)
-          osplatform=el7
-          ;;
-        8)
-          osplatform=el8
-          ;;
-        *)
-          print_error "unsupported release: $osrelease"
-          #[[ $__debug == true ]] && print_error "unsupported release: $__release"
-          # no publish
-          exit 1
-          ;;
-        esac
-      ;;
-    Darwin*)
-      osfamily="osx"
-      pkg_postfix='osx-64'
-
-      if ! release=$(sw_vers -productVersion); then
-         print_error "unable to find release string"
-         #[[ $__debug == true ]] && print_error "unable to find release string"
-      fi
-      osrelease=$(trimws "$release")
-      case $osrelease in
-        # XXX bash 3.2 on osx does not support case fall-through
-        10.9.* | 10.1?.* | 10.1?)
-          osplatform=10.9
-          ;;
-        *)
-          print_error "unsupported release: $osrelease"
-          #[[ $__debug == true ]] && print_error "unsupported release: $osrelease"
-          # no publush
-          exit 1
-          ;;
-        esac
-      ;;
-    *)
-      print_error "unknown osfamily"
-      #[[ $__debug == true ]] && print_error "unknown osfamily"
-      # no publish
-      exit 1
-      ;;
-  esac
-  echo
-  echo "tarballs-publish >> Platform parameters for binary identification:"
-  echo "  -  os-family: ${osfamily}"
-  echo "  -  os-release: ${osrelease}"
-  echo "  -  os-platform: ${osplatform}"
-  echo "  -  pkg_postfix: ${pkg_postfix}"
-}
 
 
 ##### main #####
@@ -207,7 +137,7 @@ run unset EUPS_PKGROOT
   fi
   echo
   # shellcheck disable=SC2028
-  echo "tarballs-publish >> Looking for environment information from:\\n --> ${LIST_URL}"
+  echo "$exec_name >> Looking for environment information from:\\n --> ${LIST_URL}"
   set +e
   RAW_ENV_INFO=$("${CURL}" -s "${LIST_URL}" | grep CONDA_ENV)
   set -e
@@ -220,7 +150,7 @@ run unset EUPS_PKGROOT
 
 # activate the correct environmen tusing envconfig -r ENVREF
   echo
-  echo "tarballs-publish >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
+  echo "$exec_name >> Environment $LSST_CONDA_ENV_NAME used for eups tag $DISTRIBTAG (envref $ENVREF)."
   # shellcheck disable=1090
   source "$LSSTSW/bin/envconfig" -r "$ENVREF"
   # remove config.txt files from stack to avoid conflicts in publication
@@ -240,7 +170,7 @@ run unset EUPS_PKGROOT
 
 # install the product from source pkgs using eups distrib install -t TAG DISTRIB_PRODUCTS
   echo
-  echo "tarballs-publish >> Install products" "${DISTRIB_PRODUCTS[@]}" "from eups source packages"
+  echo "$exec_name >> Install products" "${DISTRIB_PRODUCTS[@]}" "from eups source packages"
   for product in "${DISTRIB_PRODUCTS[@]}"; do
     if [ "${NAMESPACE}" = true ]; then
       run eups distrib install --server-dir "${EUPS_PKGREPO}/stack/${product}/src" -t "${DISTRIBTAG}" "${product}" "${VOPT}"
@@ -251,7 +181,7 @@ run unset EUPS_PKGROOT
 
   if [[ $VERBOSE == true ]]; then
     echo
-    echo "tarballs-publish >>  EUPS Environment Variables"
+    echo "$exec_name >>  EUPS Environment Variables"
     env | grep EUPS
     echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   fi
@@ -282,11 +212,12 @@ run unset EUPS_PKGROOT
       for product in "${DISTRIB_PRODUCTS[@]}"; do
         deploy_destination="stack/${product}/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
         echo
-        echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+        echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
           # the PKGROOT is a local filesystem
           run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
           run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
+          echo "$exec_name >> Done."
         else
           # the PKGROOT is a remote aws s3
           echo "To Be Implemented."
@@ -295,7 +226,7 @@ run unset EUPS_PKGROOT
     else
       deploy_destination="stack/${osfamily}/${osplatform}/${compiler}/${ENVREF}/"
       echo
-      echo "tarballs-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+      echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
       if [[ "${EUPS_PKGREPO:0:4}" != "http" ]]; then
         # the PKGROOT is a local filesystem
         run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
@@ -307,7 +238,7 @@ run unset EUPS_PKGROOT
     fi
   else
     echo
-    echo "tarballs-publish >> Publishing disabled. No EUPS_PKGREPO env var defined."
+    echo "$exec_name >> Publishing disabled. No EUPS_PKGREPO env var defined."
   fi 
 
 # vim: tabstop=2 shiftwidth=2 expandtab

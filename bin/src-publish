@@ -24,6 +24,10 @@
 #      The packages will be publish to ${EUPS_PKGREPO}/stack/src
 
 
+exec_name="$(basename -- $0)"
+echo "Executing $exec_name..."
+
+
 DISTRIBTAG=
 BUILD=
 NAMESPACE=false
@@ -46,7 +50,7 @@ source "${LSSTSW}/bin/utils.sh"
 TMP_PKGROOT=$LSSTSW/tmp_distrib
 
 
-usage() { echo "Usage: $0 [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
+usage() { echo "Usage: $exec_name [-n] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
 
 
 # -------    main
@@ -113,14 +117,14 @@ if [[ -z $DISTRIBTAG ]] || [[ $DISTRIBTAG == "" ]]; then
   #DISTRIBTAG="d$(date '+%Y%m%d%H%M%S')"
 fi
 echo
-echo "src-publish >> Distribution Tag identification $DISTRIBTAG. BuildID ${BUILD}"
+echo "$exec_name >> Distribution Tag identification $DISTRIBTAG. BuildID ${BUILD}"
 
 # once the buildID is givem the environment name can be identified
 LSST_CONDA_ENV_NAME=$(grep -E '^environment_name:' "${LSSTSW}/build/builds/${BUILD}.env" | awk '{print $2}')
 ENVREF="${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
 CONDA_ENV_REF="${LSST_SPLENV_REPO}@${ENVREF}"
 echo
-echo "src-publish >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
+echo "$exec_name >> $LSST_CONDA_ENV_NAME used for build $BUILD (envref $ENVREF)."
 
 # activating the environment it has been used for the build
 # shellcheck disable=SC1090
@@ -156,13 +160,13 @@ fi
 if [ "${NAMESPACE}" = true ]; then
   for product in "${PRODUCTS[@]}"; do
     echo
-    echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
+    echo "$exec_name >> Preparing tag '$DISTRIBTAG' (sources) for product ${product}."
     mkdir -p "${TMP_PKGROOT}/${product}"/tags
     run eups distrib create --server-dir="$TMP_PKGROOT/${product}" -f generic -d eupspkg -t "${BUILD}" "${product}" "${VOPT}"
     # 
     run eups distrib declare --server-dir="$TMP_PKGROOT/${product}" -t "$BUILD" "${VOPT}"
     echo
-    echo "src-publish >> Adding tag '${DISTRIBTAG}' at the distribution server."
+    echo "$exec_name >> Adding tag '${DISTRIBTAG}' at the distribution server."
     match='EUPS distribution ([^ ]+) version list. Version 1.0'
     # shellcheck disable=SC1117
     sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
@@ -181,16 +185,16 @@ if [ "${NAMESPACE}" = true ]; then
   done
 else
   echo
-  echo "src-publish >> Preparing tag '$DISTRIBTAG' (sources) for products" "${PRODUCTS[@]}"
+  echo "$exec_name >> Preparing tag '$DISTRIBTAG' (sources) for products" "${PRODUCTS[@]}"
   for product in "${PRODUCTS[@]}"; do
-    echo "src-publish >> Build sources for product ${product}."
+    echo "$exec_name >> Build sources for product ${product}."
     run eups distrib create --server-dir="$TMP_PKGROOT" -f generic -d eupspkg -t "$BUILD" "$product" "${VOPT}"
   done
   # Declare the build tag, and declare it $DISTRIBTAG, if set
   #
   run eups distrib declare --server-dir="$TMP_PKGROOT" -t "$BUILD" "${VOPT}"
   echo
-  echo "src-publish >> Adding tag '$DISTRIBTAG' at the distribution server."
+  echo "$exec_name >> Adding tag '$DISTRIBTAG' at the distribution server."
   #
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # shellcheck disable=SC1117
@@ -217,11 +221,11 @@ if [[ ! -z $EUPS_PKGREPO ]]; then
       for product in "${PRODUCTS[@]}"; do
         deploy_destination="stack/$product/src/"
         echo
-        echo "src-publish >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
+        echo "$exec_name >> Publishing to filesystem: ${EUPS_PKGREPO}/${deploy_destination}"
         # the PKGROOT is a local filesystem
         run mkdir -p "${EUPS_PKGREPO}/${deploy_destination}"
         run cp -r "${TMP_PKGROOT}/${product}/." "${EUPS_PKGREPO}/${deploy_destination}"
-        echo "src-publish >> Done."
+        echo "$exec_name >> Done."
       done
     else
         # the PKGROOT is a remote aws s3
