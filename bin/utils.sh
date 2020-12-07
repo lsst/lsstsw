@@ -282,3 +282,75 @@ fetch_repos.yaml() {
     "${baseurl}/etc/repos.yaml" \
     -o "$output_file"
 }
+
+
+# define architecture and platform the build is done
+define_platform() {
+
+  case $(uname -s) in
+    Linux*)
+      pkg_postfix='linux-64'
+      local release_file='/etc/redhat-release'
+      if [[ ! -e $release_file ]]; then
+         print_error "unknown osfamily"
+         #[[ $__debug == true ]] && print_error "unknown osfamily"
+      fi
+      osfamily="redhat"
+
+      # capture only major version number because "posix character classes"
+      if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
+         print_error "unable to find release string"
+         #[[ $__debug == true ]] && print_error "unable to find release string"
+      fi
+      osrelease="${BASH_REMATCH[1]}"
+      case $osrelease in
+        7)
+          osplatform=el7
+          ;;
+        8)
+          osplatform=el8
+          ;;
+        *)
+          print_error "unsupported release: $osrelease"
+          #[[ $__debug == true ]] && print_error "unsupported release: $__release"
+          # no publish
+          exit 1
+          ;;
+        esac
+      ;;
+    Darwin*)
+      osfamily="osx"
+      pkg_postfix='osx-64'
+
+      if ! release=$(sw_vers -productVersion); then
+         print_error "unable to find release string"
+         #[[ $__debug == true ]] && print_error "unable to find release string"
+      fi
+      osrelease=$(trimws "$release")
+      case $osrelease in
+        # XXX bash 3.2 on osx does not support case fall-through
+        10.9.* | 10.1?.* | 10.1?)
+          osplatform=10.9
+          ;;
+        *)
+          print_error "unsupported release: $osrelease"
+          #[[ $__debug == true ]] && print_error "unsupported release: $osrelease"
+          # no publush
+          exit 1
+          ;;
+        esac
+      ;;
+    *)
+      print_error "unknown osfamily"
+      #[[ $__debug == true ]] && print_error "unknown osfamily"
+      # no publish
+      exit 1
+      ;;
+  esac
+  echo
+  echo "tarballs-publish >> Platform parameters for binary identification:"
+  echo "  -  os-family: ${osfamily}"
+  echo "  -  os-release: ${osrelease}"
+  echo "  -  os-platform: ${osplatform}"
+  echo "  -  pkg_postfix: ${pkg_postfix}"
+}
