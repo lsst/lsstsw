@@ -75,18 +75,10 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "b" opt; do
+  while getopts "h" opt; do
     case "$opt" in
-    f)
-      shift;
-      FORK=$1
-      ;;
     h)
       usage
-      ;;
-    b)
-      shift;
-      BRANCH=$1
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -187,9 +179,6 @@ run() {
   echo "Pkg version: $version"
   echo "Tmp env ref: $env_ref"
   echo "Base Env Name: $SPLENV_BASE_NAME"
-  # need to get
-  echo "conda create -n lsst-scipipe-0.1.1 -c file:////home/gcomoret/anaconda3/conda-bld/ -c conda-forge rubin-env"
-  echo "conda create -n lsst-scipipe-$env_ref -c file:///$CONDA_BASE_DIR/conda-bld/ -c conda-forge rubin-env"
   # if local miniconda is installed, deploy there the bleed environment
   if [ -d "${LSSTSW}/miniconda" ]; then
     . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
