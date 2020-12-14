@@ -56,51 +56,26 @@ versiondb_head() {
 }
 
 save_build_env() {
-  # saving environment information
+  # Saving environment information
+  # Using conda-forge/rubin-env to create the environment,
+  # there is no exact reference to reffer to.
+  # 
+  # The information saved here has the following scopes:
+  # - save the environemnt name corresponding to the buildID (locally)
+  #   and permit to run a new build based on the same environment.
+  # - persist the exact environemnt resolved for this build, since 
+  #   this is not static, but will change with the time.
+  #   This informtion shall be made persisten in EUPS_PKGROOT
+
   mkdir -p "${LSSTSW_BUILD_DIR}/builds"
   filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}.env"
   echo "Saving environment information in ${filename}"
-
-  active_env="$(mktemp)"
-  ref_env="$(mktemp)"
 
   # saving information in environment name
   echo "environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
 
   # generating pinned list of environment content
-  conda list --explicit > "${active_env}"
-  cat "${active_env}" >> "${filename}"
-
-  # extract the git reference from the environment name
-  ref="${LSST_CONDA_ENV_NAME:13}"
-    
-  if [[ $ref == *"."* ]]; then
-    # the reference is a branch
-    ref1=$(echo "${ref}" | cut -f 1 -d .)
-    ref2=$(echo "${ref}" | cut -f 2 -d .)
-    local_env_dir="${LSSTSW}/env/${ref1}/${ref2}"
-  else
-    # the reference is a sha1 or a tag
-    local_env_dir="${LSSTSW}/env/${ref}"
-  fi
-
-  if [ -d "${local_env_dir}" ]; then
-    # searching for the saved envirronment file
-    ref_file=$(find "${local_env_dir}" -name "conda*.lock*" -exec basename {} \;)
-    local_env_file="${local_env_dir}/${ref_file}"
-    echo -e "\\nenv_ref_file: ${local_env_file}\\n" >> "${filename}"
-    grep -v "^name" "${local_env_file}" > "${ref_env}"
-    # save diff in file and print it to console
-    {
-      echo "Differences between active anvironment and reference environment:"
-      diff -B -C0 <(sort "${active_env}")  <(sort "${ref_env}") || true  # OK for this to fail
-      echo "^^^^ end of diff ^^^^^^^"
-    } | tee -a "${filename}"
-  else
-    echo "No environment file definition in ${local_env_dir}. Nothing recorded."
-  fi
-  rm "${active_env}"
-  rm "${ref_env}"
+  conda list --explicit >> "${filename}"
 }
 
 PREP_ONLY=false
