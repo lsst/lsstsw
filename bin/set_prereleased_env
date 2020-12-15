@@ -14,6 +14,7 @@ source "${SCRIPT_DIR}/../bin/utils.sh"
 
 set -e
 
+REPO_NAME="rubinenv-feedstock"
 
 usage() {
   if [[ ! -z "$1" ]]; then
@@ -23,7 +24,7 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] <runenv-fork> <rubinenv-branch>
+		Usage: $0 [-h] <runenv-fork-organization> <rubinenv-fork-branch>
 
 		Specific options:
 	    -h          show this message
@@ -55,7 +56,7 @@ parse_args() {
     usage "Illegal number of parameters"
   fi
 
-  FORK=$1
+  FORK="https://github.com/$1/$REPO_NAME"
   BRANCH=$2
   echo "Looking ofr rubinenv definition at"
   echo "  fork: $FORK"
@@ -91,15 +92,11 @@ check_conda() {
     usage "Missing required information: BRANCH in rubinenv forked repository"
   fi
 
-  repo_name=${FORK##*/}
-
-  echo $repo_name
-  if [ -d "$repo_name" ]; then
-    rm -rf $repo_name
+  if [ -d "$REPO_NAME" ]; then
+    rm -rf $REPO_NAME
   fi
   git clone $FORK
-  cd $repo_name
-  echo " ** $BRANCH"
+  cd $REPO_NAME
   git checkout $BRANCH
   git status
   git log -n 1
