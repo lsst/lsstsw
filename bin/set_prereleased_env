@@ -9,32 +9,11 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
-
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
-LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
-LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-# force Python 3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py37_4.8.2}
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
-LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
-LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
-LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
-LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
-LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+# shellcheck disable=SC1090
+source "${SCRIPT_DIR}/../bin/utils.sh"
 
 set -e
 
-print_error() {
-  >&2 echo -e "$@"
-}
-
-fail() {
-  local code=${2:-1}
-  [[ -n $1 ]] && print_error "$1"
-  # shellcheck disable=SC2086
-  exit $code
-}
 
 usage() {
   if [[ ! -z "$1" ]]; then
@@ -53,24 +32,6 @@ usage() {
   )"
 }
 
-config_curl() {
-  # Prefer system curl; user-installed ones sometimes behave oddly
-  if [[ -x /usr/bin/curl ]]; then
-    CURL=${CURL:-/usr/bin/curl}
-  else
-    CURL=${CURL:-curl}
-  fi
-
-  # disable curl progress meter unless running under a tty -- this is intended to
-  # reduce the amount of console output when running under CI
-  CURL_OPTS=('-#')
-  if [[ ! -t 1 ]]; then
-    CURL_OPTS=('-sS')
-  fi
-
-  # curl will exit 0 on 404 without the fail flag
-  CURL_OPTS+=('--fail')
-}
 
 parse_args() {
   local OPTIND
@@ -110,19 +71,6 @@ check_conda() {
   CONDA_BASE_DIR=$(dirname "${CONDA_DIR}")
   # shellcheck disable=SC1090  
   . "${CONDA_BASE_DIR}/etc/profile.d/conda.sh"
-}
-
-
-run() {
-  if [[ $DRYRUN == true ]]; then
-    echo "$@"
-  elif [[ $DEBUG == true ]]; then
-    (set -x; "$@")
-  else
-    echo "$@"
-    "$@"
-    result=$?
-  fi
 }
 
 
@@ -186,6 +134,10 @@ run() {
   if [ -d "${LSSTSW}/miniconda" ]; then
     . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
   fi
-  run conda create -y -n "lsst-scipipe-$env_ref" -c "file:///$CONDA_BASE_DIR/conda-bld/" -c conda-forge rubin-env
+  SCIPIPE_CONDA_ENV="lsst-scipipe-$env_ref"
+  run conda create -y -n "$SCIPIPE_CONDA_ENV" -c "file:///$CONDA_BASE_DIR/conda-bld/" -c conda-forge rubin-env
+
+  # save the environment name for a programmatic activation:
+  echo "$SCIPIPE_CONDA_ENV" > env.name
 
 # vim: tabstop=2 shiftwidth=2 expandtab
