@@ -15,6 +15,8 @@ source "${SCRIPT_DIR}/../bin/utils.sh"
 set -e
 
 REPO_NAME="rubinenv-feedstock"
+BUILD_ENV_NAME="build-env"
+BUILD_CHANNEL="file://$LSSTSW/miniconda/envs/$BUILD_ENV_NAME/conda-bld/"
 
 usage() {
   if [[ ! -z "$1" ]]; then
@@ -65,20 +67,9 @@ parse_args() {
 }
 
 
-check_conda() {
-  # activating conda
-  CONDA_PATH=$(which conda)
-  CONDA_DIR=$(dirname "${CONDA_PATH}")
-  CONDA_BASE_DIR=$(dirname "${CONDA_DIR}")
-  # shellcheck disable=SC1090  
-  . "${CONDA_BASE_DIR}/etc/profile.d/conda.sh"
-}
-
-
 ###### main
 
   config_curl
-  check_conda
 
   FORK=""
   BRANCH=""
@@ -102,10 +93,15 @@ check_conda() {
   git log -n 1
   git_hash=$(git rev-parse --short HEAD)
 
-  # thir requires to have conda installed in your base environment, including build and anaconda
-  # looking for a general conda installed in the user '~/'
-  #    we should assume that the general conda includes anaconda and conda-build
-  
+  # activate the conda provided by miniconda, deployed with ./bin/deploy
+  . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
+
+  # create a build-env environment to provide conda-build package
+  # without affecting the miniconda base environment
+  conda create -y --name $BUILD_ENV_NAME conda-build
+
+  conda activate $BUILD_ENV_NAME
+
   log_file="conda_build_recipe.log"
   echo "Conda Build Recipe. Redirecting to logfile: $log_file"
   # tests seems to generate errors when building locally
@@ -120,19 +116,13 @@ check_conda() {
   env_ref="$version-$git_hash"
   echo "------------------------------------------------------------------------------------------------------------"
   echo "Pkg full path: $pkg_file"
-  echo "Conda path: $CONDA_PATH"
-  echo "Conda dir: $CONDA_DIR"
-  echo "Conda base path: $CONDA_BASE_DIR"
   echo "Pkg file: $pkg_base_name"
   echo "Pkg version: $version"
   echo "Tmp env ref: $env_ref"
   echo "Base Env Name: $SPLENV_BASE_NAME"
-  # if local miniconda is installed, deploy there the bleed environment
-  if [ -d "${LSSTSW}/miniconda" ]; then
-    . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
-  fi
+  echo "Build channel: $BUILD_CHANNEL"
   SCIPIPE_CONDA_ENV="lsst-scipipe-$env_ref"
-  run conda create -y -n "$SCIPIPE_CONDA_ENV" -c "file:///$CONDA_BASE_DIR/conda-bld/" -c conda-forge rubin-env
+  run conda create -y -n "$SCIPIPE_CONDA_ENV" -c "$BUILD_CHANNEL" -c conda-forge rubin-env
 
   # save the environment name for a programmatic activation:
   echo "$SCIPIPE_CONDA_ENV" > env.name
