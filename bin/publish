@@ -126,6 +126,10 @@ done
 #
 run eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
 
+# save environment
+mkdir -p "${EUPS_PKGROOT}/env"
+cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env"
+
 if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
