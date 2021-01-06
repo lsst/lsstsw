@@ -76,13 +76,6 @@ fi
 
 PRODUCTS=("$@")
 
-# shellcheck disable=SC1090
-# shellcheck disable=SC2154
-. "${miniconda_path}/etc/profile.d/conda.sh"
-# shellcheck disable=SC1091
-conda activate "$LSST_CONDA_ENV_NAME"
-CONDA_ENV_REF="${LSST_SPLENV_REPO}@${LSST_CONDA_ENV_NAME#${SPLENV_BASE_NAME}-}"
-
 for prod in "${PRODUCTS[@]}"; do
   if [[ -z "$prod" ]]; then
     echo "zero length product names are not permitted"
@@ -126,9 +119,11 @@ done
 #
 run eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
 
-# save environment
-mkdir -p "${EUPS_PKGROOT}/env"
-cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env"
+echo "::: Creating folders {env,tags}"
+mkdir -p "${EUPS_PKGROOT}"/{env,tags}
+echo "::: Saving pinned environment information"
+run cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env"
+ls -l "${EUPS_PKGROOT}/env/${BUILD}.env"
 
 if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
