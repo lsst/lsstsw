@@ -228,9 +228,16 @@ main() {
     ln -s legacy "${LSSTSW}/eups/current"
   )
   # backwards compatibility if EUPS was installed to a versioned directory (not from conda)
-   test ! -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
-    echo "::: Moving old EUPS to eups-legacy"
-    mv "${LSSTSW}/eups" "${LSSTSW}/eups-legacy"
+  test ! -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
+    # in case eups fodler has already being moved to eups-legacy
+    # and then recreated (case in Jenkins, where test job uses the
+    # same filesystem as the official job)
+    if [ ! -d "${LSSTSW}/eups-legacy" ]; then
+      echo "::: Moving old EUPS to eups-legacy"
+      mv "${LSSTSW}/eups" "${LSSTSW}/eups-legacy"
+    else
+      echo "Found eups-legacy, remove it before moving old eups to legacy"
+    fi
   )
 
   # check if eups is not already available in the environment
