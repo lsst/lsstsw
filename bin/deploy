@@ -170,11 +170,7 @@ main() {
       fi
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("-c conda-forge")
-      if [[ $deploy_mode == "bleed" ]]; then
-        ARGS+=("rubin-env")
-      else
-        ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
-      fi
+      ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
       echo "conda ${ARGS[@]}"
       conda "${ARGS[@]}"
 
