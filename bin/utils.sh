@@ -73,7 +73,6 @@ deploy_scipipe_env() {
   # shellcheck disable=SC2154
   echo "::: conda lock file: ${lock_file}"
 
-  cd env || return
   if [ -e "${lock_file}" ]; then
     echo "::: conda lock file already present"
   else
