@@ -116,7 +116,7 @@ main() {
 
   local miniconda_version=$LSST_MINICONDA_VERSION
 
-  # check wich platform we are running on
+  # check which platform we are running on
   discover_platform
 
   cd "$LSSTSW"
@@ -225,7 +225,7 @@ main() {
   )
   # backwards compatibility if EUPS was installed to a versioned directory (not from conda)
   test ! -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
-    # in case eups fodler has already being moved to eups-legacy
+    # in case eups folder has already been moved to eups-legacy
     # and then recreated (case in Jenkins, where test job uses the
     # same filesystem as the official job)
     if [ ! -d "${LSSTSW}/eups-legacy" ]; then
@@ -237,7 +237,7 @@ main() {
   )
 
   # check if eups is not already available in the environment
-  # made it available in a separe eups-base environment
+  # if not, make it available from a separate eups-base environment
   if ! command -v eups > /dev/null; then
     echo "error: No eups found in the active environment ..."
     echo "  ... trying to use a stacked eups-base environment"
