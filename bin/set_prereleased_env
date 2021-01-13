@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/../bin/utils.sh"
 set -e
 
 REPO_NAME="rubinenv-feedstock"
-BUILD_ENV_NAME="build-env"
+BUILD_ENV_NAME="rubin-build-env"
 BUILD_CHANNEL="file://$LSSTSW/miniconda/envs/$BUILD_ENV_NAME/conda-bld/"
 
 usage() {
@@ -110,7 +110,6 @@ parse_args() {
   echo "Recipe Built. Logfile: $log_file"
 
   pkg_file=$(cat $log_file | grep "^anaconda upload" | awk '{ print $3 }')
-  # /Users/GComoretto/anaconda3/conda-bld/osx-64/rubinenv-0.1.0-0.tar.bz2
   pkg_base_name=$(basename -- $pkg_file)
   version=$(echo ${pkg_base_name#"rubin-env-"} | awk -F '-' '{ print $1 }')
   env_ref="$version-$git_hash"
