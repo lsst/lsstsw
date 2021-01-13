@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 
 #
-# Collection of fuctions used by ~lsstsw builder
+# Collection of functions used by ~lsstsw builder
 #
 
 
