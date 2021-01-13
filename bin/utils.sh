@@ -97,7 +97,7 @@ deploy_scipipe_env() {
     if [[ ! -t 1 ]]; then
       ARGS+=("--quiet")
     fi
-    conda "${ARGS[@]}"
+    run conda "${ARGS[@]}"
 
     echo "Cleaning conda environment..."
     conda clean -y -a > /dev/null
