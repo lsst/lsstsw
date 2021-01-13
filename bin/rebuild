@@ -58,14 +58,14 @@ versiondb_head() {
 save_build_env() {
   # Saving environment information
   # Using conda-forge/rubin-env to create the environment,
-  # there is no exact reference to reffer to.
+  # there is no exact reference to refer to.
   # 
   # The information saved here has the following scopes:
-  # - save the environemnt name corresponding to the buildID (locally)
-  #   and permit to run a new build based on the same environment.
-  # - persist the exact environemnt resolved for this build, since 
-  #   this is not static, but will change with the time.
-  #   This informtion shall be made persisten in EUPS_PKGROOT
+  # - save the environment name corresponding to the buildID (locally)
+  #   to allow a new build based on the same environment.
+  # - persist the exact environment resolved for this build, since 
+  #   this is not static, but will change with time.
+  #   This information is also placed in EUPS_PKGROOT by publish.
 
   mkdir -p "${LSSTSW_BUILD_DIR}/builds"
   filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}.env"
