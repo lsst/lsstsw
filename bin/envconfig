@@ -136,7 +136,7 @@ else
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 # Define and check EUPS_PATH
-eups_path="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
 if [ ! -d "$eups_path" ]; then
   mkdir -p "${eups_path}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
