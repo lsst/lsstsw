@@ -148,7 +148,7 @@ conda activate "$LSST_CONDA_ENV_NAME"
 export LSST_CONDA_ENV_NAME
 
 # check if eups is not already available in the environment
-# made it available in a separe eups-base environment
+# if not, make it available from a separate eups-base environment
 if ! command -v eups > /dev/null; then
   echo "error: No eups found in the active environment ..."
   echo "  ... trying to use a stacked eups-base environment"
@@ -161,7 +161,7 @@ if ! command -v eups > /dev/null; then
   conda activate --stack "$LSST_CONDA_ENV_NAME"
 fi
 
-# definition EUPS_PATH depending on the environment:
+# define EUPS_PATH depending on the environment:
 # removing from the ENV_name the default prefix defined in SPLENV_BASE_NAME
 export EUPS_PATH="${eups_path}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
