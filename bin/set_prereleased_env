@@ -26,7 +26,7 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] <runenv-fork-organization> <rubinenv-fork-branch>
+		Usage: $0 [-h] <rubinenv-fork-organization/user> <rubinenv-fork-branch>
 
 		Specific options:
 	    -h          show this message
