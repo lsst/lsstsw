@@ -1,6 +1,3 @@
-#!/bin/bash
-# shellcheck disable=SC2034
-
 #
 # Collection of functions used by ~lsstsw builder
 #
