@@ -63,7 +63,6 @@ deploy_scipipe_env() {
 
   local lock_file="${LSSTSW}/env/${ENVREF}/${conda_lockfile}"
 
-  cd "$LSSTSW" || return
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ENVREF}/etc/"
 
