@@ -35,6 +35,7 @@ usage() {
 		 Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
 
 	Build one or more products. 
+	It requires that the environment has previously been setup using envconfig.
 
 		 Specific options:
 	    -p            prepare only
@@ -109,6 +110,13 @@ shift $((OPTIND-1))
 
 if [[ "$#" != "0" ]]; then
   PRODUCTS=("$@")
+fi
+
+# Checking if the environment is active
+if [ "${CONDA_DEFAULT_ENV}" != "${LSST_CONDA_ENV_NAME}" ]; then
+  echo "Environment ${LSST_CONDA_ENV_NAME} not active."
+  echo "Please activate the environment using bin/envconfig before running rebuild."
+  exit
 fi
 
 (
