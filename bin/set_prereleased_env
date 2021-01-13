@@ -112,7 +112,7 @@ parse_args() {
   pkg_file=$(cat $log_file | grep "^anaconda upload" | awk '{ print $3 }')
   # /Users/GComoretto/anaconda3/conda-bld/osx-64/rubinenv-0.1.0-0.tar.bz2
   pkg_base_name=$(basename -- $pkg_file)
-  version=$(echo ${pkg_base_name#"rubin-env"} | awk -F '-' '{ print $2 }')
+  version=$(echo ${pkg_base_name#"rubin-env-"} | awk -F '-' '{ print $1 }')
   env_ref="$version-$git_hash"
   echo "------------------------------------------------------------------------------------------------------------"
   echo "Pkg full path: $pkg_file"
