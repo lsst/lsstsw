@@ -60,7 +60,7 @@ parse_args() {
 
   FORK="https://github.com/$1/$REPO_NAME"
   BRANCH=$2
-  echo "Looking ofr rubinenv definition at"
+  echo "Looking for rubinenv definition at"
   echo "  fork: $FORK"
   echo "  branch: $BRANCH"
 
@@ -105,7 +105,7 @@ parse_args() {
   log_file="conda_build_recipe.log"
   echo "Conda Build Recipe. Redirecting to logfile: $log_file"
   # tests seems to generate errors when building locally
-  # for the scope of this script we avoid to run test when executing conda build
+  # for the scope of this script we avoid running tests when executing conda build
   conda build --no-test recipe/ 2>&1 > $log_file
   echo "Recipe Built. Logfile: $log_file"
 
