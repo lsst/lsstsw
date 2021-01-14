@@ -1,4 +1,4 @@
-# shellcheck shell=sh
+# shellcheck shell=bash
 #
 # Collection of functions used by ~lsstsw builder
 #

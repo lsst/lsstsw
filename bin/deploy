@@ -99,9 +99,9 @@ main() {
 
   parse_args "$@"
 
-  if [[ ! -z $ENV_VERSION ]]; then
+  if [[ -n $ENV_VERSION ]]; then
     RUBIN_ENV_VERSION=$ENV_VERSION
-  elif [[ ! -z $ENVREF ]]; then
+  elif [[ -n $ENVREF ]]; then
     RUBIN_ENV_VERSION=$ENVREF
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
