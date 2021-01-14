@@ -127,6 +127,7 @@ main() {
   # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
+    # shellcheck disable=SC2154
     miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
@@ -151,7 +152,7 @@ main() {
   if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
     echo "::: Environment $LSST_CONDA_ENV_NAME already deployed."
   else
-    if [[ ! -z $ENVREF ]]; then
+    if [[ -n $ENVREF ]]; then
       deploy_scipipe_env
     else
       echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
@@ -171,7 +172,7 @@ main() {
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       ARGS+=("-c conda-forge")
       ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
-      echo "conda ${ARGS[@]}"
+      echo "conda" "${ARGS[@]}"
       conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."

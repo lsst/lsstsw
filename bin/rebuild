@@ -26,7 +26,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 
 usage() {
-  if [[ ! -z "$1" ]]; then
+  if [[ -n "$1" ]]; then
     print_error "$0: $1"
   fi
 
@@ -102,7 +102,7 @@ while getopts ":pnur:t:" o; do
     TAG="$OPTARG"
     ;;
   *)
-    usage
+    usage "$@"
     ;;
   esac
 done

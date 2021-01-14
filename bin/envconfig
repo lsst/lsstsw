@@ -79,6 +79,7 @@ if [[ -z $ZSH_NAME ]]; then
   SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  # shellcheck disable=SC2034
   SUFFIX='zsh'
 fi
 

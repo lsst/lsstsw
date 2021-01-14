@@ -19,7 +19,7 @@ BUILD_ENV_NAME="rubin-build-env"
 BUILD_CHANNEL="file://$LSSTSW/miniconda/envs/$BUILD_ENV_NAME/conda-bld/"
 
 usage() {
-  if [[ ! -z "$1" ]]; then
+  if [[ -n "$1" ]]; then
     print_error "$0: $1"
   fi
 
@@ -86,14 +86,15 @@ parse_args() {
   if [ -d "$REPO_NAME" ]; then
     rm -rf $REPO_NAME
   fi
-  git clone $FORK
-  cd $REPO_NAME
-  git checkout $BRANCH
+  git clone "$FORK"
+  cd "$REPO_NAME"
+  git checkout "$BRANCH"
   git status
   git log -n 1
   git_hash=$(git rev-parse --short HEAD)
 
   # activate the conda provided by miniconda, deployed with ./bin/deploy
+  # shellcheck disable=SC1090
   . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
 
   # create a build-env environment to provide conda-build package
@@ -106,12 +107,12 @@ parse_args() {
   echo "Conda Build Recipe. Redirecting to logfile: $log_file"
   # tests seems to generate errors when building locally
   # for the scope of this script we avoid running tests when executing conda build
-  conda build --no-test recipe/ 2>&1 > $log_file
+  conda build --no-test recipe/ >$log_file 2>&1
   echo "Recipe Built. Logfile: $log_file"
 
-  pkg_file=$(cat $log_file | grep "^anaconda upload" | awk '{ print $3 }')
-  pkg_base_name=$(basename -- $pkg_file)
-  version=$(echo ${pkg_base_name#"rubin-env-"} | awk -F '-' '{ print $1 }')
+  pkg_file=$(grep "^anaconda upload" "$log_file"| awk '{ print $3 }')
+  pkg_base_name=$(basename -- "$pkg_file")
+  version=$(echo "${pkg_base_name#"rubin-env-"}" | awk -F '-' '{ print $1 }')
   env_ref="$version-$git_hash"
   echo "------------------------------------------------------------------------------------------------------------"
   echo "Pkg full path: $pkg_file"

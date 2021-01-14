@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 #
 # Collection of functions used by ~lsstsw builder
 #
@@ -40,10 +41,12 @@ config_curl() {
 discover_platform() {
   case $(uname -s) in
     Linux*)
+      # shellcheck disable=SC2034
       ana_platform='Linux-x86_64'
       pkg_postfix='linux-64'
       ;;
     Darwin*)
+      # shellcheck disable=SC2034
       ana_platform='MacOSX-x86_64'
       pkg_postfix='osx-64'
       ;;
@@ -58,7 +61,6 @@ discover_platform() {
 deploy_scipipe_env() {
   echo "---------------------  Deploying environment from scipipe_conda_env, git reference: ${LSST_SPLENV_REF}"
 
-  local conda_bleedfile="conda3_bleed-${pkg_postfix}.yml"
   local conda_lockfile="conda-${pkg_postfix}.lock"
 
   local lock_file="${LSSTSW}/env/${ENVREF}/${conda_lockfile}"
