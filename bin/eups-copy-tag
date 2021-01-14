@@ -6,8 +6,8 @@
 [[ $1 == "-n" ]] && { DO_NOTHING=1; shift; }
 
 if [[ $# != 2 ]]; then
-  echo "usage: $0 [-n] <tagFrom> <tagTo>"
-  exit -1
+  echo "usage: $0 [-n] <tagFrom> <tagTo>" >&2
+  exit 1
 fi
 
 set -e

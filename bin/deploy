@@ -34,7 +34,7 @@ fail() {
 }
 
 usage() {
-  if [[ ! -z "$1" ]]; then
+  if [[ -n "$1" ]]; then
     print_error "$0: $1"
   fi
 
@@ -183,7 +183,7 @@ main() {
   if [[ $FIXED_ENVREF != '' ]]; then
     # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
     # if the REF is not a branch (or a tag), the reftip will be empty
-    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git ${ENVREF})
+    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git "${ENVREF}")
     reftip=${rawreftip:0:7}
     reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
     if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then

@@ -27,8 +27,8 @@ deploy*)
     echo -e "*** testing with PINNED Python 3 conda/pip packages ***"
     ./bin/deploy
   else
-    echo -e "*** Unrecognized mode for deploy script ***"
-    exit -1
+    echo -e "*** Unrecognized mode for deploy script ***" >&2
+    exit 1
   fi
   # shellcheck disable=SC1091
   . ./bin/setup.sh
