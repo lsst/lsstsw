@@ -1,0 +1,21 @@
+name: Acceptance tests
+
+on:
+  - pull_request
+
+jobs:
+  accept:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    name: Acceptance test
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: deploy and rebuild
+        run: |
+          ./bin/deploy
+          . bin/envconfig
+          rebuild base
