@@ -15,6 +15,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: deploy and rebuild
+        env:
+          # needed for macos
+          DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
         run: |
           ./bin/deploy
           . bin/envconfig
