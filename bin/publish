@@ -95,7 +95,7 @@ for prod in "${PRODUCTS[@]}"; do
 done
 
 if [[ -z $BUILD ]]; then
-  if [[ ! -z $DISTRIBTAG ]]; then
+  if [[ -n $DISTRIBTAG ]]; then
     # Default the build ID to distserver tag value
     BUILD="$DISTRIBTAG"
     echo "[publish] Build ID defaulting to distserver tag, $BUILD."
@@ -126,7 +126,7 @@ done
 #
 run eups distrib declare --server-dir="$EUPS_PKGROOT" -t "$BUILD"
 
-if [[ ! -z $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
+if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'

@@ -1,0 +1,24 @@
+name: Acceptance tests
+
+on:
+  - pull_request
+
+jobs:
+  accept:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    name: Acceptance test
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: deploy and rebuild
+        env:
+          # needed for macos
+          DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
+        run: |
+          ./bin/deploy
+          . bin/envconfig
+          rebuild base
