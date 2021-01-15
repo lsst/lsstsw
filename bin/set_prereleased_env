@@ -1,0 +1,130 @@
+#!/bin/bash
+#
+#  Deploy a new environment using a given rubin-env fork and branch
+#
+#  It is meant to be executed in after bin/deploy.
+#  The environment has to be enabled using envconfig -n 
+#
+
+SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
+# shellcheck disable=SC1090
+source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
+# shellcheck disable=SC1090
+source "${SCRIPT_DIR}/../bin/utils.sh"
+
+set -e
+
+REPO_NAME="rubinenv-feedstock"
+BUILD_ENV_NAME="rubin-build-env"
+BUILD_CHANNEL="file://$LSSTSW/miniconda/envs/$BUILD_ENV_NAME/conda-bld/"
+
+usage() {
+  if [[ -n "$1" ]]; then
+    print_error "$0: $1"
+  fi
+
+  # note that heredocs are prefixed with tab chars
+  fail "$(cat <<-EOF
+
+		Usage: $0 [-h] <rubinenv-fork-organization/user> <rubinenv-fork-branch>
+
+		Specific options:
+	    -h          show this message
+
+		EOF
+  )"
+}
+
+
+parse_args() {
+  local OPTIND
+  local opt
+
+  # We are intentionally not using gnu `getopt` due to portability concerns.
+  # Sadly, this means no long options without a massive amount of boilerplate.
+  while getopts "h" opt; do
+    case "$opt" in
+    h)
+      usage
+      ;;
+    *)
+      usage "Unknown option: ${opt}"
+      ;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [ "$#" -ne 2 ]; then 
+    usage "Illegal number of parameters"
+  fi
+
+  FORK="https://github.com/$1/$REPO_NAME"
+  BRANCH=$2
+  echo "Looking for rubinenv definition at"
+  echo "  fork: $FORK"
+  echo "  branch: $BRANCH"
+
+}
+
+
+###### main
+
+  config_curl
+
+  FORK=""
+  BRANCH=""
+
+  parse_args "$@"
+
+  if [[ -z "$FORK" ]]; then
+    usage "Missing required information: rubinenv forked repository"
+  fi
+  if [[ -z "$BRANCH" ]]; then
+    usage "Missing required information: BRANCH in rubinenv forked repository"
+  fi
+
+  if [ -d "$REPO_NAME" ]; then
+    rm -rf $REPO_NAME
+  fi
+  git clone "$FORK"
+  cd "$REPO_NAME"
+  git checkout "$BRANCH"
+  git status
+  git log -n 1
+  git_hash=$(git rev-parse --short HEAD)
+
+  # activate the conda provided by miniconda, deployed with ./bin/deploy
+  # shellcheck disable=SC1090
+  . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
+
+  # create a build-env environment to provide conda-build package
+  # without affecting the miniconda base environment
+  conda create -y --name $BUILD_ENV_NAME conda-build
+
+  conda activate $BUILD_ENV_NAME
+
+  log_file="conda_build_recipe.log"
+  echo "Conda Build Recipe. Redirecting to logfile: $log_file"
+  # tests seems to generate errors when building locally
+  # for the scope of this script we avoid running tests when executing conda build
+  conda build --no-test recipe/ >$log_file 2>&1
+  echo "Recipe Built. Logfile: $log_file"
+
+  pkg_file=$(grep "^anaconda upload" "$log_file"| awk '{ print $3 }')
+  pkg_base_name=$(basename -- "$pkg_file")
+  version=$(echo "${pkg_base_name#"rubin-env-"}" | awk -F '-' '{ print $1 }')
+  env_ref="$version-$git_hash"
+  echo "------------------------------------------------------------------------------------------------------------"
+  echo "Pkg full path: $pkg_file"
+  echo "Pkg file: $pkg_base_name"
+  echo "Pkg version: $version"
+  echo "Tmp env ref: $env_ref"
+  echo "Base Env Name: $SPLENV_BASE_NAME"
+  echo "Build channel: $BUILD_CHANNEL"
+  SCIPIPE_CONDA_ENV="lsst-scipipe-$env_ref"
+  run conda create -y -n "$SCIPIPE_CONDA_ENV" -c "$BUILD_CHANNEL" -c conda-forge rubin-env
+
+  # save the environment name for a programmatic activation:
+  echo "$SCIPIPE_CONDA_ENV" > env.name
+
+# vim: tabstop=2 shiftwidth=2 expandtab

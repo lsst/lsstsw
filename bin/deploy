@@ -6,12 +6,15 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck disable=SC1090
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
+# load common functions
+# shellcheck disable=SC1090
+source "${SCRIPT_DIR}/../bin/utils.sh"
 
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py37_4.8.2}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
@@ -22,16 +25,6 @@ LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/sci
 
 set -e
 
-print_error() {
-  >&2 echo -e "$@"
-}
-
-fail() {
-  local code=${2:-1}
-  [[ -n $1 ]] && print_error "$1"
-  # shellcheck disable=SC2086
-  exit $code
-}
 
 usage() {
   if [[ -n "$1" ]]; then
@@ -41,49 +34,18 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-b] [-h] [-r] [-R]
+		Usage: $0 [-h] [-r] [-v]
 
 		Specific options:
-	    -b          use bleeding edge conda packages
-	    -r REF      git ref in scipipe_conda_env (hash, branch, tag), create new env only if it does not exists
-	    -R REF      like -r, but always check if it is consistent with the pinned file
+	    -v VERSION  a specific version of rubin-env conda package.
+	                By default will use the version specified in etc/settings.cfg.sh
+	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
 	    -h          show this message
 
 		EOF
   )"
 }
 
-config_curl() {
-  # Prefer system curl; user-installed ones sometimes behave oddly
-  if [[ -x /usr/bin/curl ]]; then
-    CURL=${CURL:-/usr/bin/curl}
-  else
-    CURL=${CURL:-curl}
-  fi
-
-  # disable curl progress meter unless running under a tty -- this is intended to
-  # reduce the amount of console output when running under CI
-  CURL_OPTS=('-#')
-  if [[ ! -t 1 ]]; then
-    CURL_OPTS=('-sS')
-  fi
-
-  # curl will exit 0 on 404 without the fail flag
-  CURL_OPTS+=('--fail')
-}
-
-fetch_repos.yaml() {
-  local ref=${1:-master}
-  local output_file=${2:-$REPOSFILE}
-  local repo=${3:-$REPOSFILE_REPO}
-
-  local baseurl="https://raw.githubusercontent.com/${repo}/${ref}"
-
-  $CURL "${CURL_OPTS[@]}" \
-    -L \
-    "${baseurl}/etc/repos.yaml" \
-    -o "$output_file"
-}
 
 parse_args() {
   local OPTIND
@@ -91,28 +53,18 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "23bhrR" opt; do
+  while getopts "hrv" opt; do
     case "$opt" in
-    b)
-      BLEED_DEPLOY=true
-      ;;
-    3)
-      # noop
-      ;;
-    2)
-      fail 'Python 2.x is no longer supported.'
-      ;;
     h)
       usage
+      ;;
+    v)
+      shift;
+      ENV_VERSION=$1
       ;;
     r)
       shift;
       ENVREF=$1
-      ;;
-    R)
-      shift;
-      ENVREF=$1
-      CHECKENV=true
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -121,6 +73,7 @@ parse_args() {
   done
   shift $((OPTIND-1))
 }
+
 
 #
 # test to see if script is being sourced or executed. Note that this function
@@ -138,18 +91,23 @@ am_I_sourced() {
 }
 
 
-
 main() {
   config_curl
 
-  BLEED_DEPLOY=false
-  CHECKENV=false
-
+  ENV_VERSION=""
   ENVREF=""
 
   parse_args "$@"
-  # Create safe directory name from git ref
-  FIXED_ENVREF=${ENVREF//[.\/]/-}
+
+  if [[ -n $ENV_VERSION ]]; then
+    RUBIN_ENV_VERSION=$ENV_VERSION
+  elif [[ -n $ENVREF ]]; then
+    RUBIN_ENV_VERSION=$ENVREF
+  else
+    RUBIN_ENV_VERSION=$LSST_SPLENV_REF
+  fi
+
+  export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}"}
 
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
@@ -158,86 +116,8 @@ main() {
 
   local miniconda_version=$LSST_MINICONDA_VERSION
 
-  local deploy_mode=packages
-  if [[ $BLEED_DEPLOY == true ]]; then
-    deploy_mode=bleed
-  fi
-
-  case $(uname -s) in
-    Linux*)
-      local ana_platform='Linux-x86_64'
-      local pkg_postfix='linux-64'
-      ;;
-    Darwin*)
-      local ana_platform='MacOSX-x86_64'
-      local pkg_postfix='osx-64'
-      ;;
-    *)
-      fail "Cannot install miniconda: unsupported platform $(uname -s)"
-      ;;
-  esac
-
-  local conda_bleed="conda3_bleed-${pkg_postfix}.yml"
-  local conda_lockfile="conda-${pkg_postfix}.lock"
-
-  if [[ $FIXED_ENVREF != '' ]]; then
-    # (try to) get latest branch SHA1 and assign it to LSST_SPLENV_REF
-    # if the REF is not a branch (or a tag), the reftip will be empty
-    rawreftip=$(git ls-remote https://github.com/lsst/scipipe_conda_env.git "${ENVREF}")
-    reftip=${rawreftip:0:7}
-    reftype=$( echo "$rawreftip" | cut -f 2 -d ' ' | cut -f 2 -d'/' )
-    if [ "$reftip" == '' ] || [ "$reftype" == 'tags' ]; then
-        # the provided ref is not a branch
-        LSST_SPLENV_REF="${ENVREF}"
-        # Defining environment name based on the provided fixed reference
-        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}"
-        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_bleed}"
-        local lock_file="${LSSTSW}/env/${FIXED_ENVREF}/${conda_lockfile}"
-    else
-        # the provided ref is a branch
-        LSST_SPLENV_REF="$reftip"
-        # Defining environment name based on branch and SHA1 from the tip of the branch
-        LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${FIXED_ENVREF}.${LSST_SPLENV_REF}"
-        local env_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_bleed}"
-        local lock_file="${LSSTSW}/env/${FIXED_ENVREF}/${reftip}/${conda_lockfile}"
-    fi
-  else
-    # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
-    LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
-    local env_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_bleed}"
-    local lock_file="${LSSTSW}/env/${LSST_SPLENV_REF}/${conda_lockfile}"
-  fi
-
-  cd "$LSSTSW"
-  # conda environment reference
-  local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${LSST_SPLENV_REF}/etc/"
-
-  if [[ $deploy_mode == "bleed" ]]; then
-    echo "::: conda environment file: ${env_file}"
-  else
-    echo "::: conda lock file: ${lock_file}"
-  fi
-
-  cd env
-  if [ -e "${env_file}" ]; then
-    echo "::: conda environment file already present"
-  else
-    # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
-    mkdir -p "${env_file%/*}"
-    $CURL "${CURL_OPTS[@]}" -# -L \
-       "${env_url}/${conda_bleed}" \
-       --output "${env_file}"
-  fi
-
-  if [ -e "${lock_file}" ]; then
-    echo "::: conda lock file already present"
-  else
-    # if a branch or tag is provided, store the environment yaml inside the corresponding subfolder
-    mkdir -p "${lock_file%/*}"
-    $CURL "${CURL_OPTS[@]}" -# -L \
-       "${env_url}/${conda_lockfile}" \
-       --output "${lock_file}"
-  fi
+  # check which platform we are running on
+  discover_platform
 
   cd "$LSSTSW"
 
@@ -247,6 +127,7 @@ main() {
   # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
+    # shellcheck disable=SC2154
     miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
@@ -268,57 +149,36 @@ main() {
   local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
   [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
 
-  if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null && [[ $CHECKENV = false ]]; then
+  if conda env list | grep "^$LSST_CONDA_ENV_NAME " > /dev/null; then
     echo "::: Environment $LSST_CONDA_ENV_NAME already deployed."
   else
+    if [[ -n $ENVREF ]]; then
+      deploy_scipipe_env
+    else
+      echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
+      # Install packages on which the stack is known to depend
+      # conda may leave behind lock files from an uncompleted package
+      # installation attempt.  These need to be cleaned up before [re]attempting
+      # to install packages.
+      conda clean -y --all
       ARGS=()
-      if [[ $deploy_mode == "bleed" ]]; then
-        # Install packages on which the stack is known to depend
-        # conda may leave behind lock files from an uncompleted package
-        # installation attempt.  These need to be cleaned up before [re]attempting
-        # to install packages.
-        conda clean -y --all
-        ARGS+=('env' 'update')
-        ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
-        ARGS+=("--file" "$env_file")
-        conda "${ARGS[@]}"
-      else
-        ARGS+=('create')
-        # disable the conda install progress bar when not attached to a tty. Eg.,
-        # when running under CI
-        if [[ ! -t 1 ]]; then
-          ARGS+=("--quiet")
-        fi
-        ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
-        ARGS+=('-y')
-        ARGS+=("--file" "$lock_file")
-        # check if env exists and is consistent with the lock file
-        tmp_lock="$(mktemp)"
-        if (conda run -n "${LSST_CONDA_ENV_NAME}" conda list --explicit > "${tmp_lock}" 2>/dev/null); then
-          # check if environment is unchanged
-          # -B ignores blank lines
-          if (diff -B <(sort "${tmp_lock}") <(sort "${lock_file}") ); then
-            echo "Environment exists and is consistent with its definition."
-          else
-            echo "::: Environment $LSST_CONDA_ENV_NAME inconsistent. Redeploying."
-            # see conda clean comment above
-            conda clean -y --all
-            # environment has changed, it will be recreated
-            conda "${ARGS[@]}"
-          fi
-        else
-          echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
-          # see conda clean comment above
-          conda clean -y --all
-          # environment do not exist, it will be created
-          conda "${ARGS[@]}"
-        fi
-        rm "${tmp_lock}"
+      ARGS+=('create')
+      ARGS+=('-y')
+      # disable the conda install progress bar when not attached to a tty. Eg.,
+      # when running under CI
+      if [[ ! -t 1 ]]; then
+        ARGS+=("--quiet")
       fi
+      ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
+      ARGS+=("-c conda-forge")
+      ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+      echo "conda" "${ARGS[@]}"
+      conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
+    fi
   fi
 
   # intentionally outside of a lockfile subshell
@@ -343,69 +203,12 @@ main() {
     fi
   )
 
-  test -f "${LSSTSW}/lfs/.git.deployed" || ( # git
-    if hash git 2>/dev/null; then
-      GITVERNUM=$(git --version | cut -d\  -f 3)
-      # shellcheck disable=SC2183 disable=SC2046
-      GITVER=$(printf "%02d-%02d-%02d\\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
-    fi
-
-    if [[ $GITVER < "01-09-00" ]]; then
-      echo "::: Deploying git"
-      cd sources
-      GIT_BASE_URL="https://www.kernel.org/pub/software/scm/git"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${GIT_BASE_URL}/git-${LSST_GIT_VERSION}.tar.gz"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${GIT_BASE_URL}/git-manpages-${LSST_GIT_VERSION}.tar.gz"
-      tar xzf "git-${LSST_GIT_VERSION}.tar.gz"
-      cd "git-${LSST_GIT_VERSION}"
-      ./configure --prefix="${LSSTSW}/lfs"
-      make -j4
-      make install
-      man_dir="${LSSTSW}/lfs/share/man"
-      mkdir -p "$man_dir"
-      cd "$man_dir"
-      tar xzf "${LSSTSW}/sources/git-manpages-${LSST_GIT_VERSION}.tar.gz"
-      (cd "$LSSTSW" && git config push.default current)
-    else
-      echo "::: Using installed git"
-    fi
-    touch "${LSSTSW}/lfs/.git.deployed"
-  )
-
-  # check if git-lfs is available (in scipipe_conda_env since w_2020_19)
-  if (which git-lfs >/dev/null 2>&1); then
-    echo "::: Using installed git-lfs"
-  else
-    test -f "${LSSTSW}/lfs/.git-lfs.deployed" || (
-      echo "::: Deploying git-lfs"
-
-      case $(uname -s) in
-        Linux*)  lfs_platform="linux-amd64" ;;
-        Darwin*) lfs_platform="darwin-amd64" ;;
-        *)
-          fail "Cannot install git-lfs: unsupported platform $(uname -s)"
-          ;;
-      esac
-
-      cd sources
-      LFS_BASE_URL="https://github.com/github/git-lfs/releases/download"
-      LFS_ARCHIVE="git-lfs-${lfs_platform}-${LSST_LFS_VERSION}.tar.gz"
-      $CURL "${CURL_OPTS[@]}" -L \
-        -O "${LFS_BASE_URL}/v${LSST_LFS_VERSION}/${LFS_ARCHIVE}"
-
-      tar xzf "$LFS_ARCHIVE"
-      mkdir -p "${LSSTSW}/lfs/bin"
-      cp "git-lfs-${LSST_LFS_VERSION}/git-lfs" "${LSSTSW}/lfs/bin/"
-      cd "$LSSTSW"
-      touch "${LSSTSW}/lfs/.git-lfs.deployed"
-    )
-  fi
+  # report packages in the current conda env
+  conda env export
 
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
-  export EUPS_PATH="${LSSTSW}/stack/${LSST_SPLENV_REF}"
+  export EUPS_PATH="${LSSTSW}/stack/${RUBIN_ENV_VERSION}"
   echo "EUPS_PATH set to ${EUPS_PATH}"
 
   # backwards compatibility if EUPS wasn't installed to a versioned directory
@@ -416,45 +219,31 @@ main() {
     mv "${LSSTSW}/eups-tmp" "${LSSTSW}/eups/legacy"
     ln -s legacy "${LSSTSW}/eups/current"
   )
-
-  # if a LSST_EUPS_GITREV is set, use that as the version dir name
-  if [[ -n $LSST_EUPS_GITREV ]]; then
-    LSST_EUPS_VERSION=$LSST_EUPS_GITREV
-  fi
-
-  test -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
-    echo "::: Deploying eups ${LSST_EUPS_VERSION}"
-    if [[ -e "${LSSTSW}/eups/${LSST_EUPS_VERSION}" ]]; then
-      chmod -R +w "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
-      rm -rf "${LSSTSW}/eups/${LSST_EUPS_VERSION}"
-    fi
-
-    cd sources
-    if [[ -n $LSST_EUPS_GITREV ]]; then
-      git clone "$LSST_EUPS_GITREPO" eups
-      cd eups
-      git checkout "$LSST_EUPS_GITREV"
+  # backwards compatibility if EUPS was installed to a versioned directory (not from conda)
+  test ! -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
+    # in case eups folder has already been moved to eups-legacy
+    # and then recreated (case in Jenkins, where test job uses the
+    # same filesystem as the official job)
+    if [ ! -d "${LSSTSW}/eups-legacy" ]; then
+      echo "::: Moving old EUPS to eups-legacy"
+      mv "${LSSTSW}/eups" "${LSSTSW}/eups-legacy"
     else
-      $CURL "${CURL_OPTS[@]}" -L \
-        -o "eups-${LSST_EUPS_VERSION}.tar.gz" \
-        "https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz"
-      tar xzf "eups-${LSST_EUPS_VERSION}.tar.gz"
-      cd "eups-${LSST_EUPS_VERSION}"
+      echo "Found eups-legacy, remove it before moving old eups to legacy"
     fi
-
-    ./configure \
-      --prefix="${LSSTSW}/eups/${LSST_EUPS_VERSION}" \
-      --with-python="${LSSTSW}/miniconda/bin/python" \
-      --with-eups="${EUPS_PATH}"
-    make
-    make install
-    touch "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed"
   )
 
-  if [[ "$(readlink "${LSSTSW}/eups/current")" != "$LSST_EUPS_VERSION" ]]; then
-    echo "::: Making eups ${LSST_EUPS_VERSION} the default"
-    rm -f "${LSSTSW}/eups/current"
-    ln -s "${LSST_EUPS_VERSION}" "${LSSTSW}/eups/current"
+  # check if eups is not already available in the environment
+  # if not, make it available from a separate eups-base environment
+  if ! command -v eups > /dev/null; then
+    echo "error: No eups found in the active environment ..."
+    echo "  ... trying to use a stacked eups-base environment"
+    conda deactivate
+    if ! conda env list | grep "^eups-base " > /dev/null; then
+      echo "::: Creating eups-base environment"
+      conda create -y --name eups-base eups -c conda-forge
+    fi
+    conda activate eups-base
+    conda activate --stack "$LSST_CONDA_ENV_NAME"
   fi
 
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
@@ -507,7 +296,7 @@ main() {
   echo "::: To activate the just deployed environment use the following command:"
   echo
 
-  if [[ $ENVREF == '' ]]; then
+  if [[ $ENV_VERSION == '' ]]; then
     if [[ $SHELL =~ bash$ ]]; then
       echo "    . ${LSSTSW}/bin/envconfig"
     elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh

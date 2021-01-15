@@ -45,7 +45,7 @@ parse_args() {
       ;;
     n)
       shift;
-      ENVREF=$1
+      ENV_NAME=$1
       ;;
     i)
       INTERACTIVE=true
@@ -64,7 +64,7 @@ parse_args() {
 ##############
 
 INTERACTIVE=false
-ENVREF=""
+ENV_NAME=""
 BUILD_ID=""
 finish=false
 
@@ -79,6 +79,7 @@ if [[ -z $ZSH_NAME ]]; then
   SUFFIX='sh'
 else
   LSSTSW=$(cd "$(dirname "$0")/.."; pwd) || return 1
+  # shellcheck disable=SC2034
   SUFFIX='zsh'
 fi
 
@@ -89,20 +90,7 @@ source "${LSSTSW}/etc/settings.cfg.sh"
 # shellcheck disable=SC2154
 . "${miniconda_path}/etc/profile.d/conda.sh"
 
-if [[ ! -f "$LSSTSW/eups/current/bin/setups.$SUFFIX" ]]; then
-  echo "error: eups not found in $LSSTSW/eups/current" 1>&2
-  echo "  you may need to [re]run bin/deploy to [re]deploy EUPS." 1>&2
-  return
-fi
-
-export PATH="$LSSTSW/lfs/bin:$PATH"
 export PATH="$LSSTSW/bin:$PATH"
-
-export MANPATH="$LSSTSW/lfs/share/man:"
-
-# need to activate the miniconda base environment to get the correct list of environments
-# shellcheck disable=SC1091
-conda activate base
 
 if $INTERACTIVE ; then
   raw_envs=()
@@ -130,43 +118,50 @@ if $INTERACTIVE ; then
     return
   else
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
   fi
-
-elif [[ $ENVREF != "" ]]; then
-  echo "Setting $ENVREF environment..."  
-  LSST_CONDA_ENV_NAME=${ENVREF}
-  conda activate "$LSST_CONDA_ENV_NAME"
-
+elif [[ $ENV_NAME != "" ]]; then
+  echo "Setting $ENV_NAME environment..."  
+  LSST_CONDA_ENV_NAME=${ENV_NAME}
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
   if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
     LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
-    # shellcheck disable=SC1091
-    conda activate "$LSST_CONDA_ENV_NAME"
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
     echo "No build found with id ${BUILD_ID}"
     return
   fi
-
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
-  echo "Setting the default environment... ${LSST_CONDA_ENV_NAME}"
-  # shellcheck disable=SC1091
-  conda activate "$LSST_CONDA_ENV_NAME"
-
+  echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
+# Define and check EUPS_PATH
+export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+if [ ! -d "$EUPS_PATH" ]; then
+  mkdir -p "${EUPS_PATH}"/{site,ups_db}
+  echo "::: Deploying manifest.remap"
+  ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
+fi
+
+# shellcheck disable=SC1091
+conda activate "$LSST_CONDA_ENV_NAME"
 export LSST_CONDA_ENV_NAME
 
-# shellcheck disable=SC1090
-. "$LSSTSW/eups/current/bin/setups.$SUFFIX"
+# check if eups is not already available in the environment
+# if not, make it available from a separate eups-base environment
+if ! command -v eups > /dev/null; then
+  echo "error: No eups found in the active environment ..."
+  echo "  ... trying to use a stacked eups-base environment"
+  conda deactivate
+  if ! conda env list | grep "^eups-base " > /dev/null; then
+    echo "::: Creating eups-base environment"
+    conda create -y --name eups-base eups -c conda-forge
+  fi
+  conda activate eups-base
+  conda activate --stack "$LSST_CONDA_ENV_NAME"
+fi
 
-# definition EUPS_PATH depending on the environment:
-# including the last 7 characters of the environment name
-export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME: -7}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
