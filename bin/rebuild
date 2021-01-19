@@ -73,7 +73,7 @@ save_build_env() {
   echo "Saving environment information in ${filename}"
 
   # saving information in environment name
-  echo "#environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
+  echo "# environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
 
   # generating pinned list of environment content
   conda list --explicit >> "${filename}"
