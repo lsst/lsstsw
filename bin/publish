@@ -129,8 +129,9 @@ if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
+  # Saving as CONDA_ENV only the environemnt reference, that may be different from the one specified in settings.cfg
   # shellcheck disable=SC1117
-  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${CONDA_ENV_REF}"
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
   src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
   dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
 
@@ -138,6 +139,8 @@ if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
 
   # remove the original bNNNN tag to reduce tag proliferation
   rm "$src_tag"
+
+  run cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env/${DISTRIBTAG}.env"
 fi
 
 #
