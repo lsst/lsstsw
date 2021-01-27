@@ -24,7 +24,11 @@ VERSIONDB_PUSH=${VERSIONDB_PUSH:-false}
 
 # path to the root of the lsstsw checkout
 # relative to <lsstsw>/etc/
-LSSTSW="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+if [[ -n "$BASH_VERSION" ]]; then
+  LSSTSW=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." || true; pwd)
+else
+  LSSTSW=$(cd "$(dirname "$0")/.." || true; pwd)
+fi
 
 # the location of source repositories
 REPOSFILE_REPO=${REPOSFILE_REPO:-lsst/repos}
