@@ -16,7 +16,7 @@ LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eu
 # force Python 3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge defaults"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
@@ -170,7 +170,9 @@ main() {
         ARGS+=("--quiet")
       fi
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
-      ARGS+=("-c conda-forge")
+      for c in $LSST_CONDA_CHANNELS; do
+        ARGS+=("-c $c")
+      done
       ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
       echo "conda" "${ARGS[@]}"
       conda "${ARGS[@]}"
