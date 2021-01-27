@@ -163,6 +163,7 @@ if [ ! -d "$EUPS_PATH" ]; then
   ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
 fi
 echo "EUPS_PATH set to ${EUPS_PATH}"
+export RUBIN_EUPS_PATH="${EUPS_PATH}"
 
 setup -r "$LSSTSW/lsst_build"
 
