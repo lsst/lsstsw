@@ -11,17 +11,18 @@ source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 source "${SCRIPT_DIR}/../bin/utils.sh"
 
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
-LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
-LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
+# LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
+# LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+# LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/download/4.9.2-5}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-master}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
-LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
+# LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 
 set -e
 
@@ -128,7 +129,7 @@ main() {
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
     # shellcheck disable=SC2154
-    miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
+    miniconda_file_name="Miniforge3-4.9.2-5-MacOSX-arm64.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
@@ -142,8 +143,36 @@ main() {
     touch "$miniconda_lock"
   )
 
-  # shellcheck disable=SC1090 
-  . "${miniconda_path}/etc/profile.d/conda.sh"
+  function path_remove {
+    PATH=${PATH/":$1"/}
+    PATH=${PATH/"$1:"/}
+  }
+
+  function_exists() {
+    (
+      set +e
+      declare -f -F $1 > /dev/null
+      return $?
+    )
+  }
+
+  if [[ -f $CONDA_EXE ]]; then
+    function_exists conda && unset -f conda
+    condabin_exe=`which conda`
+    if [[ -f $condabin_exe ]]; then
+      condabin_path=`dirname $condabin_exe`
+      path_remove $condabin_path
+    fi
+  fi
+
+  # shellcheck disable=SC1090
+  if [[ -n $BASH_VERSION ]]; then
+    __conda_setup="$(${miniconda_path}/bin/conda 'shell.bash' 'hook' 2> /dev/null)"
+  else
+    __conda_setup="$(${miniconda_path}/bin/conda 'shell.zsh' 'hook' 2> /dev/null)"
+  fi
+
+  eval "$__conda_setup"
 
   # cleanup orphaned lock file
   local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
@@ -156,27 +185,25 @@ main() {
       deploy_scipipe_env
     else
       echo "::: Deploy new environment $LSST_CONDA_ENV_NAME"
-      # Install packages on which the stack is known to depend
-      # conda may leave behind lock files from an uncompleted package
-      # installation attempt.  These need to be cleaned up before [re]attempting
-      # to install packages.
-      conda clean -y --all
-      ARGS=()
-      ARGS+=('create')
-      ARGS+=('-y')
-      # disable the conda install progress bar when not attached to a tty. Eg.,
-      # when running under CI
-      if [[ ! -t 1 ]]; then
-        ARGS+=("--quiet")
-      fi
-      ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
-      for c in $LSST_CONDA_CHANNELS; do
-        ARGS+=("-c $c")
-      done
-      ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
-      echo "conda" "${ARGS[@]}"
-      conda "${ARGS[@]}"
 
+      conda clean -y --all
+
+      conda activate base
+
+      mkdir -p "${miniconda_path}/conda-bld/osx-arm64"
+      cp ${LSST_LOCAL_PACKAGE_PATH}/*.bz2 "${miniconda_path}/conda-bld/osx-arm64/"
+
+      # install mamba
+      conda install -y mamba conda-build
+
+      # make local packages available
+      conda index "${miniconda_path}/conda-bld/"
+
+      # install the local env
+      mamba search pybind11 -c local
+      mamba env create -n "$LSST_CONDA_ENV_NAME" -f ${LSST_LOCAL_PACKAGE_PATH}/rubinenv-${RUBIN_ENV_VERSION}.yaml
+
+      cp ${LSST_LOCAL_PACKAGE_PATH}/git-lfs "${miniconda_path}/envs/${LSST_CONDA_ENV_NAME}/bin/"
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
