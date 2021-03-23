@@ -15,3 +15,6 @@ stack/
 var/
 venv/
 versiondb/
+bin/
+env/
+eups-legacy/
