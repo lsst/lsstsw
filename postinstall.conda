@@ -1,0 +1,8 @@
+mypy
+black
+jupyter
+ipython
+pydocstyle
+boto3
+moto
+rstcheck
