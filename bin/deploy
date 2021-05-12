@@ -4,10 +4,10 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck disable=SC1090
+# shellcheck source=./etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
 # load common functions
-# shellcheck disable=SC1090
+# shellcheck source=./bin/utils.sh
 source "${SCRIPT_DIR}/../bin/utils.sh"
 
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
@@ -124,10 +124,8 @@ main() {
   fetch_repos.yaml 'master'
 
   # install miniconda
-  # shellcheck disable=SC2154
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
-    # shellcheck disable=SC2154
     miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
@@ -142,7 +140,7 @@ main() {
     touch "$miniconda_lock"
   )
 
-  # shellcheck disable=SC1090 
+  # shellcheck disable=SC1091
   . "${miniconda_path}/etc/profile.d/conda.sh"
 
   # cleanup orphaned lock file
@@ -185,7 +183,6 @@ main() {
 
   # intentionally outside of a lockfile subshell
   echo "Activating environment ${LSST_CONDA_ENV_NAME}"
-  # shellcheck disable=SC1091
   conda activate "${LSST_CONDA_ENV_NAME}"
 
   # Configuring proper channels at environment level

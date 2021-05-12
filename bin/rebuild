@@ -19,9 +19,9 @@
 set -e
 
 DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck disable=SC1090
+# shellcheck source=./etc/settings.cfg.sh
 . "${DIR}/../etc/settings.cfg.sh"
-# shellcheck disable=SC1090
+# shellcheck source=./bin/utils.sh
 . "${DIR}/utils.sh"
 
 
