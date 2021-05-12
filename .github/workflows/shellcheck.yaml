@@ -13,3 +13,5 @@ jobs:
       - name: Run shellcheck
         uses: ludeeus/action-shellcheck@master
         # See https://github.com/ludeeus/action-shellcheck for customizations
+        with:
+          check_together: 'yes'

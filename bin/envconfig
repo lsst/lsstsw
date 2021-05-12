@@ -83,11 +83,10 @@ else
   SUFFIX='zsh'
 fi
 
-# shellcheck disable=SC1090
+# shellcheck source=./etc/settings.cfg.sh
 source "${LSSTSW}/etc/settings.cfg.sh"
 
-# shellcheck disable=SC1090
-# shellcheck disable=SC2154
+# shellcheck disable=SC1091
 . "${miniconda_path}/etc/profile.d/conda.sh"
 
 export PATH="$LSSTSW/bin:$PATH"
@@ -137,7 +136,6 @@ else
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 
-# shellcheck disable=SC1091
 conda activate "$LSST_CONDA_ENV_NAME"
 export LSST_CONDA_ENV_NAME
 

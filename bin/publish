@@ -18,7 +18,7 @@ BUILD=
 
 set -e
 DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck disable=SC1090
+# shellcheck source=./etc/settings.cfg.sh
 . "${DIR}/../etc/settings.cfg.sh"
 
 usage() { echo "Usage: $0 [-b <build_id>] [-t <distservtag>] <product1> [product2 [...]]" 1>&2; exit 1; }
@@ -130,8 +130,7 @@ if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
 
   match='EUPS distribution ([^ ]+) version list. Version 1.0'
   # Saving as CONDA_ENV only the environemnt reference, that may be different from the one specified in settings.cfg
-  # shellcheck disable=SC1117
-  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\n#BUILD=\1\n#CONDA_ENV=${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+  sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\\n#BUILD=\\1\\n#CONDA_ENV=${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
   src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"
   dst_tag="${EUPS_PKGROOT}/tags/${DISTRIBTAG}.list"
 

@@ -7,9 +7,9 @@
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-# shellcheck disable=SC1090
+# shellcheck source=./etc/settings.cfg.sh
 source "${SCRIPT_DIR}/../etc/settings.cfg.sh"
-# shellcheck disable=SC1090
+# shellcheck source=./bin/utils.sh
 source "${SCRIPT_DIR}/../bin/utils.sh"
 
 set -e
@@ -94,7 +94,7 @@ parse_args() {
   git_hash=$(git rev-parse --short HEAD)
 
   # activate the conda provided by miniconda, deployed with ./bin/deploy
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   . "${LSSTSW}/miniconda/etc/profile.d/conda.sh"
 
   # create a build-env environment to provide conda-build package

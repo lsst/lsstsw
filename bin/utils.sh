@@ -12,8 +12,7 @@ print_error() {
 fail() {
   local code=${2:-1}
   [[ -n $1 ]] && print_error "$1"
-  # shellcheck disable=SC2086
-  exit $code
+  exit "$code"
 }
 
 
@@ -68,7 +67,6 @@ deploy_scipipe_env() {
   # conda environment reference
   local env_url="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ENVREF}/etc/"
 
-  # shellcheck disable=SC2154
   echo "::: conda lock file: ${lock_file}"
 
   if [ -e "${lock_file}" ]; then

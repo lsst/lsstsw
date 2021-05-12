@@ -19,4 +19,5 @@ jobs:
         run: pip install yamllint
 
       - name: Run linter
-        run: yamllint .
+        run: |
+          yamllint -d "{extends:default, rules:{truthy:{check-keys: false}}}" .
