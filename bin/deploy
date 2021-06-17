@@ -34,12 +34,13 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r] [-v]
+		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG]
 
 		Specific options:
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
+	    -x TAG      eups tag to select the exact environment for that tag
 	    -h          show this message
 
 		EOF
@@ -53,17 +54,27 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hrv" opt; do
+  while getopts "hrvx" opt; do
     case "$opt" in
     h)
       usage
       ;;
     v)
       shift;
+      [[ -n $TAG ]] && usage "Cannot specify both -v and -x"
+      [[ -n $ENVREF ]] && usage "Cannot specify both -v and -r"
       ENV_VERSION=$1
+      ;;
+    x)
+      shift;
+      [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
+      [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
+      TAG=$1
       ;;
     r)
       shift;
+      [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
+      [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
       ENVREF=$1
       ;;
     *)
@@ -90,6 +101,27 @@ am_I_sourced() {
   fi
 }
 
+get_tagged_env() {
+  eups_root=https://eups.lsst.codes/stack
+  env_version=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/$1.list" \
+    | grep '^#CONDA_ENV=' | cut -d= -f2) \
+    || fail "Unable to determine conda env"
+  platform="$(uname -s)"
+  case "$platform" in
+    Linux)
+      eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+      ;;
+    Darwin)
+      eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+      ;;
+    *)
+      fail "Unknown platform: $platform"
+      ;;
+  esac
+
+  $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
+    || fail "Unable to download environment spec for tag $1"
+}
 
 main() {
   config_curl
@@ -103,6 +135,9 @@ main() {
     RUBIN_ENV_VERSION=$ENV_VERSION
   elif [[ -n $ENVREF ]]; then
     RUBIN_ENV_VERSION=$ENVREF
+  elif [[ -n $TAG ]]; then
+    RUBIN_ENV_VERSION=$TAG
+    get_tagged_env "$TAG"
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
   fi
@@ -171,13 +206,21 @@ main() {
       for c in $LSST_CONDA_CHANNELS; do
         ARGS+=("-c $c")
       done
-      ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+      if [[ -n $TAG ]]; then
+        ARGS+=("--file" "${TAG}.env")
+      else
+        ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+      fi
       echo "conda" "${ARGS[@]}"
       conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
+
+      if [[ -n $TAG ]]; then
+        rm "${TAG}.env"
+      fi
     fi
   fi
 
@@ -297,11 +340,9 @@ main() {
   echo "::: To activate the just deployed environment use the following command:"
   echo
 
-  if [[ $ENV_VERSION == '' ]]; then
+  if [[ -z "$ENV_VERSION" ]] && [[ -z "$ENVREF" ]] && [[ -z "$TAG" ]]; then
     if [[ $SHELL =~ bash$ ]]; then
       echo "    . ${LSSTSW}/bin/envconfig"
-    elif [[ $SHELL =~ csh$ ]]; then # Supports tcsh
-      echo "    source ${LSSTSW}/bin/envconfig.csh"
     elif [[ $SHELL =~ zsh$ ]]; then
       echo "    . ${LSSTSW}/bin/envconfig"
     else
