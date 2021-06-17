@@ -34,13 +34,13 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r] [-v]
+		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG]
 
 		Specific options:
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
-            -x TAG      eups tag to select the exact environment for that tag
+	    -x TAG      eups tag to select the exact environment for that tag
 	    -h          show this message
 
 		EOF
@@ -61,14 +61,20 @@ parse_args() {
       ;;
     v)
       shift;
+      [[ -n $TAG ]] && usage "Cannot specify both -v and -x"
+      [[ -n $ENVREF ]] && usage "Cannot specify both -v and -r"
       ENV_VERSION=$1
       ;;
     x)
       shift;
+      [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
+      [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
       TAG=$1
       ;;
     r)
       shift;
+      [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
+      [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
       ENVREF=$1
       ;;
     *)
@@ -201,7 +207,7 @@ main() {
         ARGS+=("-c $c")
       done
       if [[ -n $TAG ]]; then
-	ARGS+=("--file" "${TAG}.env")
+        ARGS+=("--file" "${TAG}.env")
       else
         ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
       fi
