@@ -40,6 +40,7 @@ usage() {
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
+            -x TAG      eups tag to select the exact environment for that tag
 	    -h          show this message
 
 		EOF
@@ -53,7 +54,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hrv" opt; do
+  while getopts "hrvx" opt; do
     case "$opt" in
     h)
       usage
@@ -61,6 +62,10 @@ parse_args() {
     v)
       shift;
       ENV_VERSION=$1
+      ;;
+    x)
+      shift;
+      TAG=$1
       ;;
     r)
       shift;
@@ -90,6 +95,27 @@ am_I_sourced() {
   fi
 }
 
+get_tagged_env() {
+  eups_root=https://eups.lsst.codes/stack
+  RUBIN_ENV_VERSION=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/${TAG}.list" \
+    | grep '^#CONDA_ENV=' | cut -d= -f2) \
+    || fail "Unable to determine conda env"
+  platform="$(uname -s)"
+  case "$platform" in
+    Linux)
+      eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$RUBIN_ENV_VERSION"
+      ;;
+    Darwin)
+      eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$RUBIN_ENV_VERSION"
+      ;;
+    *)
+      fail "Unknown platform: $platform"
+      ;;
+  esac
+
+  $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/${TAG}.env" \
+    || fail "Unable to download environment spec for tag ${TAG}"
+}
 
 main() {
   config_curl
@@ -103,6 +129,9 @@ main() {
     RUBIN_ENV_VERSION=$ENV_VERSION
   elif [[ -n $ENVREF ]]; then
     RUBIN_ENV_VERSION=$ENVREF
+  elif [[ -n $TAG ]]; then
+    RUBIN_ENV_VERSION=$TAG
+    get_tagged_env
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
   fi
@@ -171,13 +200,21 @@ main() {
       for c in $LSST_CONDA_CHANNELS; do
         ARGS+=("-c $c")
       done
-      ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+      if [[ -n $TAG ]]; then
+	ARGS+=("--file" ${TAG}.env)
+      else
+        ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+      fi
       echo "conda" "${ARGS[@]}"
       conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
       echo "done"
+
+      if [[ -n $TAG ]]; then
+        rm "${TAG}.env"
+      fi
     fi
   fi
 
