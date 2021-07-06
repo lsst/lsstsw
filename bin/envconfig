@@ -155,7 +155,8 @@ fi
 
 # Define and check EUPS_PATH
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
-rubin_env_version=$(conda list --json rubin-env | grep version | cut -d\" -f4 | uniq) && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
+rubin_env_version=$(conda list --json rubin-env | jq -r '.[0].version') \
+  && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
 if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
