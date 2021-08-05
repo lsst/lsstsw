@@ -206,6 +206,7 @@ main() {
       for c in $LSST_CONDA_CHANNELS; do
         ARGS+=("-c $c")
       done
+      ARGS+=("--strict-channel-priority")
       if [[ -n $TAG ]]; then
         ARGS+=("--file" "${TAG}.env")
       else
@@ -284,7 +285,7 @@ main() {
     conda deactivate
     if ! conda env list | grep "^eups-base " > /dev/null; then
       echo "::: Creating eups-base environment"
-      conda create -y --name eups-base eups -c conda-forge
+      conda create -y --name eups-base --strict-channel-priority eups -c conda-forge
     fi
     conda activate eups-base
     conda activate --stack "$LSST_CONDA_ENV_NAME"
