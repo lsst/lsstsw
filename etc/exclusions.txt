@@ -4,3 +4,4 @@
 cuda_toolkit            .*
 cuda_sdk                .*
 condor                  .*
+rc2_subset              .*
