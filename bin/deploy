@@ -253,7 +253,7 @@ main() {
 
   # Define EUPS_PATH depending on the environment,
   # including the last 7 characters of the environment name
-  export EUPS_PATH="${LSSTSW}/stack/${RUBIN_ENV_VERSION}"
+  export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
   echo "EUPS_PATH set to ${EUPS_PATH}"
 
   # backwards compatibility if EUPS wasn't installed to a versioned directory
