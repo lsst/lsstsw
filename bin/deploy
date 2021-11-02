@@ -14,8 +14,9 @@ LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 # force Python 3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+# Miniforge3-4.10.0-0-MacOSX-arm64.sh
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.10.0}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/download/4.10.0-0}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
@@ -128,7 +129,7 @@ main() {
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
     # shellcheck disable=SC2154
-    miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
+    miniconda_file_name="Miniforge3-4.10.0-0-MacOSX-arm64.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
