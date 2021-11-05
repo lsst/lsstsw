@@ -166,8 +166,14 @@ main() {
     echo "::: Deploying ${miniconda_file_name}"
 
     cd sources
+    conda_script="${LSST_MINICONDA_BASE_URL}/${miniconda_file_name}"
+    echo $conda_script
+    if [ $(uname -m) == 'arm64' ]; then
+      conda_script='https://github.com/conda-forge/miniforge/releases/download/4.10.3-3/Miniforge3-4.10.3-3-MacOSX-arm64.sh'
+      miniconda_file_name="Miniforge3-4.10.3-3-MacOSX-arm64.sh"
+    fi
     $CURL "${CURL_OPTS[@]}" -# -L \
-      -O "${LSST_MINICONDA_BASE_URL}/${miniconda_file_name}"
+      -O "$conda_script"
 
     rm -rf "$miniconda_path"
     bash "$miniconda_file_name" -b -p "$miniconda_path"

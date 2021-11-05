@@ -46,7 +46,8 @@ discover_platform() {
       ;;
     Darwin*)
       # shellcheck disable=SC2034
-      ana_platform='MacOSX-x86_64'
+      ana_arch=$(uname -m)	
+      ana_platform='MacOSX-'${ana_arch}
       pkg_postfix='osx-64'
       ;;
     *)
