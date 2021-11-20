@@ -46,7 +46,7 @@ print_settings() {
   IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
   vars+=("${eups_vars[@]}")
 
-  for i in ${vars[*]}
+  for i in "${vars[@]}"
   do
     echo "${i}: ${!i}"
   done
@@ -133,7 +133,7 @@ if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   if [ -n "$RUBINENV_VER" ]; then
     conda_env="$RUBINENV_VER"
   else
-    conda_env="${LSST_CONDA_ENV_NAME#$SPLENV_BASE_NAME-}"
+    conda_env="${LSST_CONDA_ENV_NAME#"$SPLENV_BASE_NAME"-}"
   fi
   sub="EUPS distribution ${DISTRIBTAG} version list. Version 1.0\\n#BUILD=\\1\\n#CONDA_ENV=${conda_env}"
   src_tag="${EUPS_PKGROOT}/tags/${BUILD}.list"

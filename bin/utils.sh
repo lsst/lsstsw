@@ -133,7 +133,7 @@ print_settings() {
   IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
   vars+=("${eups_vars[@]}")
 
-  for i in ${vars[*]}
+  for i in "${vars[@]}"
   do
     echo "${i}: ${!i}"
   done
