@@ -153,7 +153,18 @@ fi
   #
   if [[ $VERSIONDB_PUSH == true ]]; then
     # do not pull from remote unless configured to push
-    (cd "$VERSIONDB" && git pull --quiet)
+    (
+      cd "$VERSIONDB"
+      current_branch="$(git branch --show-current)"
+      if [[ $current_branch != main ]]; then 
+        git branch -m "$current_branch" main
+	git fetch origin
+	git branch -u origin/main main
+	git remote set-head origin -a
+	git checkout main
+      fi
+      git pull --quiet
+    )
     VERSIONDB_HEAD_PREBUILD=$(versiondb_head)
   fi
 
