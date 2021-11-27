@@ -133,7 +133,7 @@ print_settings() {
   IFS=" " read -r -a eups_vars <<< "${!EUPS@}"
   vars+=("${eups_vars[@]}")
 
-  for i in ${vars[*]}
+  for i in "${vars[@]}"
   do
     echo "${i}: ${!i}"
   done
@@ -141,7 +141,7 @@ print_settings() {
 
 
 fetch_repos.yaml() {
-  local ref=${1:-master}
+  local ref=${1:-main}
   local output_file=${2:-$REPOSFILE}
   local repo=${3:-$REPOSFILE_REPO}
 
