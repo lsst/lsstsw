@@ -38,15 +38,16 @@ config_curl() {
 
 # funcion to identify the platform
 discover_platform() {
+  _machine=$(uname -m)
   case $(uname -s) in
     Linux*)
       # shellcheck disable=SC2034
-      ana_platform='Linux-x86_64'
+      ana_platform='Linux-'${_machine}
       pkg_postfix='linux-64'
       ;;
     Darwin*)
       # shellcheck disable=SC2034
-      ana_platform='MacOSX-x86_64'
+      ana_platform='MacOSX-'${_machine}
       pkg_postfix='osx-64'
       ;;
     *)
