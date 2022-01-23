@@ -177,6 +177,7 @@ main() {
 
   # shellcheck disable=SC1091
   . "${miniconda_path}/etc/profile.d/conda.sh"
+  conda activate base
 
   # cleanup orphaned lock file
   local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
