@@ -194,7 +194,7 @@ main() {
       # installation attempt.  These need to be cleaned up before [re]attempting
       # to install packages.
       conda clean -y --all
-      conda install -y -cconda-forge mamba
+      conda install -y -c conda-forge mamba
       ARGS=()
       ARGS+=('create')
       ARGS+=('-y')
@@ -205,7 +205,7 @@ main() {
       fi
       ARGS+=('--name' "$LSST_CONDA_ENV_NAME")
       for c in $LSST_CONDA_CHANNELS; do
-        ARGS+=("-c$c")
+        ARGS+=("-c" "$c")
       done
       ARGS+=("--strict-channel-priority")
       if [[ -n $TAG ]]; then
