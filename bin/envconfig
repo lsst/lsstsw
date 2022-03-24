@@ -92,20 +92,15 @@ source "${LSSTSW}/etc/settings.cfg.sh"
 export PATH="$LSSTSW/bin:$PATH"
 
 if $INTERACTIVE ; then
-  raw_envs=()
   # get the list of available environments
-  while IFS=$'\n' read -r line 
-  do 
-    if [[ "$line" != '' ]] ; then
-      raw_envs+=("$line")
-    fi
-  done < <(conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base")
   envs=()
   l=0
-  for i in "${raw_envs[@]}"; do
-    ((l++))
-    envs[l]=$(echo "${i}" | cut -f 1 -d ' ')
-    echo "${l} - ${envs[${l}]}"
+  for env in $(conda env list | grep -v "^[# ]" | cut -d' ' -f1); do
+    if [[ "$env" != '' ]] && [[ "$env" != "base" ]] ; then
+      ((l++))
+      envs[l]="$env"
+      echo "${l} - ${envs[${l}]}"
+    fi
   done
   echo "0 - EXIT (return)"
   read -r -p "Choose environment [0 to ${l}]: " eid
