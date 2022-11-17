@@ -1,4 +1,4 @@
 setupRequired(tkt -r /home/jbosch/LSST/tkt-tool)
 envSet(TKT_ENVIRONMENT, /home/jbosch/LSST/tkt.json)
 envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/src, |)
-envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/redhat/el7/conda-system/miniconda3-py38_4.9.2-4.0.1, |)
+envPrepend(EUPS_PKGROOT, https://eups.lsst.codes/stack/redhat/el7/conda-system/miniconda3-py38_4.9.2-4.1.0, |)
