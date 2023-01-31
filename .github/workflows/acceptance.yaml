@@ -17,7 +17,7 @@ jobs:
       - name: deploy and rebuild
         env:
           # needed for macos
-          DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
+          DEVELOPER_DIR: /Applications/Xcode_14.2.app/Contents/Developer
         run: |
           ./bin/deploy
           . bin/envconfig
