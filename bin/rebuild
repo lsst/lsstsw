@@ -32,20 +32,20 @@ usage() {
 
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF 
-		 Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
+  Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
 
-	Build one or more products. 
-	It requires that the environment has previously been setup using envconfig.
+  Build one or more products.
+  It requires that the environment has previously been setup using envconfig.
 
-		 Specific options:
-	    -p            prepare only
-	    -n            pass "--no-fetch" parameter to lsst_build
-	    -u            update repos.yaml
-	    -r <ref>      git reference (branch or tags) to be built
-	    -t <eupstag>  specify the eupstag to use
-	    -h            show this message
+     Specific options:
+      -p            prepare only
+      -n            pass "--no-fetch" parameter to lsst_build
+      -u            update repos.yaml
+      -r <ref>      git reference (branch or tags) to be built
+      -t <eupstag>  specify the eupstag to use
+      -h            show this message
 
-		EOF
+EOF
   )"
 }
 
@@ -159,10 +159,10 @@ fi
       current_branch="$(git branch --show-current)"
       if [[ $current_branch != main ]]; then 
         git branch -m "$current_branch" main
-	git fetch origin
-	git branch -u origin/main main
-	git remote set-head origin -a
-	git checkout main
+        git fetch origin
+        git branch -u origin/main main
+        git remote set-head origin -a
+        git checkout main
       fi
       git pull --quiet
     )
