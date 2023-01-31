@@ -32,7 +32,8 @@ usage() {
 
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF 
-  Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
+  Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]]
+         [-t <eupstag>] [-c] product1 [product2 [...]]
 
   Build one or more products.
   It requires that the environment has previously been setup using envconfig.
@@ -43,6 +44,7 @@ usage() {
       -u            update repos.yaml
       -r <ref>      git reference (branch or tags) to be built
       -t <eupstag>  specify the eupstag to use
+      -c            declare resulting build results as "current" tag
       -h            show this message
 
 EOF
@@ -82,9 +84,10 @@ save_build_env() {
 PREP_ONLY=false
 NO_FETCH=false
 UPDATE=false
+CURRENT=false
 refs=()
 
-while getopts ":pnur:t:" o; do
+while getopts ":pnur:t:c" o; do
   case "$o" in
   p)
     PREP_ONLY=true
@@ -100,6 +103,9 @@ while getopts ":pnur:t:" o; do
     ;;
   t)
     TAG="$OPTARG"
+    ;;
+  c)
+    CURRENT=true
     ;;
   *)
     usage "$@"
@@ -215,7 +221,10 @@ fi
   # Tag as requested
   #
   if [[ -n $TAG ]]; then
-    eups-copy-tag "$BUILD" "$TAG"
+    eups tags --clone="$BUILD" "$TAG"
+  fi
+  if [[ $CURRENT == true ]]; then
+    eups tags --clone="$BUILD" current
   fi
 
   echo "# BUILD $BUILD completed."
