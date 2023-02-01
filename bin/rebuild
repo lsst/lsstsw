@@ -215,7 +215,7 @@ fi
   # Tag as requested
   #
   if [[ -n $TAG ]]; then
-    eups-copy-tag "$BUILD" "$TAG"
+    eups tags --clone="$BUILD" "$TAG"
   fi
 
   echo "# BUILD $BUILD completed."
