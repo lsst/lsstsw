@@ -38,11 +38,11 @@ usage() {
 	It requires that the environment has previously been setup using envconfig.
 
 		 Specific options:
-	    -p            prepare only
+	    -p            prepare only (checkout and pull main for all packages and run "lsst-build prepare")
 	    -n            pass "--no-fetch" parameter to lsst_build
 	    -u            update repos.yaml
 	    -r <ref>      git reference (branch or tags) to be built
-	    -t <eupstag>  specify the eupstag to use
+	    -t <eupstag>  clone the finished build eups tag to the specified eupstag (e.g. "-t current")
 	    -h            show this message
 
 		EOF
