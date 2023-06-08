@@ -149,7 +149,8 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  local miniconda_version=$LSST_MINICONDA_VERSION
+  # Always use latest, regardless of what it says elsewhere
+  local miniconda_version="latest"
 
   # check which platform we are running on
   discover_platform
