@@ -13,8 +13,9 @@ source "${SCRIPT_DIR}/../bin/utils.sh"
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-# force Python 3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
+# This string is used to maintain compatibility with eups.lsst.codes URLs
+# but it is not actually used to select the miniconda version.
+LSST_MINICONDA_VERSION="py38_4.9.2"
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
