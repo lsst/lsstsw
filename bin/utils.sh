@@ -45,9 +45,21 @@ discover_platform() {
       pkg_postfix='linux-64'
       ;;
     Darwin*)
-      # shellcheck disable=SC2034
-      ana_platform='MacOSX-x86_64'
-      pkg_postfix='osx-64'
+      case $(uname -m) in
+        x86_64)
+          # shellcheck disable=SC2034
+          ana_platform='MacOSX-x86_64'
+          pkg_postfix='osx-64'
+          ;;
+	arm64)
+          # shellcheck disable=SC2034
+          ana_platform='MacOSX-arm64'
+          pkg_postfix='osx-arm64'
+          ;;
+        *)
+          fail "Cannot install miniconda: unsupported Darwin arch $(uname -m)"
+          ;;
+      esac
       ;;
     *)
       fail "Cannot install miniconda: unsupported platform $(uname -s)"
