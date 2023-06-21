@@ -17,7 +17,7 @@ LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eu
 # but it is not actually used to select the miniconda version.
 LSST_MINICONDA_VERSION="py38_4.9.2"
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"nodefaults conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-main}
@@ -197,7 +197,7 @@ main() {
       # installation attempt.  These need to be cleaned up before [re]attempting
       # to install packages.
       conda clean -y --all
-      conda install -y -c conda-forge mamba
+      conda install -y -c conda-forge -c nodefaults mamba
       ARGS=()
       ARGS+=('create')
       ARGS+=('-y')
