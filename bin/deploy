@@ -16,7 +16,7 @@ LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eu
 # This string is used to maintain compatibility with eups.lsst.codes URLs
 # but it is not actually used to select the miniconda version.
 LSST_MINICONDA_VERSION="py38_4.9.2"
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/latest/download}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"nodefaults conda-forge"}
 LSST_GIT_VERSION=${LSST_GIT_VERSION:-2.18.0}
 LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
@@ -150,9 +150,6 @@ main() {
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
   export PATH="${LSSTSW}/bin:${PATH}"
 
-  # Always use latest, regardless of what it says elsewhere
-  local miniconda_version="latest"
-
   # check which platform we are running on
   discover_platform
 
@@ -163,7 +160,7 @@ main() {
   # install miniconda
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
-    miniconda_file_name="Miniconda3-${miniconda_version}-${ana_platform}.sh"
+    miniconda_file_name="Mambaforge-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
@@ -197,7 +194,6 @@ main() {
       # installation attempt.  These need to be cleaned up before [re]attempting
       # to install packages.
       conda clean -y --all
-      conda install -y -c conda-forge -c nodefaults mamba
       ARGS=()
       ARGS+=('create')
       ARGS+=('-y')
