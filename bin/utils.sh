@@ -40,9 +40,18 @@ config_curl() {
 discover_platform() {
   case $(uname -s) in
     Linux*)
-      # shellcheck disable=SC2034
-      ana_platform='Linux-x86_64'
-      pkg_postfix='linux-64'
+      case $(uname -m) in
+        x86_64)
+          # shellcheck disable=SC2034
+          ana_platform='Linux-x86_64'
+          pkg_postfix='linux-64'
+          ;;
+        aarch64)
+          # shellcheck disable=SC2034
+          ana_platform='Linux-aarch64'
+          pkg_postfix='linux-aarch64'
+          ;;
+      esac
       ;;
     Darwin*)
       case $(uname -m) in
