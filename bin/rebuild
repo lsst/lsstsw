@@ -178,8 +178,10 @@ fi
   ARGS+=("--version-git-repo=${VERSIONDB}")
   ARGS+=("$LSSTSW_BUILD_DIR")
   ARGS+=("${refs[@]}")
-  ARGS+=(${PRODUCTS[@]})
-  
+  for products in "${PRODUCTS[@]}"; do
+    ARGS+=("${products}")
+  done
+
   lsst-build prepare "${ARGS[@]}"
 
   if [[ $VERSIONDB_PUSH == true ]]; then
