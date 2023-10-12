@@ -11,7 +11,7 @@ SPLENV_BASE_NAME="lsst-scipipe"
 LSST_SPLENV_REPO=${LSST_SPLENV_REPO:-https://github.com/lsst/scipipe_conda_env.git}
 
 # top-level products
-PRODUCTS='lsst_distrib'
+PRODUCTS=("lsst_distrib")
 
 # change to ssh+git if push is needed
 VERSIONDB_REPO=${VERSIONDB_REPO:-https://github.com/lsst/versiondb.git}
