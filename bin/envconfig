@@ -30,7 +30,7 @@ usage() {
   )
 
   finish=true
-   
+
 }
 
 parse_args() {
@@ -114,7 +114,7 @@ if $INTERACTIVE ; then
     LSST_CONDA_ENV_NAME="${envs[${eid}]}"
   fi
 elif [[ $ENV_NAME != "" ]]; then
-  echo "Setting $ENV_NAME environment..."  
+  echo "Setting $ENV_NAME environment..."
   LSST_CONDA_ENV_NAME=${ENV_NAME}
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
