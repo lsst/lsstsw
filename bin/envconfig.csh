@@ -8,7 +8,7 @@ set BUILD_ID = ""
 
 if ( ! "$?1" ) then
   if ( "$1" == "-h" ) then
-    echo "Usage: source bin/envconfig.csh [-i] [-n] [-b] [-h]" 
+    echo "Usage: source bin/envconfig.csh [-i] [-n] [-b] [-h]"
     echo
     echo "    -i          interactive, choose from a list of available environments"
     echo "    -n NAME     activate the environment NAME"
@@ -94,7 +94,7 @@ if ( "$1" == "-i" ) then
   set env_list= ( `conda env list | grep -v "^#" | grep -v "^ " | grep -v "^base" | awk '{print $1}'` )
   echo
   @ i = 0
-  @ nenvs = $#env_list 
+  @ nenvs = $#env_list
   echo "Found" $nenvs "environment(s):"
   while ( $i < $nenvs )
     @ i++
@@ -118,7 +118,7 @@ if ( "$1" == "-i" ) then
     exit
   endif
   echo "Activating environment" $env_list[$eid]
-  set LSST_CONDA_ENV_NAME = ( $env_list[$eid] ) 
+  set LSST_CONDA_ENV_NAME = ( $env_list[$eid] )
 endif
 
 if ( ! $?LSST_SPLENV_REF) then

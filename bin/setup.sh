@@ -20,4 +20,3 @@ fi
 echo "Sourcing bin/envconfig instead"
 # shellcheck source=./bin/envconfig
 source "${LSSTSW}/bin/envconfig" 0
-

@@ -6,14 +6,14 @@
 if [[ -z $1 ]]; then
  (cat <<-EOF
 	Usage: $0 [-d] <tag>
-	
+
 	     -d : instead of setting it, delete the tag
-	
+
 	WARNING: THIS WILL APPLY <tag> TO ALL LSST/DMS REPOSITORIES IN ./build
 	         AND IMMEDIATELY PUSH THEM TO THE UPSTREAM GIT SERVER.
-	
+
 	                                           EXERCISE EXTREME CAUTION.
-	
+
 	EOF
   ) >&2
   exit 1

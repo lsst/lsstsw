@@ -31,10 +31,10 @@ usage() {
   fi
 
   # note that heredocs are prefixed with tab chars
-  fail "$(cat <<-EOF 
+  fail "$(cat <<-EOF
 		 Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
 
-	Build one or more products. 
+	Build one or more products.
 	It requires that the environment has previously been setup using envconfig.
 
 		 Specific options:
@@ -60,11 +60,11 @@ save_build_env() {
   # Saving environment information
   # Using conda-forge/rubin-env to create the environment,
   # there is no exact reference to refer to.
-  # 
+  #
   # The information saved here has the following scopes:
   # - save the environment name corresponding to the buildID (locally)
   #   to allow a new build based on the same environment.
-  # - persist the exact environment resolved for this build, since 
+  # - persist the exact environment resolved for this build, since
   #   this is not static, but will change with time.
   #   This information is also placed in EUPS_PKGROOT by publish.
 
@@ -157,7 +157,7 @@ fi
     (
       cd "$VERSIONDB"
       current_branch="$(git branch --show-current)"
-      if [[ $current_branch != main ]]; then 
+      if [[ $current_branch != main ]]; then
         git branch -m "$current_branch" main
 	git fetch origin
 	git branch -u origin/main main
