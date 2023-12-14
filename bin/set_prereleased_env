@@ -3,7 +3,7 @@
 #  Deploy a new environment using a given rubin-env fork and branch
 #
 #  It is meant to be executed in after bin/deploy.
-#  The environment has to be enabled using envconfig -n 
+#  The environment has to be enabled using envconfig -n
 #
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
@@ -54,7 +54,7 @@ parse_args() {
   done
   shift $((OPTIND-1))
 
-  if [ "$#" -ne 2 ]; then 
+  if [ "$#" -ne 2 ]; then
     usage "Illegal number of parameters"
   fi
 

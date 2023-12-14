@@ -37,4 +37,3 @@ endif
 echo "Sourcing bin/envconfig.csh instead"
 echo
 source "$LSSTSW/bin/envconfig.csh"
-

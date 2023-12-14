@@ -55,28 +55,25 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hrvx" opt; do
+  while getopts "hr:v:x:" opt; do
     case "$opt" in
     h)
       usage
       ;;
     v)
-      shift;
       [[ -n $TAG ]] && usage "Cannot specify both -v and -x"
       [[ -n $ENVREF ]] && usage "Cannot specify both -v and -r"
-      ENV_VERSION=$1
+      ENV_VERSION=${OPTARG}
       ;;
     x)
-      shift;
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
       [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
-      TAG=$1
+      TAG=${OPTARG}
       ;;
     r)
-      shift;
       [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
-      ENVREF=$1
+      ENVREF=${OPTARG}
       ;;
     *)
       usage "Unknown option: ${opt}"
