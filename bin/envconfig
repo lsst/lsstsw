@@ -37,15 +37,13 @@ parse_args() {
   local OPTIND
   local opt
 
-  while getopts "bnih" opt; do
+  while getopts "b:n:ih" opt; do
     case "$opt" in
     b)
-      shift;
-      BUILD_ID=$1
+      BUILD_ID=${OPTARG}
       ;;
     n)
-      shift;
-      ENV_NAME=$1
+      ENV_NAME=${OPTARG}
       ;;
     i)
       INTERACTIVE=true
