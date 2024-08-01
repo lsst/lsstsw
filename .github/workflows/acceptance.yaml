@@ -7,17 +7,24 @@ jobs:
   accept:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-13, macos-latest]
+        include:
+          - os: ubuntu-latest
+            devel: ""
+          - os: macos-13
+            devel: "/Applications/Xcode_14.3.app/Contents/Developer"
+          - os: macos-latest
+            devel: "/Applications/Xcode_15.3.app/Contents/Developer"
 
     name: Acceptance test
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: deploy and rebuild
         env:
           # needed for macos
-          DEVELOPER_DIR: /Applications/Xcode_14.2.app/Contents/Developer
+          DEVELOPER_DIR: ${{ matrix.devel }}
         run: |
           ./bin/deploy
           . bin/envconfig
