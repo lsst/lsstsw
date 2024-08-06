@@ -7,7 +7,7 @@ LSST Distribution Server Account
 
 For a guide to using `lsstsw`, see:
 
-http://developer.lsst.io/en/latest/build-ci/lsstsw.html
+https://developer.lsst.io/stack/lsstsw.html
 
 *Note: this directory is git managed.*
 
