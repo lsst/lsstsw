@@ -18,6 +18,7 @@
 
 set -e
 
+timer_start=$(date +%s)
 DIR=$(cd "$(dirname "$0")"; pwd)
 # shellcheck source=./etc/settings.cfg.sh
 . "${DIR}/../etc/settings.cfg.sh"
@@ -217,8 +218,9 @@ fi
   if [[ -n $TAG ]]; then
     eups tags --clone="$BUILD" "$TAG"
   fi
-
-  echo "# BUILD $BUILD completed."
+  timer_end=$(date +%s)
+  RUNTIME=$((timer_end-timer_start))
+  echo "# BUILD $BUILD completed in $RUNTIME seconds."
 ) 200>"$DIR/../var/run/rebuild.run"
 
 # vim: tabstop=2 shiftwidth=2 expandtab
