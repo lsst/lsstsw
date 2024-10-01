@@ -157,7 +157,7 @@ main() {
   # install miniconda
   miniconda_lock="${miniconda_path}/.deployed"
   test -f "$miniconda_lock" || (
-    miniconda_file_name="Mambaforge-${ana_platform}.sh"
+    miniconda_file_name="Miniforge3-${ana_platform}.sh"
 
     echo "::: Deploying ${miniconda_file_name}"
 
