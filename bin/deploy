@@ -105,17 +105,23 @@ get_tagged_env() {
     | grep '^#CONDA_ENV=' | cut -d= -f2) \
     || fail "Unable to determine conda env"
   platform="$(uname -s)"
-  case "$platform" in
-    Linux)
+  arch="$(uname -p)"
+  if [[ "$platform" = "Linux" ]]; then
+    if [[ "$arch" = "x86_64" ]]; then
       eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
-      ;;
-    Darwin)
+    elif [[ "$arch" = "aarch64" ]]; then
+      eups_platform="redhat/el8-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+    fi
+
+  elif [[ "$platform" = "Darwin" ]]; then
+    if [[ "$arch" = "x86_64" ]]; then
       eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
-      ;;
-    *)
-      fail "Unknown platform: $platform"
-      ;;
-  esac
+    elif [[ "$arch" = "arm64" ]]; then
+      eups_platform="osx/14-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+    fi
+  else
+    fail "Unknown platform or arch: $platform $arch"
+  fi
 
   $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
     || fail "Unable to download environment spec for tag $1"
