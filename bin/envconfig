@@ -101,7 +101,11 @@ if $INTERACTIVE ; then
     fi
   done
   echo "0 - EXIT (return)"
-  read -r -p "Choose environment [0 to ${l}]: " eid
+  if [ -n "$ZSH_VERSION" ]; then
+    read -r "eid?Choose environment [0 to ${l}]: "
+  else
+    read -r -p "Choose environment [0 to ${l}]: " eid
+  fi
   if  [[ "${eid}" -eq 0 ]] ; then
     return
   fi
