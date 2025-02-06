@@ -147,7 +147,7 @@ main() {
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
   fi
 
-  if [[ $RUBIN_ENV_VERSION == *dev ]]; then
+  if [[ "$RUBIN_ENV_VERSION" == *dev* ]]; then
     RUBIN_ENV_CONDA_CHANNELS="nodefaults conda-forge/label/rubin-env_dev conda-forge"
   fi
   LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"${RUBIN_ENV_CONDA_CHANNELS}"}
