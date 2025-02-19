@@ -17,3 +17,4 @@
 [create]testdata_latiss_cpp   None
 [create]testdata_ci_hsc       None
 [create]testdata_ci_imsim     None
+[create]testdata_image_cutouts None
