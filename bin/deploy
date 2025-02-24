@@ -187,6 +187,12 @@ main() {
   . "${miniconda_path}/etc/profile.d/conda.sh"
   conda activate base
 
+  # Ensure that dyld finds conda libraries
+  if [[ ${ana_platform:0:6} == "MacOSX" ]]; then
+    echo "Setting DYLD_FALLBACK_LIBRARY_PATH=${CONDA_PREFIX}/lib"
+    export DYLD_FALLBACK_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+  fi
+
   # cleanup orphaned lock file
   local old_miniconda_pkgs_lock="${LSSTSW}/miniconda/.packages.deployed"
   [[ -e $old_miniconda_pkgs_lock ]] && rm "$old_miniconda_pkgs_lock"
