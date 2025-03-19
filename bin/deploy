@@ -68,6 +68,7 @@ parse_args() {
     x)
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
       [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
+      [[ -n $ENV_NAME ]] && usage "Cannot specify both -x and -R"
       TAG=${OPTARG}
       ;;
     r)
@@ -76,7 +77,9 @@ parse_args() {
       ENVREF=${OPTARG}
       ;;
     R)
-      LSST_RUBIN_ENV_NAME=${OPTARG}
+      [[ -n $TAG ]] && usage "Cannot specify both -R and -x"
+      [[ "${OPTARG}" != rubin-env-* ]] && usage "VARIANT must start with rubin-env-"
+      ENV_NAME=${OPTARG}
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -148,6 +151,9 @@ main() {
     get_tagged_env "$TAG"
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
+  fi
+  if [[ -n $ENV_NAME ]]; then
+    LSST_RUBIN_ENV_NAME="$ENV_NAME"
   fi
 
   if [[ "$RUBIN_ENV_VERSION" == *dev* ]]; then
