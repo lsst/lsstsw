@@ -34,14 +34,14 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG] [-R VARIANT]
+		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG] [-V VARIANT]
 
 		Specific options:
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
 	    -x TAG      eups tag to select the exact environment for that tag
-    -R VARIANT  install a specific rubin-env variant, like rubin-env-developer
+    -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
 	    -h          show this message
 
 		EOF
@@ -55,7 +55,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hr:v:x:R:" opt; do
+  while getopts "hr:v:x:V:" opt; do
     case "$opt" in
     h)
       usage
@@ -68,7 +68,7 @@ parse_args() {
     x)
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
       [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
-      [[ -n $ENV_NAME ]] && usage "Cannot specify both -x and -R"
+      [[ -n $ENV_NAME ]] && usage "Cannot specify both -x and -V"
       TAG=${OPTARG}
       ;;
     r)
@@ -76,8 +76,8 @@ parse_args() {
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
       ENVREF=${OPTARG}
       ;;
-    R)
-      [[ -n $TAG ]] && usage "Cannot specify both -R and -x"
+    V)
+      [[ -n $TAG ]] && usage "Cannot specify both -V and -x"
       [[ "${OPTARG}" != rubin-env-* ]] && usage "VARIANT must start with rubin-env-"
       ENV_NAME=${OPTARG}
       ;;
