@@ -22,7 +22,7 @@ LSST_LFS_VERSION=${LSST_LFS_VERSION:-2.4.2}
 LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-main}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
-
+LSST_RUBIN_ENV_NAME="rubin-env"
 set -e
 
 
@@ -34,13 +34,14 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG]
+		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG] [-V VARIANT]
 
 		Specific options:
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
 	    -x TAG      eups tag to select the exact environment for that tag
+    -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
 	    -h          show this message
 
 		EOF
@@ -54,7 +55,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hr:v:x:" opt; do
+  while getopts "hr:v:x:V:" opt; do
     case "$opt" in
     h)
       usage
@@ -67,12 +68,18 @@ parse_args() {
     x)
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
       [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
+      [[ -n $ENV_NAME ]] && usage "Cannot specify both -x and -V"
       TAG=${OPTARG}
       ;;
     r)
       [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
       ENVREF=${OPTARG}
+      ;;
+    V)
+      [[ -n $TAG ]] && usage "Cannot specify both -V and -x"
+      [[ "${OPTARG}" != rubin-env-* ]] && usage "VARIANT must start with rubin-env-"
+      ENV_NAME=${OPTARG}
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -144,6 +151,9 @@ main() {
     get_tagged_env "$TAG"
   else
     RUBIN_ENV_VERSION=$LSST_SPLENV_REF
+  fi
+  if [[ -n $ENV_NAME ]]; then
+    LSST_RUBIN_ENV_NAME="$ENV_NAME"
   fi
 
   if [[ "$RUBIN_ENV_VERSION" == *dev* ]]; then
@@ -224,7 +234,7 @@ main() {
       if [[ -n $TAG ]]; then
         ARGS+=("--file" "${TAG}.env")
       else
-        ARGS+=("rubin-env=${RUBIN_ENV_VERSION}")
+        ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
       fi
       echo "mamba" "${ARGS[@]}"
       mamba "${ARGS[@]}"
