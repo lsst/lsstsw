@@ -33,7 +33,7 @@ usage() {
 
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
-		 Usage: $0 [-p] [-b] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
+		 Usage: $0 [-p] [-B] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
 
 	Build one or more products.
 	It requires that the environment has previously been setup using envconfig.
@@ -41,7 +41,7 @@ usage() {
 		 Specific options:
 	    -p            prepare only (checkout and pull main for all packages and run "lsst-build prepare")
 	    -n            pass "--no-fetch" parameter to lsst_build
-	    -b            pass "--no-binary-fetch" parameter as false to lsst_build
+	    -B            pass "--no_binary-fetch" parameter as false to lsst_build
 	    -u            update repos.yaml
 	    -r <ref>      git reference (branch or tags) to be built
 	    -t <eupstag>  clone the finished build eups tag to the specified eupstag (e.g. "-t current")
@@ -87,7 +87,7 @@ NO_BINARY_FETCH=false
 UPDATE=false
 refs=()
 
-while getopts ":pbnur:t:" o; do
+while getopts ":pBnur:t:" o; do
   case "$o" in
   p)
     PREP_ONLY=true
@@ -95,7 +95,7 @@ while getopts ":pbnur:t:" o; do
   n)
     NO_FETCH=true
     ;;
-  b)
+  B)
     NO_BINARY_FETCH=true
     ;;
   u)
