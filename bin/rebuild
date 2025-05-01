@@ -33,7 +33,7 @@ usage() {
 
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
-		 Usage: $0 [-p] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
+		 Usage: $0 [-p] [-B] [-n] [-u] [-r <ref> [-r <ref2> [...]]] [-t <eupstag>] product1 [product2 [...]]
 
 	Build one or more products.
 	It requires that the environment has previously been setup using envconfig.
@@ -41,6 +41,7 @@ usage() {
 		 Specific options:
 	    -p            prepare only (checkout and pull main for all packages and run "lsst-build prepare")
 	    -n            pass "--no-fetch" parameter to lsst_build
+	    -B            pass "--no_binary-fetch" parameter as false to lsst_build
 	    -u            update repos.yaml
 	    -r <ref>      git reference (branch or tags) to be built
 	    -t <eupstag>  clone the finished build eups tag to the specified eupstag (e.g. "-t current")
@@ -82,16 +83,20 @@ save_build_env() {
 
 PREP_ONLY=false
 NO_FETCH=false
+NO_BINARY_FETCH=false
 UPDATE=false
 refs=()
 
-while getopts ":pnur:t:" o; do
+while getopts ":pBnur:t:" o; do
   case "$o" in
   p)
     PREP_ONLY=true
     ;;
   n)
     NO_FETCH=true
+    ;;
+  B)
+    NO_BINARY_FETCH=true
     ;;
   u)
     UPDATE=true
@@ -210,8 +215,11 @@ fi
   #
   # Execute build
   #
-  lsst-build build "$LSSTSW_BUILD_DIR"
-
+  ARGSBUILD=()
+  if [[ $NO_BINARY_FETCH == true ]]; then
+    ARGSBUILD=("--no-binary-fetch")
+  fi
+  lsst-build build "${ARGSBUILD[@]}" "$LSSTSW_BUILD_DIR"
   #
   # Tag as requested
   #

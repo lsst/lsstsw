@@ -152,6 +152,8 @@ fi
 
 # Define and check EUPS_PATH
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
+export EUPS_ROOT="https://eups.lsst.codes/stack"
+export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 rubin_env_version=$(conda list --json rubin-env | jq -r '.[0].version') \
   && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
 if [ ! -d "$EUPS_PATH" ]; then
@@ -159,6 +161,29 @@ if [ ! -d "$EUPS_PATH" ]; then
   echo "::: Deploying manifest.remap"
   ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
 fi
+# This code is a copy from lsstinstall. We should look for a way to unify this code
+platform="$(uname -s)"
+cpu_arch="$(uname -m)"
+echo "Platform: $platform-$cpu_arch"
+if [[ "$platform" = "Linux" ]]; then
+  if [[ "$cpu_arch" = "x86_64" ]]; then
+    eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$rubin_env_version"
+  elif [[ "$cpu_arch" = "aarch64" ]]; then
+    eups_platform="redhat/el8-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$rubin_env_version"
+  fi
+
+elif [[ "$platform" = "Darwin" ]]; then
+  if [[ "$cpu_arch" = "x86_64" ]]; then
+    eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$rubin_env_version"
+  elif [[ "$cpu_arch" = "arm64" ]]; then
+    eups_platform="osx/14-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$rubin_env_version"
+  fi
+fi
+if [[ -z $eups_platform ]]; then
+  fail "Unable to identify OS or architecture"
+fi
+echo "$eups_platform"
+export EUPS_DISTRIB="${EUPS_ROOT}/${eups_platform}"
 echo "EUPS_PATH set to ${EUPS_PATH}"
 export RUBIN_EUPS_PATH="${EUPS_PATH}"
 
