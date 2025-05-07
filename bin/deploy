@@ -131,6 +131,30 @@ get_tagged_env() {
   $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
     || fail "Unable to download environment spec for tag $1"
 }
+# setup curl
+run_curl() {
+    _c=curl
+    # Silent, show errors
+    _opt="-sS"
+    # Use /usr/bin/curl if available for consistency
+    [ -x /usr/bin/curl ] && _c=/usr/bin/curl
+    # If running interactively, output progress
+    [ -t 1 ] && _opt="-#"
+    # Fail on error, follow redirects, and retry on transient errors
+    $_c -fL --retry 3 $_opt "$@"
+}
+
+# Copy postinstall
+copy_postinstall_fix(){
+  callback_folder="$EUPS_PATH/site"
+  hook="distribInstallPostHook.py"
+  echo "Check to see if $callback_folder/$hook exists"
+  hook_url="https://raw.githubusercontent.com/RobertLuptonTheGood/eups/refs/heads/master/callbacks/$hook"
+  if [ ! -f "$callback_folder/$hook" ]; then
+    echo "Installing posthook"
+    run_curl -o "$callback_folder/$hook" "$hook_url"
+  fi
+}
 
 main() {
   config_curl
@@ -329,6 +353,8 @@ main() {
     git config -f versiondb/.git/config push.default current
     touch "${LSSTSW}/versiondb/.deployed"
   )
+
+  copy_postinstall_fix
 
   # Clone lsst_build
   if [[ ! -f "${LSSTSW}/lsst_build/.deployed" ]]; then
