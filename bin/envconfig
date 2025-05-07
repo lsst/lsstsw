@@ -9,6 +9,30 @@
 print_error() {
   >&2 echo -e "$@"
 }
+# setup curl
+run_curl() {
+    _c=curl
+    # Silent, show errors
+    _opt="-sS"
+    # Use /usr/bin/curl if available for consistency
+    [ -x /usr/bin/curl ] && _c=/usr/bin/curl
+    # If running interactively, output progress
+    [ -t 1 ] && _opt="-#"
+    # Fail on error, follow redirects, and retry on transient errors
+    $_c -fL --retry 3 $_opt "$@"
+}
+
+# Copy postinstall
+copy_postinstall_fix(){
+  callback_folder="$EUPS_PATH/site"
+  hook="distribInstallPostHook.py"
+  echo "Check to see if $callback_folder/$hook exists"
+  hook_url="https://raw.githubusercontent.com/RobertLuptonTheGood/eups/refs/heads/master/callbacks/$hook"
+  if [ ! -f "$callback_folder/$hook" ]; then
+    echo "Installing posthook"
+    run_curl -o "$callback_folder/$hook" "$hook_url"
+  fi
+}
 
 usage() {
   if [[ -n "$1" ]]; then
@@ -160,6 +184,7 @@ if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
   ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
+  copy_postinstall_fix
 fi
 # This code is a copy from lsstinstall. We should look for a way to unify this code
 platform="$(uname -s)"
