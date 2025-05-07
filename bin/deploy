@@ -275,32 +275,6 @@ main() {
   # report packages in the current conda env
   conda env export
 
-  # Define EUPS_PATH depending on the environment,
-  # including the last 7 characters of the environment name
-  export EUPS_PATH="${LSSTSW}/stack/${RUBIN_ENV_VERSION}"
-  echo "EUPS_PATH set to ${EUPS_PATH}"
-
-  # backwards compatibility if EUPS wasn't installed to a versioned directory
-  test -f "${LSSTSW}/eups/.deployed" && ( # EUPS
-    echo "::: Moving old EUPS to eups/legacy"
-    mv "${LSSTSW}/eups" "${LSSTSW}/eups-tmp"
-    mkdir -p "${LSSTSW}/eups"
-    mv "${LSSTSW}/eups-tmp" "${LSSTSW}/eups/legacy"
-    ln -s legacy "${LSSTSW}/eups/current"
-  )
-  # backwards compatibility if EUPS was installed to a versioned directory (not from conda)
-  test ! -f "${LSSTSW}/eups/${LSST_EUPS_VERSION}/.deployed" || ( # EUPS
-    # in case eups folder has already been moved to eups-legacy
-    # and then recreated (case in Jenkins, where test job uses the
-    # same filesystem as the official job)
-    if [ ! -d "${LSSTSW}/eups-legacy" ]; then
-      echo "::: Moving old EUPS to eups-legacy"
-      mv "${LSSTSW}/eups" "${LSSTSW}/eups-legacy"
-    else
-      echo "Found eups-legacy, remove it before moving old eups to legacy"
-    fi
-  )
-
   # check if eups is not already available in the environment
   # if not, make it available from a separate eups-base environment
   if ! command -v eups > /dev/null; then
@@ -315,9 +289,6 @@ main() {
     conda activate --stack "$LSST_CONDA_ENV_NAME"
   fi
 
-  mkdir -p "${EUPS_PATH}"/{site,ups_db}
-  echo "::: Deploying manifest.remap"
-  ln -sf "${LSSTSW}/etc/manifest.remap" "${EUPS_PATH}/site/manifest.remap"
 
   test -f "${LSSTSW}/versiondb/.deployed" || ( # Clone the version database
     echo "::: Deploying versiondb"
