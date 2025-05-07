@@ -236,8 +236,8 @@ main() {
       else
         ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
       fi
-      echo "mamba" "${ARGS[@]}"
-      mamba "${ARGS[@]}"
+      echo "conda" "${ARGS[@]}"
+      conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."
       conda clean -y -a > /dev/null
