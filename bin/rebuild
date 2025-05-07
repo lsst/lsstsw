@@ -58,6 +58,19 @@ versiondb_head() {
   (cd "$VERSIONDB" && git rev-parse HEAD)
 }
 
+# setup curl
+run_curl() {
+    _c=curl
+    # Silent, show errors
+    _opt="-sS"
+    # Use /usr/bin/curl if available for consistency
+    [ -x /usr/bin/curl ] && _c=/usr/bin/curl
+    # If running interactively, output progress
+    [ -t 1 ] && _opt="-#"
+    # Fail on error, follow redirects, and retry on transient errors
+    $_c -fL --retry 3 $_opt "$@"
+}
+
 save_build_env() {
   # Saving environment information
   # Using conda-forge/rubin-env to create the environment,
@@ -124,6 +137,17 @@ if [ "${CONDA_DEFAULT_ENV}" != "${LSST_CONDA_ENV_NAME}" ]; then
   echo "Please activate the environment using bin/envconfig before running rebuild."
   exit
 fi
+# Copy postinstall
+copy_postinstall_fix(){
+  callback_folder="$EUPS_PATH/site"
+  hook="distribInstallPostHook.py"
+  echo "Check to see if $callback_folder/$hook exists"
+  hook_url="https://raw.githubusercontent.com/RobertLuptonTheGood/eups/refs/heads/master/callbacks/$hook"
+  if [ ! -f "$callback_folder/$hook" ]; then
+    echo "Installing posthook"
+    run_curl -o "$callback_folder/$hook" "$hook_url"
+  fi
+}
 
 (
   # true if `lsst-build prepare` has run successfully
@@ -198,6 +222,7 @@ fi
   echo "# BUILD ID: $BUILD"
 
   save_build_env
+  copy_postinstall_fix
 
   if [[ $PREP_ONLY == true ]]; then
     exit
