@@ -13,7 +13,7 @@ source "${SCRIPT_DIR}/../bin/utils.sh"
 LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-""}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-# This string is used to maintain compatibility with eups.lsst.codes URLs
+# This string is used to maintain compatibility with eups.lsst.cloud URLs
 # but it is not actually used to select the miniconda version.
 LSST_MINICONDA_VERSION="py38_4.9.2"
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/latest/download}
@@ -106,7 +106,7 @@ am_I_sourced() {
 }
 
 get_tagged_env() {
-  eups_root=https://eups.lsst.codes/stack
+  eups_root=https://eups.lsst.cloud/stack
   env_version=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/$1.list" \
     | grep '^#CONDA_ENV=' | cut -d= -f2) \
     || fail "Unable to determine conda env"

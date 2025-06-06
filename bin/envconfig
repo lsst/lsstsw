@@ -176,7 +176,7 @@ fi
 
 # Define and check EUPS_PATH
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
-export EUPS_ROOT="https://eups.lsst.codes/stack"
+export EUPS_ROOT="https://eups.lsst.cloud/stack"
 export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 rubin_env_version=$(conda list --json rubin-env | jq -r '.[0].version') \
   && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
