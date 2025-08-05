@@ -134,7 +134,7 @@ fi
   # completed.  This is to allow consumer scripts to be able to determine if a
   # failure in this script occurred before or after the prepare step.
   #
-  # shellcheck disable=SC2317  # function is reachable via trap
+  # shellcheck disable=SC2317,SC2329  # function is reachable via trap
   cleanup() {
     local rv=$?
 
