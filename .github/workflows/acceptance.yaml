@@ -11,10 +11,10 @@ jobs:
         include:
           - os: ubuntu-latest
             devel: ""
-          - os: macos-13
-            devel: "/Applications/Xcode_14.3.app/Contents/Developer"
+          - os: macos-14
+            devel: "/Applications/Xcode_15.4.app/Contents/Developer"
           - os: macos-latest
-            devel: "/Applications/Xcode_15.3.app/Contents/Developer"
+            devel: "/Applications/Xcode_16.4.app/Contents/Developer"
 
     name: Acceptance test
     runs-on: ${{ matrix.os }}
