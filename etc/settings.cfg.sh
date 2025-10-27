@@ -22,6 +22,9 @@ VERSIONDB_PUSH=${VERSIONDB_PUSH:-false}
 # the settings below should rarely need changing
 #
 
+# lsstcam
+LSSTCAM_TESTDATA_DIR=${LSSTCAM_TESTDATA_DIR:-'/tmp/LSSTCAMData'}
+
 # path to the root of the lsstsw checkout
 # relative to <lsstsw>/etc/
 if [[ -n "$BASH_VERSION" ]]; then
