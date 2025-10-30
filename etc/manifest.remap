@@ -20,4 +20,4 @@
 [create]testdata_image_cutouts None
 [create]descwl_shear_sims     None
 [create]descwl_coadd          None
-[create]descel                None
+[create]descwl                None
