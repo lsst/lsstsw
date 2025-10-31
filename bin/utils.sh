@@ -167,9 +167,30 @@ fetch_repos.yaml() {
   local repo=${3:-$REPOSFILE_REPO}
 
   local baseurl="https://raw.githubusercontent.com/${repo}/${ref}"
+  local output_dir
+  output_dir=$(dirname "$output_file")
 
-  $CURL "${CURL_OPTS[@]}" \
-    -L \
-    "${baseurl}/etc/repos.yaml" \
-    -o "$output_file"
+  if $CURL "${CURL_OPTS[@]}" -f -L "${baseurl}/etc/repos.yaml" -o "$output_file"; then
+    return 0
+  fi
+
+  echo "HTTPS download failed; falling back to git clone of ${repo}@${ref}"
+
+  (
+    cd "$output_dir" || exit 1
+
+    # Clone into same directory but with unique PID to only copy repos.yaml
+    local clone_dir=".repos_clone_$$"
+
+    if git clone --depth 1 --branch "$ref" "https://github.com/${repo}.git" "$clone_dir"; then
+      if [ -f "${clone_dir}/etc/repos.yaml" ]; then
+        cp "${clone_dir}/etc/repos.yaml" "$output_file"
+        echo "repos.yaml successfully retrieved via git clone"
+      fi
+      rm -rf "$clone_dir"
+    else
+      echo "git clone fallback failed for ${repo}@${ref}" >&2
+      return 1
+    fi
+  )
 }
