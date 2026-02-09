@@ -21,3 +21,4 @@
 [create]descwl_shear_sims     None
 [create]descwl_coadd          None
 [create]descwl                None
+[create]testdata_images       None
