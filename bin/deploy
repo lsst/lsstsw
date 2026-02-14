@@ -111,7 +111,7 @@ get_tagged_env() {
     | grep '^#CONDA_ENV=' | cut -d= -f2) \
     || fail "Unable to determine conda env"
   platform="$(uname -s)"
-  arch="$(uname -p)"
+  arch="$(uname -m)"
   if [[ "$platform" = "Linux" ]]; then
     if [[ "$arch" = "x86_64" ]]; then
       eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
@@ -122,7 +122,7 @@ get_tagged_env() {
   elif [[ "$platform" = "Darwin" ]]; then
     if [[ "$arch" = "x86_64" ]]; then
       eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
-    elif [[ "$arch" = "arm" ]]; then
+    elif [[ "$arch" = "arm64" ]]; then
       eups_platform="osx/14-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
     fi
   else
