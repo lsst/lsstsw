@@ -17,7 +17,10 @@ VIRTUAL_PKG_PREFIXES = ('__', 'python_abi')
 def build_conda_index(conda_prefix):
     """Parse conda-meta JSONs and return (import_to_pkg, pkg_deps, pkg_versions, pkg_has_python).
 
-    import_to_pkg: {python_import_name: conda_pkg_name}
+    import_to_pkg: {python_import_name: set[conda_pkg_name]}
+                   Sets, not single values, because namespace packages
+                   (sphinxcontrib-*, backports.*, zope.*, ...) have many
+                   conda packages contributing to the same top-level dir.
     pkg_deps:      {conda_pkg_name: [direct_dep_pkg_names]}
     pkg_versions:  {conda_pkg_name: version_string}
     pkg_has_python:{conda_pkg_name: bool}
@@ -49,7 +52,18 @@ def build_conda_index(conda_prefix):
                     or import_name.endswith((".dist-info", ".egg-info", ".pth"))):
                 continue
             has_python = True
-            import_to_pkg[import_name] = name
+            import_to_pkg.setdefault(import_name, set()).add(name)
+
+            # Also register namespace.subpackage so dotted forms like
+            # 'sphinxcontrib.applehelp' map to the correct specific conda
+            # package when depfinder emits them.
+            parts = file_path.split("/")
+            if len(parts) >= 5:
+                sub = parts[4]
+                if (not sub.startswith("_")
+                        and not sub.endswith((".py", ".so", ".pyd",
+                                              ".dist-info", ".egg-info", ".pth"))):
+                    import_to_pkg.setdefault(f"{import_name}.{sub}", set()).add(name)
 
         pkg_has_python[name] = has_python
 
@@ -138,7 +152,13 @@ def classify_imports(imports, import_to_pkg, stack_packages):
         if any(imp == pkg or imp.startswith(pkg + ".") for pkg in stack_packages):
             lsst_imports.add(imp)
         elif imp in import_to_pkg:
-            directly_required.add(import_to_pkg[imp])
+            directly_required.update(import_to_pkg[imp])
+        elif (top := imp.split(".", 1)[0]) in import_to_pkg:
+            # Depfinder usually collapses dotted imports to top-level. If a
+            # namespace (e.g. 'sphinxcontrib') has multiple conda contributors,
+            # mark them all required — we can't tell from a top-level import
+            # which sub was actually used, so over-approximate.
+            directly_required.update(import_to_pkg[top])
         else:
             unmapped.add(imp)
 
