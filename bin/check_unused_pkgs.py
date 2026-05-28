@@ -2,6 +2,7 @@
 """Audit the active rubin-env conda environment for unused packages."""
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -108,14 +109,87 @@ def build_lsst_index(build_dir):
     return packages
 
 
-def scan_imports(build_dir):
-    """Walk build_dir, return set of all required+questionable import names."""
+def _string_list_values(node):
+    """Return string elements of a List/Tuple AST node (skip non-string entries)."""
+    if not isinstance(node, (ast.List, ast.Tuple)):
+        return set()
+    return {
+        elt.value for elt in node.elts
+        if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
+    }
+
+
+def _resolve_module_file(module_path, conda_prefix):
+    """Resolve a dotted module name to a .py file under $CONDA_PREFIX/site-packages."""
+    site_packages = list(Path(conda_prefix).glob("lib/python*/site-packages"))
+    parts = module_path.split(".")
+    for sp in site_packages:
+        candidate = sp.joinpath(*parts)
+        py_file = candidate.with_suffix(".py")
+        if py_file.is_file():
+            return py_file
+        init_file = candidate / "__init__.py"
+        if init_file.is_file():
+            return init_file
+    return None
+
+
+def extract_sphinx_extensions(filepath, conda_prefix=None, _visited=None):
+    """Parse a conf.py and return the union of any module-level `extensions = [...]`
+    list (and `extensions += [...]` augmentations).
+
+    Sphinx loads extensions by string name (e.g. `'sphinx_design'`), not via
+    `import`, so depfinder cannot see them. We also follow `from X import *` one
+    or more levels deep when conda_prefix is provided, because the LSST stack
+    pattern is `from documenteer.conf.pipelinespkg import *`, which is where
+    the actual `extensions` list lives.
+    """
+    if _visited is None:
+        _visited = set()
+    filepath = str(filepath)
+    if filepath in _visited:
+        return set()
+    _visited.add(filepath)
+
+    try:
+        tree = ast.parse(Path(filepath).read_text(errors="replace"))
+    except Exception:
+        return set()
+
+    extensions = set()
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "extensions":
+                    extensions |= _string_list_values(node.value)
+        elif isinstance(node, ast.AugAssign):
+            if (isinstance(node.target, ast.Name)
+                    and node.target.id == "extensions"
+                    and isinstance(node.op, ast.Add)):
+                extensions |= _string_list_values(node.value)
+        elif (isinstance(node, ast.ImportFrom) and conda_prefix
+                and node.module
+                and any(alias.name == "*" for alias in node.names)):
+            resolved = _resolve_module_file(node.module, conda_prefix)
+            if resolved:
+                extensions |= extract_sphinx_extensions(
+                    resolved, conda_prefix, _visited
+                )
+    return extensions
+
+
+def scan_imports(build_dir, conda_prefix=None):
+    """Walk build_dir, return set of all required+questionable import names.
+
+    Also extracts Sphinx extension names from any conf.py encountered, since
+    those are loaded by string and otherwise invisible to depfinder.
+    """
     from depfinder.inspection import get_imported_libs
 
     imports = set()
     skipped = 0
     for root, dirs, files in os.walk(build_dir):
-        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
         for fname in files:
             if not fname.endswith(".py"):
                 continue
@@ -128,6 +202,9 @@ def scan_imports(build_dir):
                 continue
             imports.update(info.get("required", set()))
             imports.update(info.get("questionable", set()))
+
+            if fname == "conf.py":
+                imports |= extract_sphinx_extensions(filepath, conda_prefix)
     if skipped:
         print(f"Warning: skipped {skipped} files due to parse errors", file=sys.stderr)
     return imports
@@ -267,7 +344,7 @@ def main():
         sys.exit(1)
 
     print(f"Scanning imports in {args.build_dir} ...", file=sys.stderr)
-    imports = scan_imports(args.build_dir)
+    imports = scan_imports(args.build_dir, conda_prefix)
 
     print("Indexing conda-meta...", file=sys.stderr)
     import_to_pkg, pkg_deps, pkg_versions, pkg_has_python = build_conda_index(conda_prefix)

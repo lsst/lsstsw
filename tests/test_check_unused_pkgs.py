@@ -4,7 +4,7 @@ import os
 import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'bin'))
-from check_unused_pkgs import main, build_conda_index, build_lsst_index, scan_imports, classify_imports, transitive_closure, classify_packages, format_report
+from check_unused_pkgs import main, build_conda_index, build_lsst_index, scan_imports, classify_imports, transitive_closure, classify_packages, format_report, extract_sphinx_extensions
 
 
 def test_main_exits_without_conda_prefix(monkeypatch):
@@ -418,3 +418,71 @@ def test_classify_imports_dotted_falls_back_to_top_level():
     )
     assert directly_required == {"sphinxcontrib-applehelp", "sphinxcontrib-htmlhelp"}
     assert unmapped == set()
+
+
+def test_extract_sphinx_extensions_literal_list(tmp_path):
+    conf = tmp_path / "conf.py"
+    conf.write_text(
+        "project = 'foo'\n"
+        "extensions = ['sphinx_design', 'sphinx_copybutton',\n"
+        "              'sphinxcontrib.youtube']\n"
+    )
+    assert extract_sphinx_extensions(conf) == {
+        "sphinx_design", "sphinx_copybutton", "sphinxcontrib.youtube",
+    }
+
+
+def test_extract_sphinx_extensions_aug_assign(tmp_path):
+    conf = tmp_path / "conf.py"
+    conf.write_text(
+        "extensions = ['a']\n"
+        "extensions += ['b', 'c']\n"
+    )
+    assert extract_sphinx_extensions(conf) == {"a", "b", "c"}
+
+
+def test_extract_sphinx_extensions_follows_star_import(tmp_path):
+    # Mirror LSST pattern: conf.py does `from documenteer.conf.pipelinespkg import *`
+    # and the `extensions` list lives in that imported module.
+    site = tmp_path / "lib" / "python3.13" / "site-packages"
+    pkg = site / "documenteer" / "conf"
+    pkg.mkdir(parents=True)
+    (pkg.parent / "__init__.py").write_text("")
+    (pkg / "__init__.py").write_text("")
+    (pkg / "pipelinespkg.py").write_text(
+        "extensions = ['sphinx_design', 'sphinx_automodapi']\n"
+    )
+    conf = tmp_path / "conf.py"
+    conf.write_text("from documenteer.conf.pipelinespkg import *\n")
+
+    assert extract_sphinx_extensions(conf, str(tmp_path)) == {
+        "sphinx_design", "sphinx_automodapi",
+    }
+
+
+def test_extract_sphinx_extensions_handles_cycle(tmp_path):
+    # Two modules star-importing each other shouldn't cause infinite recursion.
+    site = tmp_path / "lib" / "python3.13" / "site-packages"
+    site.mkdir(parents=True)
+    (site / "a.py").write_text(
+        "from b import *\nextensions = ['x']\n"
+    )
+    (site / "b.py").write_text(
+        "from a import *\nextensions = ['y']\n"
+    )
+    conf = tmp_path / "conf.py"
+    conf.write_text("from a import *\n")
+    assert extract_sphinx_extensions(conf, str(tmp_path)) == {"x", "y"}
+
+
+def test_scan_imports_picks_up_conf_py_extensions(tmp_path):
+    # End-to-end: a conf.py declaring extensions adds those names to the
+    # imports set returned by scan_imports.
+    pkg_dir = tmp_path / "src"
+    (pkg_dir / "doc").mkdir(parents=True)
+    (pkg_dir / "doc" / "conf.py").write_text(
+        "extensions = ['sphinx_design', 'sphinxcontrib.mermaid']\n"
+    )
+    imports = scan_imports(str(pkg_dir))
+    assert "sphinx_design" in imports
+    assert "sphinxcontrib.mermaid" in imports
