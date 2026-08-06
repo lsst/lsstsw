@@ -133,6 +133,10 @@ if ( ! $?LSST_CONDA_ENV_NAME ) then
   set LSST_CONDA_ENV_NAME="lsst-scipipe-$LSST_SPLENV_REF"
 endif
 
+if ( ! $?LSST_ADD_RSP ) then
+  set LSST_CONDA_ENV_NAME="$LSST_CONDA_ENV_NAME-rsp"
+endif
+
 conda activate "$LSST_CONDA_ENV_NAME"
 
 source "$LSSTSW/eups/current/bin/setups.csh"

@@ -58,6 +58,25 @@ versiondb_head() {
   (cd "$VERSIONDB" && git rev-parse HEAD)
 }
 
+# Extract package name from a conda explicit URL
+get_pkg_name() {
+    # e.g. .../numpy-1.24.0-py310h5d7c261_0.conda -> numpy
+    basename "$1" | sed -E 's/(-[^-]+-[^-]+\.(conda|tar\.bz2))$//'
+}
+
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spinstr='|/-\'
+    while ps -p "$pid" > /dev/null 2>&1; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
 save_build_env() {
   # Saving environment information
   # Using conda-forge/rubin-env to create the environment,
@@ -71,14 +90,81 @@ save_build_env() {
   #   This information is also placed in EUPS_PKGROOT by publish.
 
   mkdir -p "${LSSTSW_BUILD_DIR}/builds"
-  filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}.env"
+  local filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}.env"
+  local rsp_filename="${LSSTSW_BUILD_DIR}/builds/${BUILD}_rsp.env"
+  local workdir
+  workdir=$(mktemp -d)
   echo "Saving environment information in ${filename}"
 
-  # saving information in environment name
-  echo "#environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
+  if [[ $LSST_ADD_RSP == true ]]; then
+  echo "Saving RSP in $rsp_filename"
+  # Capture the active rubin-env-rsp build environment
+  conda list --explicit > "$rsp_filename"
 
-  # generating pinned list of environment content
-  conda list --explicit >> "${filename}"
+  # Build an associative array: pkg_name -> full_url (from rsp)
+  declare -A rsp_map
+  while IFS= read -r line; do
+      # Skip comments/headers and empty lines
+      [[ "$line" =~ ^@ ]] && continue
+      [[ "$line" =~ ^# ]] && continue
+      [[ -z "$line" ]] && continue
+
+      name=$(get_pkg_name "$line")
+      rsp_map["$name"]="$line"
+  done < "$rsp_filename"
+
+  # pin the RSP and name-oracle solves to the exact rubin-env version resolved
+  # for this build so the results are directly comparable to the build env
+  local rubinenv_ver
+  rubinenv_ver=$(conda list --export | awk -F= '$1 == "rubin-env" { print $2 }')
+  if [[ $LSST_GLIBC_FLAG = "true" && $(uname -s) == Linux && $(uname -m) == x86_64 ]] && \
+    [[ $(printf '%s\n' "13.0.0" "$rubinenv_ver" | sort -V | tail -n1) == "$rubinenv_ver" ]]; then
+    echo "Setting Conda override"
+    export CONDA_OVERRIDE_GLIBC=2.17
+  fi
+  # fresh rubin-env solve used only as the package-name membership oracle
+  echo "Resolving Rubin-env "
+  conda create -y -p "${workdir}/rubinenv_solve" "rubin-env=${rubinenv_ver}" \
+    > "${workdir}/rubinenv_solve.log" 2>&1 &
+  solve_pid=$!
+  spinner "$solve_pid"
+  if ! wait "$solve_pid"; then
+    echo "ERROR: 'conda create' for rubin-env=${rubinenv_ver} failed:" >&2
+    cat "${workdir}/rubinenv_solve.log" >&2
+    exit 1
+  fi
+  echo "Loaded rubin-env"
+  unset CONDA_OVERRIDE_GLIBC
+  conda list --explicit -p "${workdir}/rubinenv_solve" > "${workdir}/rubinenv_solve.env"
+  : > "$filename"
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^@ || "$line" =~ ^# || -z "$line" ]]; then
+        echo "$line" >> "$filename"
+        continue
+    fi
+
+    name=$(get_pkg_name "$line")
+    if [[ -n "${rsp_map[$name]}" && "${rsp_map[$name]}" != "$line" ]]; then
+        echo "Replacing: $line" >&2
+        echo "     with: ${rsp_map[$name]}" >&2
+        echo "${rsp_map[$name]}" >> "$filename"
+    else
+        echo "$line" >> "$filename"
+    fi
+  done < "${workdir}/rubinenv_solve.env"
+
+  else
+    conda list --explicit > "$filename"
+  fi
+
+  echo "Done. Updated list written to $filename"
+  #
+
+  # # saving information in environment name
+  # echo "#environment_name: ${LSST_CONDA_ENV_NAME}" > "${filename}"
+  #
+  # # generating pinned list of environment content
+  # conda list --explicit >> "${filename}"
 }
 
 PREP_ONLY=false

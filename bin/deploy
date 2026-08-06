@@ -136,7 +136,7 @@ get_tagged_env() {
     fail "Unknown platform or arch: $platform $arch"
   fi
   fetch_url="$eups_root/$eups_platform/env/$1.env"
-  if [[ $ENABLE_RSP ]]; then
+  if [[ $LSST_ADD_RSP = true ]]; then
     fetch_url="$eups_root/$eups_platform/env/$1-rsp.env"
   fi
 
@@ -168,8 +168,7 @@ main() {
   if [[ -n $ENV_NAME ]]; then
     LSST_RUBIN_ENV_NAME="$ENV_NAME"
   fi
-  echo "Bye"
-  if [[ $LSST_ADD_RSP ]]; then
+  if [[ $LSST_ADD_RSP = true ]]; then
     LSST_RUBIN_ENV_NAME="$LSST_RUBIN_ENV_NAME-rsp"
   fi
 
@@ -181,6 +180,7 @@ main() {
   suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
   export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"}
 
+  echo "$LSST_CONDA_ENV_NAME"
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
@@ -255,6 +255,11 @@ main() {
         ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
       fi
       echo "conda" "${ARGS[@]}"
+
+      if [[  $LSST_GLIBC_FLAG = "true" && $(uname -s) == Linux && $(uname -m) == x86_64 ]] && \
+        [[ $(printf '%s\n' "13.0.0" "$RUBIN_ENV_VERSION" | sort -V | tail -n1) == "$RUBIN_ENV_VERSION" ]]; then
+        export CONDA_OVERRIDE_GLIBC=2.17
+      fi
       conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."

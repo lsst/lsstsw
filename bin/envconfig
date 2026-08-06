@@ -153,7 +153,8 @@ elif [[ $BUILD_ID != "" ]]; then
   fi
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
-  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
+  suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${suffix}"}
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 
