@@ -79,7 +79,7 @@ parse_args() {
       ENVREF=${OPTARG}
       ;;
     R)
-      [[ -n $TAG ]] && usage "Cannot specify both -R and -x"
+      # -R is valid alongside -x: it selects the tag's _rsp.env variant.
       [[ -n $ENVREF ]] && usage "Cannot specify both -R and -r"
       LSST_ADD_RSP=true
       ;;
@@ -135,10 +135,13 @@ get_tagged_env() {
   else
     fail "Unknown platform or arch: $platform $arch"
   fi
-  fetch_url="$eups_root/$eups_platform/env/$1.env"
+  # curl -O writes to the remote basename, so callers must install and clean up
+  # the file under this same name rather than reconstructing it from $TAG.
+  TAG_ENV_FILE="$1.env"
   if [[ $LSST_ADD_RSP = true ]]; then
-    fetch_url="$eups_root/$eups_platform/env/$1-rsp.env"
+    TAG_ENV_FILE="${1}_rsp.env"
   fi
+  fetch_url="$eups_root/$eups_platform/env/$TAG_ENV_FILE"
 
   $CURL "${CURL_OPTS[@]}" -O "$fetch_url" \
     || fail "Unable to download environment spec for tag $1 at $fetch_url"
@@ -149,7 +152,7 @@ main() {
 
   ENV_VERSION=""
   ENVREF=""
-
+  TAG_ENV_FILE=""
 
   parse_args "$@"
 
@@ -250,7 +253,7 @@ main() {
       done
       ARGS+=("--strict-channel-priority")
       if [[ -n $TAG ]]; then
-        ARGS+=("--file" "${TAG}.env")
+        ARGS+=("--file" "$TAG_ENV_FILE")
       else
         ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
       fi
@@ -267,7 +270,7 @@ main() {
       echo "done"
 
       if [[ -n $TAG ]]; then
-        rm "${TAG}.env"
+        rm "$TAG_ENV_FILE"
       fi
     fi
   fi
