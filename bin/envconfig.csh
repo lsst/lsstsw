@@ -80,11 +80,13 @@ setenv MANPATH "$LSSTSW/lfs/share/man:"
 
 if ( $BUILD_ID != "" ) then
   echo "Retriving environment information from build" $BUILD_ID
-  if ( -f "build/builds/${BUILD_ID}.env" ) then
-    set LSST_CONDA_ENV_NAME=`grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' '`
+  # absolute so -b works when sourced from outside $LSSTSW
+  set build_env="$LSSTSW/build/builds/${BUILD_ID}.env"
+  if ( -f "$build_env" ) then
+    set LSST_CONDA_ENV_NAME=`grep 'environment_name' "$build_env" | cut -f 2 -d ' '`
     echo "Activating environment $LSST_CONDA_ENV_NAME"
   else
-    echo "No build found with id ${BUILD_ID}"
+    echo "No build found with id ${BUILD_ID} at ${build_env}"
     exit 1
   endif
 endif
