@@ -80,11 +80,13 @@ setenv MANPATH "$LSSTSW/lfs/share/man:"
 
 if ( $BUILD_ID != "" ) then
   echo "Retriving environment information from build" $BUILD_ID
-  if ( -f "build/builds/${BUILD_ID}.env" ) then
-    set LSST_CONDA_ENV_NAME=`grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' '`
+  # absolute so -b works when sourced from outside $LSSTSW
+  set build_env="$LSSTSW/build/builds/${BUILD_ID}.env"
+  if ( -f "$build_env" ) then
+    set LSST_CONDA_ENV_NAME=`grep 'environment_name' "$build_env" | cut -f 2 -d ' '`
     echo "Activating environment $LSST_CONDA_ENV_NAME"
   else
-    echo "No build found with id ${BUILD_ID}"
+    echo "No build found with id ${BUILD_ID} at ${build_env}"
     exit 1
   endif
 endif
@@ -130,7 +132,15 @@ if ( ! $?SPLENV_BASE_NAME) then
 endif
 
 if ( ! $?LSST_CONDA_ENV_NAME ) then
-  set LSST_CONDA_ENV_NAME="lsst-scipipe-$LSST_SPLENV_REF"
+  # the -rsp suffix belongs only to a name derived from scratch; the BUILD_ID and
+  # -i branches above already resolved a real env name that may itself end in
+  # -rsp, and appending again would name an env that does not exist.
+  set rsp_suffix=""
+  if ( $?LSST_ADD_RSP ) then
+    if ( "$LSST_ADD_RSP" == "true" ) set rsp_suffix="-rsp"
+  endif
+  set LSST_CONDA_ENV_NAME="${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${rsp_suffix}"
+  unset rsp_suffix
 endif
 
 conda activate "$LSST_CONDA_ENV_NAME"

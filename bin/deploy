@@ -23,6 +23,7 @@ LSST_BUILD_GITREV=${LSST_BUILD_GITREV:-main}
 LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 LSST_RUBIN_ENV_NAME="rubin-env"
+LSST_ADD_RSP=${LSST_ADD_RSP:-false}
 set -e
 
 
@@ -40,6 +41,7 @@ usage() {
 	    -v VERSION  a specific version of rubin-env conda package.
 	                By default will use the version specified in etc/settings.cfg.sh
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
+      -R RSP      downloads rubin-env-rsp version of conda package
 	    -x TAG      eups tag to select the exact environment for that tag
     -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
 	    -h          show this message
@@ -55,7 +57,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hr:v:x:V:" opt; do
+  while getopts "hr:v:x:V:R" opt; do
     case "$opt" in
     h)
       usage
@@ -75,6 +77,11 @@ parse_args() {
       [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
       ENVREF=${OPTARG}
+      ;;
+    R)
+      # -R is valid alongside -x: it selects the tag's _rsp.env variant.
+      [[ -n $ENVREF ]] && usage "Cannot specify both -R and -r"
+      LSST_ADD_RSP=true
       ;;
     V)
       [[ -n $TAG ]] && usage "Cannot specify both -V and -x"
@@ -128,8 +135,16 @@ get_tagged_env() {
   else
     fail "Unknown platform or arch: $platform $arch"
   fi
-  $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
-    || fail "Unable to download environment spec for tag $1"
+  # curl -O writes to the remote basename, so callers must install and clean up
+  # the file under this same name rather than reconstructing it from $TAG.
+  TAG_ENV_FILE="$1.env"
+  if [[ $LSST_ADD_RSP = true ]]; then
+    TAG_ENV_FILE="${1}_rsp.env"
+  fi
+  fetch_url="$eups_root/$eups_platform/env/$TAG_ENV_FILE"
+
+  $CURL "${CURL_OPTS[@]}" -O "$fetch_url" \
+    || fail "Unable to download environment spec for tag $1 at $fetch_url"
 }
 
 main() {
@@ -137,6 +152,7 @@ main() {
 
   ENV_VERSION=""
   ENVREF=""
+  TAG_ENV_FILE=""
 
   parse_args "$@"
 
@@ -155,14 +171,19 @@ main() {
   if [[ -n $ENV_NAME ]]; then
     LSST_RUBIN_ENV_NAME="$ENV_NAME"
   fi
+  if [[ $LSST_ADD_RSP = true ]]; then
+    LSST_RUBIN_ENV_NAME="$LSST_RUBIN_ENV_NAME-rsp"
+  fi
 
   if [[ "$RUBIN_ENV_VERSION" == *dev* ]]; then
     RUBIN_ENV_CONDA_CHANNELS="nodefaults conda-forge/label/rubin-env_dev conda-forge"
   fi
   LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"${RUBIN_ENV_CONDA_CHANNELS}"}
 
-  export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}"}
+  suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
+  export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"}
 
+  echo "$LSST_CONDA_ENV_NAME"
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
 
   export PATH="${LSSTSW}/lfs/bin:${PATH}"
@@ -232,11 +253,16 @@ main() {
       done
       ARGS+=("--strict-channel-priority")
       if [[ -n $TAG ]]; then
-        ARGS+=("--file" "${TAG}.env")
+        ARGS+=("--file" "$TAG_ENV_FILE")
       else
         ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
       fi
       echo "conda" "${ARGS[@]}"
+
+      if [[  $LSST_GLIBC_FLAG = "true" && $(uname -s) == Linux && $(uname -m) == x86_64 ]] && \
+        [[ $(printf '%s\n' "13.0.0" "$RUBIN_ENV_VERSION" | sort -V | tail -n1) == "$RUBIN_ENV_VERSION" ]]; then
+        export CONDA_OVERRIDE_GLIBC=2.17
+      fi
       conda "${ARGS[@]}"
 
       echo "Cleaning conda environment..."
@@ -244,7 +270,7 @@ main() {
       echo "done"
 
       if [[ -n $TAG ]]; then
-        rm "${TAG}.env"
+        rm "$TAG_ENV_FILE"
       fi
     fi
   fi

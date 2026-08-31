@@ -144,16 +144,19 @@ elif [[ $ENV_NAME != "" ]]; then
   LSST_CONDA_ENV_NAME=${ENV_NAME}
 elif [[ $BUILD_ID != "" ]]; then
   echo "Looking for the environment used in build ${BUILD_ID}..."
-  if [[ -f "build/builds/${BUILD_ID}.env" ]]; then
-    LSST_CONDA_ENV_NAME=$(grep 'environment_name' build/builds/"${BUILD_ID}".env | cut -f 2 -d ' ')
+  # absolute so -b works when sourced from outside $LSSTSW, as CI does
+  build_env="${LSSTSW_BUILD_DIR}/builds/${BUILD_ID}.env"
+  if [[ -f $build_env ]]; then
+    LSST_CONDA_ENV_NAME=$(grep 'environment_name' "$build_env" | cut -f 2 -d ' ')
     echo "Activating environment ${LSST_CONDA_ENV_NAME}"
   else
-    echo "No build found with id ${BUILD_ID}"
+    echo "No build found with id ${BUILD_ID} at ${build_env}"
     return
   fi
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
-  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}"}
+  suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
+  LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${suffix}"}
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 

@@ -125,6 +125,13 @@ echo "::: Saving pinned environment information"
 run cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env"
 ls -l "${EUPS_PKGROOT}/env/${BUILD}.env"
 
+# rebuild only emits an _rsp.env when the build ran with LSST_ADD_RSP=true
+rsp_env="${LSSTSW_BUILD_DIR}/builds/${BUILD}_rsp.env"
+if [[ -f $rsp_env ]]; then
+  run cp "$rsp_env" "${EUPS_PKGROOT}/env"
+  ls -l "${EUPS_PKGROOT}/env/${BUILD}_rsp.env"
+fi
+
 if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   echo "Adding tag '$DISTRIBTAG' at the distribution server."
 
@@ -145,6 +152,9 @@ if [[ -n $DISTRIBTAG && "$DISTRIBTAG" != "$BUILD" ]]; then
   rm "$src_tag"
 
   run cp "${LSSTSW_BUILD_DIR}/builds/${BUILD}.env" "${EUPS_PKGROOT}/env/${DISTRIBTAG}.env"
+  if [[ -f $rsp_env ]]; then
+    run cp "$rsp_env" "${EUPS_PKGROOT}/env/${DISTRIBTAG}_rsp.env"
+  fi
 fi
 
 #
