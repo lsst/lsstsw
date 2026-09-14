@@ -156,6 +156,10 @@ elif [[ $BUILD_ID != "" ]]; then
 else
   # in case no ref is given as parameter, attach the default SHA-1 to $SPLENV_BASE_NAME (lsst-scipipe)
   suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
+  # Must reproduce the name deploy built, including an experimental python pin.
+  if [[ -n $LSST_PYTHON_PIN ]]; then
+    suffix="${suffix}-py${LSST_PYTHON_PIN//./}"
+  fi
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${suffix}"}
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
@@ -181,8 +185,16 @@ fi
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
 export EUPS_ROOT="https://eups.lsst.cloud/stack"
 export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
+# The recompute below keys the eups stack on the rubin-env version so that
+# environments sharing a version share one stack.  A python pin has to survive
+# it: the stack's ups_db and the binaries installed under it are specific to the
+# python ABI, so a pinned environment needs a stack of its own.
+python_suffix=""
+case "$LSST_CONDA_ENV_NAME" in
+  *-py[0-9][0-9]*) python_suffix="-py${LSST_CONDA_ENV_NAME##*-py}" ;;
+esac
 rubin_env_version=$(conda list --json rubin-env | jq -r '.[0].version') \
-  && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
+  && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}${python_suffix}"
 if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
   echo "::: Deploying manifest.remap"
@@ -212,6 +224,14 @@ if [[ -z $eups_platform ]]; then
 fi
 echo "$eups_platform"
 export EUPS_DISTRIB="${EUPS_ROOT}/${eups_platform}"
+if [[ -n $python_suffix ]]; then
+  # The pkgroot path has no python component, so the binaries published under it
+  # are the ones built for the python rubin-env selects.  Their extension modules
+  # are ABI-untagged and link no libpython, so a pinned interpreter would load
+  # them and then fail unpredictably -- offer source packages instead.
+  echo "Python-pinned environment: restricting eups packages to source"
+  export EUPS_DISTRIB="${EUPS_ROOT}/src"
+fi
 echo "EUPS_PATH set to ${EUPS_PATH}"
 export RUBIN_EUPS_PATH="${EUPS_PATH}"
 

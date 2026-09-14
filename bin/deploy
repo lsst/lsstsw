@@ -24,6 +24,10 @@ LSST_BUILD_GITREPO=${LSST_BUILD_GITREPO:-https://github.com/lsst/lsst_build.git}
 LSST_SCIPIPECENV_GITREPO=${LSST_SCIPIPECENV_GITREPO:-https://github.com/lsst/scipipe_conda_env.git}
 LSST_RUBIN_ENV_NAME="rubin-env"
 LSST_ADD_RSP=${LSST_ADD_RSP:-false}
+# Experimental: pin the environment to a python version other than the one
+# rubin-env selects.  Empty means "let rubin-env choose", which is the only
+# officially supported configuration.
+LSST_PYTHON_PIN=${LSST_PYTHON_PIN:-""}
 set -e
 
 
@@ -35,7 +39,7 @@ usage() {
   # note that heredocs are prefixed with tab chars
   fail "$(cat <<-EOF
 
-		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG] [-V VARIANT]
+		Usage: $0 [-h] [-r REF|-v VERSION|-x TAG] [-V VARIANT] [-y PYTHON_VERSION]
 
 		Specific options:
 	    -v VERSION  a specific version of rubin-env conda package.
@@ -44,6 +48,15 @@ usage() {
       -R RSP      downloads rubin-env-rsp version of conda package
 	    -x TAG      eups tag to select the exact environment for that tag
     -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
+	    -y PYTHON_VERSION
+	                EXPERIMENTAL.  Build the environment with a specific python
+	                version, eg. "3.14".  rubin-env selects the officially
+	                supported python by default, so this is not needed for normal
+	                use.  The environment name and its eups stack gain a
+	                "-py<version>" suffix so they cannot collide with the
+	                supported ones.  Not available with -x or -r, whose
+	                environments are installed from a resolved package list that
+	                already pins python.
 	    -h          show this message
 
 		EOF
@@ -57,7 +70,7 @@ parse_args() {
 
   # We are intentionally not using gnu `getopt` due to portability concerns.
   # Sadly, this means no long options without a massive amount of boilerplate.
-  while getopts "hr:v:x:V:R" opt; do
+  while getopts "hr:v:x:V:Ry:" opt; do
     case "$opt" in
     h)
       usage
@@ -71,11 +84,13 @@ parse_args() {
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -x and -v"
       [[ -n $ENVREF ]] && usage "Cannot specify both -x and -r"
       [[ -n $ENV_NAME ]] && usage "Cannot specify both -x and -V"
+      [[ -n $LSST_PYTHON_PIN ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -x"
       TAG=${OPTARG}
       ;;
     r)
       [[ -n $TAG ]] && usage "Cannot specify both -r and -x"
       [[ -n $ENV_VERSION ]] && usage "Cannot specify both -r and -v"
+      [[ -n $LSST_PYTHON_PIN ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -r"
       ENVREF=${OPTARG}
       ;;
     R)
@@ -87,6 +102,13 @@ parse_args() {
       [[ -n $TAG ]] && usage "Cannot specify both -V and -x"
       [[ "${OPTARG}" != rubin-env-* ]] && usage "VARIANT must start with rubin-env-"
       ENV_NAME=${OPTARG}
+      ;;
+    y)
+      # -x and -r install from a fully resolved package list, which already pins
+      # python, so a pin there would be silently ignored.
+      [[ -n $TAG ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -x"
+      [[ -n $ENVREF ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -r"
+      LSST_PYTHON_PIN=${OPTARG}
       ;;
     *)
       usage "Unknown option: ${opt}"
@@ -181,6 +203,12 @@ main() {
   LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"${RUBIN_ENV_CONDA_CHANNELS}"}
 
   suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
+  # A python pin gets its own environment and its own eups stack: the published
+  # eups binaries and the ups_db are python-ABI-specific, so a pinned build must
+  # not share either with the supported one.  Matches lsstinstall's naming.
+  if [[ -n $LSST_PYTHON_PIN ]]; then
+    suffix="${suffix}-py${LSST_PYTHON_PIN//./}"
+  fi
   export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"}
 
   echo "$LSST_CONDA_ENV_NAME"
@@ -256,6 +284,9 @@ main() {
         ARGS+=("--file" "$TAG_ENV_FILE")
       else
         ARGS+=("${LSST_RUBIN_ENV_NAME}=${RUBIN_ENV_VERSION}")
+        if [[ -n $LSST_PYTHON_PIN ]]; then
+          ARGS+=("python=${LSST_PYTHON_PIN}")
+        fi
       fi
       echo "conda" "${ARGS[@]}"
 
