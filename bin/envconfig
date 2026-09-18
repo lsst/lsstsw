@@ -181,7 +181,7 @@ fi
 export EUPS_PATH="${LSSTSW}/stack/${LSST_CONDA_ENV_NAME}"
 export EUPS_ROOT="https://eups.lsst.cloud/stack"
 export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
-rubin_env_version=$(conda list --json rubin-env | jq -r '.[0].version') \
+rubin_env_version=$(find "$CONDA_PREFIX/conda-meta" -maxdepth 1 -name 'rubin-env-[0-9]*.json' -print -quit | sed -E 's|.*/rubin-env-([^-]+)-.*|\1|') \
   && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}"
 if [ ! -d "$EUPS_PATH" ]; then
   mkdir -p "${EUPS_PATH}"/{site,ups_db}
