@@ -40,8 +40,8 @@ usage() {
 
 		 Specific options:
 	    -p            prepare only (checkout and pull main for all packages and run "lsst-build prepare")
-	    -n            pass "--no-fetch" parameter to lsst_build
-	    -B            pass "--no_binary-fetch" parameter as false to lsst_build
+	    -n            doesn't pull any packages and uses on disk version of package
+	    -B            turn off binary fetching and builds from source
 	    -u            update repos.yaml
 	    -r <ref>      git reference (branch or tags) to be built
 	    -t <eupstag>  clone the finished build eups tag to the specified eupstag (e.g. "-t current")
