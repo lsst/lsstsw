@@ -40,7 +40,7 @@ usage() {
 
 		 Specific options:
 	    -p            prepare only (checkout and pull main for all packages and run "lsst-build prepare")
-	    -n            doesn't pull any packages and uses on disk version of package
+	    -n            does not pull any packages and uses on disk version of package
 	    -B            turn off binary fetching and builds from source
 	    -u            update repos.yaml
 	    -r <ref>      git reference (branch or tags) to be built
