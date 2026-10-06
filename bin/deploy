@@ -50,11 +50,11 @@ usage() {
     -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
 	    -y PYTHON_VERSION
 	                EXPERIMENTAL.  Build the environment with a specific python
-	                version, eg. "3.14".  rubin-env selects the officially
-	                supported python by default, so this is not needed for normal
-	                use.  The environment name and its eups stack gain a
-	                "-py<version>" suffix so they cannot collide with the
-	                supported ones.  Not available with -x or -r, whose
+                  version, given as major.minor[.patch], eg. "3.14".  rubin-env
+                  selects the officially supported python by default, so this is
+                  not needed for normal use.  The environment name and its eups
+                  stack gain a "-py<version>" suffix so they cannot collide with
+                  the supported ones.  Not available with -x or -r, whose
 	                environments are installed from a resolved package list that
 	                already pins python.
 	    -h          show this message
@@ -63,6 +63,14 @@ usage() {
   )"
 }
 
+validate_python_pin() {
+  local pin=$1
+  local src=$2
+
+  if [[ ! $pin =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    usage "Invalid python pin (${src}): '${pin}'. Expected major.minor[.patch], eg. '3.14'"
+  fi
+}
 
 parse_args() {
   local OPTIND
@@ -108,6 +116,7 @@ parse_args() {
       # python, so a pin there would be silently ignored.
       [[ -n $TAG ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -x"
       [[ -n $ENVREF ]] && usage "Cannot use a python pin (-y or LSST_PYTHON_PIN) with -r"
+      validate_python_pin  "${OPTARG}" "-y"
       LSST_PYTHON_PIN=${OPTARG}
       ;;
     *)
@@ -178,6 +187,12 @@ main() {
 
   parse_args "$@"
 
+  # -y is checked as it is parsed; this also covers a pin inherited from the
+  # environment, which never passes through parse_args.
+  if [[ -n $LSST_PYTHON_PIN ]]; then
+    validate_python_pin "$LSST_PYTHON_PIN" "LSST_PYTHON_PIN"
+  fi
+
   RUBIN_ENV_CONDA_CHANNELS="nodefaults conda-forge"
 
   if [[ -n $ENV_VERSION ]]; then
@@ -208,6 +223,18 @@ main() {
   # not share either with the supported one.  Matches lsstinstall's naming.
   if [[ -n $LSST_PYTHON_PIN ]]; then
     suffix="${suffix}-py${LSST_PYTHON_PIN//./}"
+    # An exported LSST_CONDA_ENV_NAME wins below, which would drop the suffix
+    # and send us at an existing unpinned environment -- conda create never
+    # runs, so the pin would be ignored and deploy would still report success.
+    # A name the caller chose is fine only if envconfig will read the pin back
+    # out of it, which is what earns the environment its own eups stack.
+    if [[ -n $LSST_CONDA_ENV_NAME \
+      && $LSST_CONDA_ENV_NAME != "${SPLENV_BASE_NAME}-"*"${suffix}" ]]; then
+      fail "LSST_CONDA_ENV_NAME is set to '${LSST_CONDA_ENV_NAME}', which is not of the
+      form '${SPLENV_BASE_NAME}-<version>${suffix}'.  A python pin needs an environment
+      whose name carries it, so that envconfig gives it an eups stack of its own:
+      unset LSST_CONDA_ENV_NAME, or name it to match."
+    fi
   fi
   export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"}
 
@@ -393,7 +420,7 @@ main() {
   echo "::: To activate the just deployed environment use the following command:"
   echo
 
-  if [[ -z "$ENV_VERSION" ]] && [[ -z "$ENVREF" ]] && [[ -z "$TAG" ]]; then
+  if [[ -z "$ENV_VERSION" ]] && [[ -z "$ENVREF" ]] && [[ -z "$TAG" ]] && [[ -z "$LSST_PYTHON_PIN" ]]; then
     if [[ $SHELL =~ bash$ ]]; then
       echo "    . ${LSSTSW}/bin/envconfig"
     elif [[ $SHELL =~ zsh$ ]]; then

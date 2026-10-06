@@ -191,7 +191,19 @@ export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 # python ABI, so a pinned environment needs a stack of its own.
 python_suffix=""
 case "$LSST_CONDA_ENV_NAME" in
-  *-py[0-9][0-9]*) python_suffix="-py${LSST_CONDA_ENV_NAME##*-py}" ;;
+  # deploy appends the pin last, with the dots stripped, to a name it prefixed
+  # with $SPLENV_BASE_NAME -- so a pin is digits running to the end of such a
+  # name.  Anything else ("-py311-mytest", or a name that merely contains
+  # "-py") is a user environment that must keep sharing the stack built for
+  # the python rubin-env selected.
+  "${SPLENV_BASE_NAME}-"*-py[0-9]*)
+    python_pin_digits="${LSST_CONDA_ENV_NAME##*-py}"
+    case "$python_pin_digits" in
+      *[!0-9]*) ;;
+      *) python_suffix="-py${python_pin_digits}" ;;
+    esac
+    unset python_pin_digits
+    ;;
 esac
 rubin_env_version=$(find "$CONDA_PREFIX/conda-meta" -maxdepth 1 -name 'rubin-env-[0-9]*.json' -print -quit | sed -E 's|.*/rubin-env-([^-]+)-.*|\1|') \
   && export EUPS_PATH="${LSSTSW}/stack/${SPLENV_BASE_NAME}-${rubin_env_version}${python_suffix}"
