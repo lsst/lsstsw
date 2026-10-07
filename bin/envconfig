@@ -172,7 +172,15 @@ else
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 
-conda activate "$LSST_CONDA_ENV_NAME"
+# An unchecked activate used to fall through to the eups probe below, which
+# then created an eups-base environment nobody asked for, made a stack
+# directory for an environment that does not exist, and -- because
+# $CONDA_PREFIX still pointed at whatever was active before -- reported
+# success with EUPS_PATH aimed at an unrelated stack.
+if ! conda activate "$LSST_CONDA_ENV_NAME"; then
+  print_error "error: failed to activate conda environment '${LSST_CONDA_ENV_NAME}'"
+  return 1
+fi
 export LSST_CONDA_ENV_NAME
 
 # check if eups is not already available in the environment
