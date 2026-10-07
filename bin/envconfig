@@ -34,6 +34,63 @@ copy_postinstall_fix(){
   fi
 }
 
+# Make sure $LSST_CONDA_ENV_NAME names an environment that exists, setting it to
+# the sole installed candidate when it does not.  A function so that `local`
+# keeps its scratch variables out of the interactive shells this is sourced into.
+#
+#   $1  the derived (or inherited) environment name
+#   $2  a required "-rsp"/"-py<ver>" suffix, or empty for no preference
+#
+# Sets $LSST_CONDA_ENV_NAME; returns 1 if the caller should give up.
+resolve_env_name() {
+  local wanted=$1 want_suffix=$2
+  local envs name count=0 found="" list=""
+
+  # One conda call: `conda env list` is slow enough to notice when envconfig
+  # runs from a shell rc file.
+  envs=$(conda env list | grep -v "^[# ]" | cut -d' ' -f1)
+
+  # -qxF: whole-line and literal, so lsst-scipipe-14.0 is not satisfied by
+  # lsst-scipipe-14.0.0 and the dots in a name stay literal.
+  if printf '%s\n' "$envs" | grep -qxF "$wanted"; then
+    return 0
+  fi
+
+  while read -r name; do
+    # Only the environments lsstsw manages: never auto-activate base,
+    # eups-base, or a user's unrelated env.  case, not grep: env names carry
+    # dots, which a regex would read as wildcards.
+    case "$name" in "${SPLENV_BASE_NAME}-"*) ;; *) continue ;; esac
+    # A requested -rsp/-py suffix narrows the field, so an explicitly stated
+    # intent still wins; no suffix means no preference.
+    if [[ -n $want_suffix && $name != *"$want_suffix" ]]; then
+      continue
+    fi
+    count=$((count+1))
+    found=$name
+    list="${list}    ${name}"$'\n'
+  done <<< "$envs"
+
+  if [[ $count -eq 1 ]]; then
+    echo "notice: ${wanted} is not installed; using the only environment" \
+      "that is: ${found}"
+    LSST_CONDA_ENV_NAME=$found
+    return 0
+  fi
+
+  if [[ $count -eq 0 ]]; then
+    print_error "error: ${wanted} is not installed, and no" \
+      "${SPLENV_BASE_NAME}-*${want_suffix} environment was found."
+    print_error "  Run bin/deploy to install one."
+  else
+    print_error "error: ${wanted} is not installed. Candidates:"
+    print_error "$list"
+    print_error "  Choose one with:  . ${LSSTSW}/bin/envconfig -n NAME"
+    print_error "  or interactively: . ${LSSTSW}/bin/envconfig -i"
+  fi
+  return 1
+}
+
 usage() {
   if [[ -n "$1" ]]; then
     print_error "$0: $1"
@@ -172,48 +229,15 @@ else
 
   # The name above is derived, not looked up, so it may well not be installed:
   # after `deploy -y 3.14` the pin is not set in a fresh shell, so the name
-  # loses its -py3.14 suffix and points at nothing.  Rather than hand conda a
-  # name that cannot activate, see what is actually installed.  One call: conda
-  # env list is slow enough to notice when envconfig runs from a shell rc file.
-  conda_envs=$(conda env list | grep -v "^[# ]" | cut -d' ' -f1)
-  if ! printf '%s\n' "$conda_envs" | grep -qxF "$LSST_CONDA_ENV_NAME"; then
-    n=0
-    found=""
-    list=""
-    while read -r env_name; do
-      # Only the environments lsstsw manages: never auto-activate base,
-      # eups-base, or a user's unrelated env.  case, not grep: env names carry
-      # dots, which a regex would read as wildcards.
-      case "$env_name" in "${SPLENV_BASE_NAME}-"*) ;; *) continue ;; esac
-      # A requested -rsp/-py suffix narrows the field, so an explicitly stated
-      # intent still wins; no suffix means no preference.
-      if [[ -n $suffix && $env_name != *"$suffix" ]]; then
-        continue
-      fi
-      n=$((n+1))
-      found=$env_name
-      list="${list}    ${env_name}"$'\n'
-    done <<< "$conda_envs"
-
-    if [[ $n -eq 1 ]]; then
-      echo "notice: ${LSST_CONDA_ENV_NAME} is not installed; using the only" \
-        "environment that is: ${found}"
-      LSST_CONDA_ENV_NAME=$found
-    elif [[ $n -eq 0 ]]; then
-      print_error "error: ${LSST_CONDA_ENV_NAME} is not installed, and no" \
-        "${SPLENV_BASE_NAME}-*${suffix} environment was found."
-      print_error "  Run bin/deploy to install one."
-      return 1
-    else
-      print_error "error: ${LSST_CONDA_ENV_NAME} is not installed. Candidates:"
-      print_error "$list"
-      print_error "  Choose one with:  . ${LSSTSW}/bin/envconfig -n NAME"
-      print_error "  or interactively: . ${LSSTSW}/bin/envconfig -i"
-      return 1
-    fi
+  # loses its -py3.14 suffix and points at nothing.
+  if ! resolve_env_name "$LSST_CONDA_ENV_NAME" "$suffix"; then
+    unset -f resolve_env_name
+    return 1
   fi
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
+# Sourced into interactive shells: do not leave the helper defined.
+unset -f resolve_env_name
 
 # An unchecked activate used to fall through to the eups probe below, which
 # then created an eups-base environment nobody asked for, made a stack
