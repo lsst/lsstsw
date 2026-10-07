@@ -169,6 +169,49 @@ else
     fi
   fi
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${suffix}"}
+
+  # The name above is derived, not looked up, so it may well not be installed:
+  # after `deploy -y 3.14` the pin is not set in a fresh shell, so the name
+  # loses its -py3.14 suffix and points at nothing.  Rather than hand conda a
+  # name that cannot activate, see what is actually installed.  One call: conda
+  # env list is slow enough to notice when envconfig runs from a shell rc file.
+  conda_envs=$(conda env list | grep -v "^[# ]" | cut -d' ' -f1)
+  if ! printf '%s\n' "$conda_envs" | grep -qxF "$LSST_CONDA_ENV_NAME"; then
+    n=0
+    found=""
+    list=""
+    while read -r env_name; do
+      # Only the environments lsstsw manages: never auto-activate base,
+      # eups-base, or a user's unrelated env.  case, not grep: env names carry
+      # dots, which a regex would read as wildcards.
+      case "$env_name" in "${SPLENV_BASE_NAME}-"*) ;; *) continue ;; esac
+      # A requested -rsp/-py suffix narrows the field, so an explicitly stated
+      # intent still wins; no suffix means no preference.
+      if [[ -n $suffix && $env_name != *"$suffix" ]]; then
+        continue
+      fi
+      n=$((n+1))
+      found=$env_name
+      list="${list}    ${env_name}"$'\n'
+    done <<< "$conda_envs"
+
+    if [[ $n -eq 1 ]]; then
+      echo "notice: ${LSST_CONDA_ENV_NAME} is not installed; using the only" \
+        "environment that is: ${found}"
+      LSST_CONDA_ENV_NAME=$found
+    elif [[ $n -eq 0 ]]; then
+      print_error "error: ${LSST_CONDA_ENV_NAME} is not installed, and no" \
+        "${SPLENV_BASE_NAME}-*${suffix} environment was found."
+      print_error "  Run bin/deploy to install one."
+      return 1
+    else
+      print_error "error: ${LSST_CONDA_ENV_NAME} is not installed. Candidates:"
+      print_error "$list"
+      print_error "  Choose one with:  . ${LSSTSW}/bin/envconfig -n NAME"
+      print_error "  or interactively: . ${LSSTSW}/bin/envconfig -i"
+      return 1
+    fi
+  fi
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
 fi
 
