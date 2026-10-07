@@ -150,6 +150,13 @@ if [ "${CONDA_DEFAULT_ENV}" != "${LSST_CONDA_ENV_NAME}" ]; then
   exit
 fi
 
+# A python-pinned environment (set by envconfig) cannot use the published
+# binaries: they are built for the python rubin-env selects.
+if [[ $LSST_PYTHON_PINNED_ENV == true ]] && [[ $NO_BINARY_FETCH != true ]]; then
+  echo "Python-pinned environment: building from source (--no-binary-fetch)"
+  NO_BINARY_FETCH=true
+fi
+
 (
   # true if `lsst-build prepare` has run successfully
   PREPARED=false
