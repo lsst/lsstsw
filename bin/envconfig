@@ -288,7 +288,9 @@ elif [[ "$platform" = "Darwin" ]]; then
   fi
 fi
 if [[ -z $eups_platform ]]; then
-  fail "Unable to identify OS or architecture"
+  # `fail` lives in bin/utils.sh, which this script does not source.
+  print_error "error: unable to identify OS or architecture: $platform-$cpu_arch"
+  return 1
 fi
 echo "$eups_platform"
 export EUPS_DISTRIB="${EUPS_ROOT}/${eups_platform}"
