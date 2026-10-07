@@ -222,7 +222,7 @@ else
       print_error "  Run bin/deploy to install one."
     else
       print_error "error: ${wanted} is not installed. Candidates:"
-      print_error "$list"
+      print_error "${list%$'\n'}"
       print_error "  Choose one with:  . ${LSSTSW}/bin/envconfig -n NAME"
       print_error "  or interactively: . ${LSSTSW}/bin/envconfig -i"
     fi
