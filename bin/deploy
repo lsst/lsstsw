@@ -47,7 +47,7 @@ usage() {
 	    -r REF      git reference (SHA1) in scipipe_conda_env repository (backward compatibility)
       -R RSP      downloads rubin-env-rsp version of conda package
 	    -x TAG      eups tag to select the exact environment for that tag
-    -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
+      -V VARIANT  install a specific rubin-env variant, like rubin-env-developer
 	    -y PYTHON_VERSION
 	                EXPERIMENTAL.  Build the environment with a specific python
                   version, given as major.minor[.patch], eg. "3.14".  rubin-env
@@ -219,10 +219,10 @@ main() {
 
   suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
   # A python pin gets its own environment and its own eups stack: the published
-  # eups binaries and the ups_db are python-ABI-specific, so a pinned build must
-  # not share either with the supported one.  Matches lsstinstall's naming.
+  # eups binaries and the ups_db are python-ABI-specific.
   if [[ -n $LSST_PYTHON_PIN ]]; then
-    suffix="${suffix}-py${LSST_PYTHON_PIN//./}"
+    # Keep the dots: stripping them collapses 3.11.4 and 3.1.14 onto one name.
+    suffix="${suffix}-py${LSST_PYTHON_PIN}"
     # An exported LSST_CONDA_ENV_NAME wins below, which would drop the suffix
     # and send us at an existing unpinned environment -- conda create never
     # runs, so the pin would be ignored and deploy would still report success.

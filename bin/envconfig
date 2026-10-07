@@ -158,7 +158,15 @@ else
   suffix=$([ "$LSST_ADD_RSP" = true ] && echo "-rsp" || echo "")
   # Must reproduce the name deploy built, including an experimental python pin.
   if [[ -n $LSST_PYTHON_PIN ]]; then
-    suffix="${suffix}-py${LSST_PYTHON_PIN//./}"
+    suffix="${suffix}-py${LSST_PYTHON_PIN}"
+    # This script exports LSST_CONDA_ENV_NAME, so re-sourcing after setting a
+    # pin would otherwise reuse the name and activate the unpinned environment.
+    if [[ -n $LSST_CONDA_ENV_NAME && $LSST_CONDA_ENV_NAME != *"${suffix}" ]]; then
+      echo "Ignoring LSST_CONDA_ENV_NAME='${LSST_CONDA_ENV_NAME}': it does not" \
+        "carry the python pin '${LSST_PYTHON_PIN}'.  Use -n to activate it" \
+        "instead, or unset LSST_PYTHON_PIN."
+      LSST_CONDA_ENV_NAME=""
+    fi
   fi
   LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${LSST_SPLENV_REF}${suffix}"}
   echo "Setting the environment... ${LSST_CONDA_ENV_NAME}"
@@ -188,21 +196,18 @@ export LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 # The recompute below keys the eups stack on the rubin-env version so that
 # environments sharing a version share one stack.  A python pin has to survive
 # it: the stack's ups_db and the binaries installed under it are specific to the
-# python ABI, so a pinned environment needs a stack of its own.
+# python ABI, so a pinned environment needs a stack of its own.  deploy appends
+# the pin last, so it is the trailing "-py<major.minor[.patch]>" of a name it
+# prefixed with $SPLENV_BASE_NAME; anything else keeps the shared stack.
 python_suffix=""
 case "$LSST_CONDA_ENV_NAME" in
-  # deploy appends the pin last, with the dots stripped, to a name it prefixed
-  # with $SPLENV_BASE_NAME -- so a pin is digits running to the end of such a
-  # name.  Anything else ("-py311-mytest", or a name that merely contains
-  # "-py") is a user environment that must keep sharing the stack built for
-  # the python rubin-env selected.
   "${SPLENV_BASE_NAME}-"*-py[0-9]*)
-    python_pin_digits="${LSST_CONDA_ENV_NAME##*-py}"
-    case "$python_pin_digits" in
-      *[!0-9]*) ;;
-      *) python_suffix="-py${python_pin_digits}" ;;
+    python_pin="${LSST_CONDA_ENV_NAME##*-py}"
+    case "$python_pin" in
+      *[!0-9.]* | .* | *. | *..* | *.*.*.*) ;;
+      *.*) python_suffix="-py${python_pin}" ;;
     esac
-    unset python_pin_digits
+    unset python_pin
     ;;
 esac
 rubin_env_version=$(find "$CONDA_PREFIX/conda-meta" -maxdepth 1 -name 'rubin-env-[0-9]*.json' -print -quit | sed -E 's|.*/rubin-env-([^-]+)-.*|\1|') \
@@ -236,13 +241,15 @@ if [[ -z $eups_platform ]]; then
 fi
 echo "$eups_platform"
 export EUPS_DISTRIB="${EUPS_ROOT}/${eups_platform}"
+# The pkgroot path has no python component, so the binaries published under it
+# are built for the python rubin-env selects.  Their extension modules are
+# ABI-untagged and link no libpython, so a pinned interpreter would load them
+# and then fail unpredictably.  rebuild reads this and builds from source.
 if [[ -n $python_suffix ]]; then
-  # The pkgroot path has no python component, so the binaries published under it
-  # are the ones built for the python rubin-env selects.  Their extension modules
-  # are ABI-untagged and link no libpython, so a pinned interpreter would load
-  # them and then fail unpredictably -- offer source packages instead.
-  echo "Python-pinned environment: restricting eups packages to source"
-  export EUPS_DISTRIB="${EUPS_ROOT}/src"
+  echo "Python-pinned environment: eups binary packages will not be fetched"
+  export LSST_PYTHON_PINNED_ENV=true
+else
+  unset LSST_PYTHON_PINNED_ENV
 fi
 echo "EUPS_PATH set to ${EUPS_PATH}"
 export RUBIN_EUPS_PATH="${EUPS_PATH}"
