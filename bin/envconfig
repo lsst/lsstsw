@@ -62,8 +62,10 @@ resolve_env_name() {
     # dots, which a regex would read as wildcards.
     case "$name" in "${SPLENV_BASE_NAME}-"*) ;; *) continue ;; esac
     # A requested -rsp/-py suffix narrows the field, so an explicitly stated
-    # intent still wins; no suffix means no preference.
-    if [[ -n $want_suffix && $name != *"$want_suffix" ]]; then
+    # intent still wins; no suffix means no preference.  deploy appends any
+    # python pin after -rsp, so a bare -rsp request also accepts -rsp-py<ver>.
+    if [[ -n $want_suffix && $name != *"$want_suffix" \
+        && $name != *"${want_suffix}-py"* ]]; then
       continue
     fi
     count=$((count+1))
