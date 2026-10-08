@@ -223,20 +223,33 @@ main() {
   if [[ -n $LSST_PYTHON_PIN ]]; then
     # Keep the dots: stripping them collapses 3.11.4 and 3.1.14 onto one name.
     suffix="${suffix}-py${LSST_PYTHON_PIN}"
-    # An exported LSST_CONDA_ENV_NAME wins below, which would drop the suffix
-    # and send us at an existing unpinned environment -- conda create never
-    # runs, so the pin would be ignored and deploy would still report success.
-    # A name the caller chose is fine only if envconfig will read the pin back
-    # out of it, which is what earns the environment its own eups stack.
-    if [[ -n $LSST_CONDA_ENV_NAME \
-      && $LSST_CONDA_ENV_NAME != "${SPLENV_BASE_NAME}-"*"${suffix}" ]]; then
-      fail "LSST_CONDA_ENV_NAME is set to '${LSST_CONDA_ENV_NAME}', which is not of the
+  fi
+  local derived_env_name="${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"
+  # envconfig exports LSST_CONDA_ENV_NAME for the environment it activates, so in
+  # a shell that sourced it the variable records the active environment rather
+  # than asking for one.  Taken as a request it would make deploy report that
+  # environment as already deployed instead of creating the one these options
+  # name.  A name set by hand is not the active one, so it still counts.
+  if [[ -n $LSST_CONDA_ENV_NAME && $LSST_CONDA_ENV_NAME == "$CONDA_DEFAULT_ENV" ]]; then
+    if [[ $LSST_CONDA_ENV_NAME != "$derived_env_name" ]]; then
+      echo "::: Ignoring LSST_CONDA_ENV_NAME='${LSST_CONDA_ENV_NAME}': it names the" \
+        "active environment, not the one to deploy."
+    fi
+    LSST_CONDA_ENV_NAME=""
+  fi
+  # A hand-set LSST_CONDA_ENV_NAME wins below, which would drop the suffix and
+  # send us at an existing unpinned environment -- conda create never runs, so
+  # the pin would be ignored and deploy would still report success.  A chosen
+  # name is fine only if envconfig will read the pin back out of it, which is
+  # what earns the environment its own eups stack.
+  if [[ -n $LSST_PYTHON_PIN && -n $LSST_CONDA_ENV_NAME \
+    && $LSST_CONDA_ENV_NAME != "${SPLENV_BASE_NAME}-"*"${suffix}" ]]; then
+    fail "LSST_CONDA_ENV_NAME is set to '${LSST_CONDA_ENV_NAME}', which is not of the
       form '${SPLENV_BASE_NAME}-<version>${suffix}'.  A python pin needs an environment
       whose name carries it, so that envconfig gives it an eups stack of its own:
       unset LSST_CONDA_ENV_NAME, or name it to match."
-    fi
   fi
-  export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-"${SPLENV_BASE_NAME}-${RUBIN_ENV_VERSION}${suffix}"}
+  export LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-$derived_env_name}
 
   echo "$LSST_CONDA_ENV_NAME"
   mkdir -p "${LSSTSW}"/{sources,build,var/run,var/log,lfs,distserver/production,etc,env}
